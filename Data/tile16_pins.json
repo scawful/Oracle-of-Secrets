@@ -1,0 +1,4201 @@
+{
+ "schema_version": 2,
+ "about": "Unified engine-referenced Tile16 pins (overlay streams, active ASM DrawMap16 callers, Bank $1B interactive tiles, Bank $02 Map32UpdateTiles grave reveals, and custom reveal overrides). Regenerate: python3 Scripts/Build/check_tile16_pins.py --rom <base.sfc> --update",
+ "category_counts": {
+  "asm_draw_persist": 98,
+  "bank1b_interactive": 35,
+  "overlay_stream": 244,
+  "custom_reveal_override": 2,
+  "bank02_map32_update": 30
+ },
+ "tile16": {
+  "001": {
+   "def": "0470037010703770",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Overworld/overlays.asm"
+   ]
+  },
+  "034": {
+   "def": "a018a018a018a018",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Sprites/Bosses/octoboss.asm:SubmergeWaitWall"
+   ]
+  },
+  "036": {
+   "def": "8019811990199119",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:bush_match"
+   ]
+  },
+  "094": {
+   "def": "400d404d500d504d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame3",
+    "ov1E"
+   ]
+  },
+  "0B7": {
+   "def": "831d831d831d831d",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Items/ice_rod.asm:LinkItem_IceRod"
+   ]
+  },
+  "0C7": {
+   "def": "4208440852085408",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame5",
+    "Overworld/overlays.asm:Frame7",
+    "ov1E"
+   ]
+  },
+  "0C8": {
+   "def": "5348424863485248",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame5",
+    "Overworld/overlays.asm:Frame7",
+    "ov1E"
+   ]
+  },
+  "0C9": {
+   "def": "4308440853085408",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1E"
+   ]
+  },
+  "0CE": {
+   "def": "4508808855088008",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame0",
+    "Overworld/overlays.asm:Frame1",
+    "Overworld/overlays.asm:Frame2",
+    "Overworld/overlays.asm:Frame5",
+    "ov1E"
+   ]
+  },
+  "0D5": {
+   "def": "80c8454880485548",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame0",
+    "Overworld/overlays.asm:Frame1",
+    "Overworld/overlays.asm:Frame2",
+    "Overworld/overlays.asm:Frame5",
+    "ov1E"
+   ]
+  },
+  "0DF": {
+   "def": "f929fa29eb29ef09",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "0E0": {
+   "def": "fa69f969ef49eb69",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "0FB": {
+   "def": "e808e908f808f908",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "0FC": {
+   "def": "e948e848fa08f848",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "101": {
+   "def": "8211825192119251",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:lw_sign_match"
+   ]
+  },
+  "108": {
+   "def": "8858a018ba18a018",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame2",
+    "ov1B"
+   ]
+  },
+  "10A": {
+   "def": "a0188858a018ba18",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame2",
+    "ov1B"
+   ]
+  },
+  "156": {
+   "def": "630864084a084a08",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame5",
+    "ov1E"
+   ]
+  },
+  "158": {
+   "def": "6308640865086608",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame7",
+    "ov1E"
+   ]
+  },
+  "172": {
+   "def": "a01883188318a018",
+   "categories": [
+    "bank1b_interactive",
+    "custom_reveal_override"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:dw_grass_reveal_override",
+    "liftables_palette_fix.asm:dw63_bush_sign_reveal"
+   ]
+  },
+  "175": {
+   "def": "80c8454895085548",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame0",
+    "Overworld/overlays.asm:Frame5",
+    "ov1E"
+   ]
+  },
+  "17D": {
+   "def": "8209824992099249",
+   "categories": [
+    "bank1b_interactive",
+    "custom_reveal_override"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:dw_sign_match",
+    "liftables_palette_fix.asm:dw_sign_match"
+   ]
+  },
+  "183": {
+   "def": "80c8454895085548",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame1",
+    "Overworld/overlays.asm:Frame2",
+    "ov1E"
+   ]
+  },
+  "192": {
+   "def": "0f190f190f190f19",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5E"
+   ]
+  },
+  "196": {
+   "def": "0f1d0f1d0f1d0f1d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Fortress_Frame0",
+    "Overworld/overlays.asm:Fortress_Frame1",
+    "Overworld/overlays.asm:Fortress_Frame2",
+    "Overworld/overlays.asm:Fortress_Frame3",
+    "ov5E"
+   ]
+  },
+  "205": {
+   "def": "ef49ec499c08fb49",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "20F": {
+   "def": "a2158915b2159915",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:small_light_rock_match"
+   ]
+  },
+  "210": {
+   "def": "a0188210a0189210",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "211": {
+   "def": "4308440848084808",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "212": {
+   "def": "df1ddf5ddf9ddfdd",
+   "categories": [
+    "bank1b_interactive",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match",
+    "ov03",
+    "ov04",
+    "ov05",
+    "ov06"
+   ]
+  },
+  "213": {
+   "def": "821083109210b210",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "214": {
+   "def": "b25092508250a018",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "215": {
+   "def": "8188bd4847084808",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "216": {
+   "def": "45085e0875485e08",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "217": {
+   "def": "b2d093d0a3d0a3d0",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "218": {
+   "def": "be48af0847084908",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "219": {
+   "def": "a0187a48a018a118",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "21A": {
+   "def": "86085a086a486a08",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "21B": {
+   "def": "a019a059b019b059",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_match"
+   ]
+  },
+  "223": {
+   "def": "ec09ef09fb099c48",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "239": {
+   "def": "a3098a09b3099a09",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:heavy_rock_match"
+   ]
+  },
+  "251": {
+   "def": "5315641573157415",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:pegasus_rock_pile_match"
+   ]
+  },
+  "2B6": {
+   "def": "f51df41d4408e61d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "2B9": {
+   "def": "f45df55de65d4408",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "2BD": {
+   "def": "6408f61d4308f209",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame5",
+    "ov1E"
+   ]
+  },
+  "2BE": {
+   "def": "f41dc51de61dd51d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1E"
+   ]
+  },
+  "2BF": {
+   "def": "c41df45dd41de65d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "2C0": {
+   "def": "f65d6448f2494348",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame5",
+    "ov1E"
+   ]
+  },
+  "2D5": {
+   "def": "62086408dddd4a08",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame0",
+    "Overworld/overlays.asm:Frame1",
+    "Overworld/overlays.asm:Frame2",
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "2E4": {
+   "def": "1b151b151b151b15",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame3",
+    "ov1E"
+   ]
+  },
+  "312": {
+   "def": "f31dc51de51dd51d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "313": {
+   "def": "c41dc51dd41dd51d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1E"
+   ]
+  },
+  "37E": {
+   "def": "8c198d199c199d19",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:tall_grass_match"
+   ]
+  },
+  "3E7": {
+   "def": "6019605976197659",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov23"
+   ]
+  },
+  "3EA": {
+   "def": "609960d900110051",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov23"
+   ]
+  },
+  "3EC": {
+   "def": "0c150c150c150c15",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov23"
+   ]
+  },
+  "479": {
+   "def": "1d3d1d3d1d3d1d3d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:_1BD019",
+    "ov1B"
+   ]
+  },
+  "480": {
+   "def": "035d037d035d037d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:_1BD019",
+    "ov1B"
+   ]
+  },
+  "481": {
+   "def": "033d031d033d031d",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:_1BD019"
+   ]
+  },
+  "4E2": {
+   "def": "fdcced4ced4cfdcc",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame2",
+    "ov1B"
+   ]
+  },
+  "530": {
+   "def": "0b1d1b1d0b1d1b1d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame3",
+    "ov1E"
+   ]
+  },
+  "56D": {
+   "def": "3f9d3fdd3f1d3f5d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame4",
+    "ov1E"
+   ]
+  },
+  "57D": {
+   "def": "4308440868486808",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame5",
+    "ov1E"
+   ]
+  },
+  "599": {
+   "def": "600d604d380d384d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame3",
+    "ov1E"
+   ]
+  },
+  "5A1": {
+   "def": "600d604d600d604d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame3",
+    "ov1E"
+   ]
+  },
+  "5D8": {
+   "def": "e83ce91cf83cf91c",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "5D9": {
+   "def": "ea5ce87cfa5cf83c",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "603": {
+   "def": "235d645d425d401d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1B"
+   ]
+  },
+  "607": {
+   "def": "549d501d631d601d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1B"
+   ]
+  },
+  "609": {
+   "def": "441d701d341d361d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1B"
+   ]
+  },
+  "611": {
+   "def": "31dd30dd209d7b89",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame3",
+    "Overworld/overlays.asm:_1BD019"
+   ]
+  },
+  "612": {
+   "def": "309d319d7bc920dd",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame3",
+    "Overworld/overlays.asm:_1BD019"
+   ]
+  },
+  "613": {
+   "def": "7c897c895c895c89",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame3",
+    "Overworld/overlays.asm:_1BD019"
+   ]
+  },
+  "614": {
+   "def": "109d7c89109d5c89",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:_1BD019"
+   ]
+  },
+  "615": {
+   "def": "7cc910dd5cc910dd",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:_1BD019"
+   ]
+  },
+  "619": {
+   "def": "643d233d407d423d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1B"
+   ]
+  },
+  "61B": {
+   "def": "505d541d605d631d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1B"
+   ]
+  },
+  "61D": {
+   "def": "705d441d365d345d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1B"
+   ]
+  },
+  "68F": {
+   "def": "120d124d040d044d",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Sprites/Bosses/octoboss.asm:SpawnPirateHats"
+   ]
+  },
+  "692": {
+   "def": "8810881086108610",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:ZoraTemple_EntranceAnimation"
+   ]
+  },
+  "6A4": {
+   "def": "030d034d130d134d",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Sprites/Bosses/octoboss.asm:SpawnPirateHats"
+   ]
+  },
+  "72A": {
+   "def": "4d494c495d495c49",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank1b:repurposed_brick_wall_skipped"
+   ],
+   "intentionally_skipped": true
+  },
+  "730": {
+   "def": "630862484a08dd9d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame0",
+    "Overworld/overlays.asm:Frame1",
+    "Overworld/overlays.asm:Frame2",
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "75D": {
+   "def": "e808e918f808f918",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "75E": {
+   "def": "ea58e848fa18f848",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "787": {
+   "def": "2f192e191f151f55",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Goron_Frame4",
+    "ov36"
+   ]
+  },
+  "789": {
+   "def": "0e556f151e557f15",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Goron_Frame0",
+    "ov36"
+   ]
+  },
+  "78A": {
+   "def": "6e150e157e151e15",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Goron_Frame2",
+    "ov36"
+   ]
+  },
+  "790": {
+   "def": "0f150f551f151f55",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov36"
+   ]
+  },
+  "791": {
+   "def": "2f197b190ed57f15",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Goron_Frame3",
+    "ov36"
+   ]
+  },
+  "797": {
+   "def": "7b192e196e150e95",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Goron_Frame3",
+    "ov36"
+   ]
+  },
+  "87B": {
+   "def": "203d023d371d3f0d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov0F",
+    "ov14"
+   ]
+  },
+  "87C": {
+   "def": "027d207d3f4d375d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov0F",
+    "ov14"
+   ]
+  },
+  "87D": {
+   "def": "381d3e0d2e1d2f1d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov0F",
+    "ov14"
+   ]
+  },
+  "87E": {
+   "def": "3e4d385d2f5d2e5d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov0F",
+    "ov14"
+   ]
+  },
+  "87F": {
+   "def": "2f112e512f912ed1",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4A",
+    "ov4F",
+    "ov50",
+    "ov51",
+    "ov52",
+    "ov53",
+    "ov54",
+    "ov55",
+    "ov56",
+    "ov57",
+    "ov58",
+    "ov59",
+    "ov60",
+    "ov61"
+   ]
+  },
+  "880": {
+   "def": "3e1d3e1d3e1d3e1d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov15",
+    "ov16",
+    "ov17",
+    "ov18",
+    "ov19",
+    "ov20",
+    "ov21"
+   ]
+  },
+  "895": {
+   "def": "831083108310d718",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5A",
+    "ov5B",
+    "ov5C",
+    "ov63",
+    "ov64"
+   ]
+  },
+  "896": {
+   "def": "2d993d99d70dd70d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5A",
+    "ov5B",
+    "ov5C",
+    "ov63",
+    "ov64"
+   ]
+  },
+  "897": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "898": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "899": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "89A": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "89B": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "89C": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "89D": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "89E": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "89F": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "8A0": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "8A2": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "8A3": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "8A4": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "8A5": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8A6": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8A7": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8A8": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8A9": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8AA": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8AB": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8AC": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8AD": {
+   "def": "5c095d097c097c09",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8AE": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8AF": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8B0": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8B1": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8B2": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8B3": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8B4": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8B5": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov47"
+   ]
+  },
+  "8B6": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov42",
+    "ov43",
+    "ov44",
+    "ov4C"
+   ]
+  },
+  "8B7": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov42",
+    "ov43",
+    "ov44",
+    "ov4C"
+   ]
+  },
+  "8B8": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov42",
+    "ov43",
+    "ov44",
+    "ov4C"
+   ]
+  },
+  "8B9": {
+   "def": "5d495c497c497c49",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8BA": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov42",
+    "ov43",
+    "ov44",
+    "ov4C"
+   ]
+  },
+  "8BB": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov42",
+    "ov43",
+    "ov44",
+    "ov4C"
+   ]
+  },
+  "8BC": {
+   "def": "bf00bf00bf00bf00",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov42",
+    "ov43",
+    "ov44",
+    "ov4C"
+   ]
+  },
+  "8C1": {
+   "def": "5b49007d6b49107d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8C3": {
+   "def": "7b49205d315d305d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8CD": {
+   "def": "201d7b09301d311d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8CF": {
+   "def": "0e3d0e3d1e3d0f3d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame3",
+    "ov1B"
+   ]
+  },
+  "8D1": {
+   "def": "641d233d411d423d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame3",
+    "ov1B"
+   ]
+  },
+  "8DB": {
+   "def": "3e1d3f1d4c094d09",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8DD": {
+   "def": "3f1d3e5d4d494c49",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8DE": {
+   "def": "325d715d4b49015d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8DF": {
+   "def": "2e3d1f3d2f1d2f1d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8EB": {
+   "def": "511d123d611d221d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8EC": {
+   "def": "111d5b09211d6b09",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "8FD": {
+   "def": "1f7d2e7d2f5d2f5d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "918": {
+   "def": "ad09ae09bd09fe08",
+   "categories": [
+    "bank02_map32_update",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles",
+    "bank02:Map32UpdateTiles_q326",
+    "ov08",
+    "ov09",
+    "ov0A",
+    "ov0C",
+    "ov0D",
+    "ov0E",
+    "ov10",
+    "ov11",
+    "ov12",
+    "ov13",
+    "ov1D",
+    "ov1F",
+    "ov22",
+    "ov25",
+    "ov26",
+    "ov27",
+    "ov28",
+    "ov29",
+    "ov2A",
+    "ov2B",
+    "ov2C",
+    "ov2D",
+    "ov2E",
+    "ov2F",
+    "ov30",
+    "ov31",
+    "ov32",
+    "ov33",
+    "ov34",
+    "ov35",
+    "ov37",
+    "ov38",
+    "ov39",
+    "ov3A",
+    "ov45",
+    "ov46",
+    "ov4D",
+    "ov4E",
+    "ov62",
+    "ov6B",
+    "ov77"
+   ]
+  },
+  "919": {
+   "def": "ae49ad49fe48bd49",
+   "categories": [
+    "bank02_map32_update",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles",
+    "bank02:Map32UpdateTiles_q326",
+    "ov08",
+    "ov09",
+    "ov0A",
+    "ov0C",
+    "ov0D",
+    "ov0E",
+    "ov10",
+    "ov11",
+    "ov12",
+    "ov13",
+    "ov1D",
+    "ov1F",
+    "ov22",
+    "ov25",
+    "ov26",
+    "ov27",
+    "ov28",
+    "ov29",
+    "ov2A",
+    "ov2B",
+    "ov2C",
+    "ov2D",
+    "ov2E",
+    "ov2F",
+    "ov30",
+    "ov31",
+    "ov32",
+    "ov33",
+    "ov34",
+    "ov35",
+    "ov37",
+    "ov38",
+    "ov39",
+    "ov3A",
+    "ov45",
+    "ov46",
+    "ov4D",
+    "ov4E",
+    "ov62",
+    "ov6B",
+    "ov77"
+   ]
+  },
+  "91A": {
+   "def": "be09bc098e899309",
+   "categories": [
+    "bank02_map32_update",
+    "bank1b_interactive",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles",
+    "bank02:Map32UpdateTiles_q326",
+    "bank1b:grave_stairs_reveal",
+    "ov08",
+    "ov09",
+    "ov0A",
+    "ov0C",
+    "ov0D",
+    "ov0E",
+    "ov10",
+    "ov11",
+    "ov12",
+    "ov13",
+    "ov1D",
+    "ov1F",
+    "ov22",
+    "ov25",
+    "ov26",
+    "ov27",
+    "ov28",
+    "ov29",
+    "ov2A",
+    "ov2B",
+    "ov2C",
+    "ov2D",
+    "ov2E",
+    "ov2F",
+    "ov30",
+    "ov31",
+    "ov32",
+    "ov33",
+    "ov34",
+    "ov35",
+    "ov37",
+    "ov38",
+    "ov39",
+    "ov3A",
+    "ov45",
+    "ov46",
+    "ov4D",
+    "ov4E",
+    "ov62",
+    "ov6B",
+    "ov77"
+   ]
+  },
+  "91B": {
+   "def": "bc49be4993098ec9",
+   "categories": [
+    "bank02_map32_update",
+    "bank1b_interactive",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles",
+    "bank02:Map32UpdateTiles_q326",
+    "bank1b:grave_stairs_reveal",
+    "ov08",
+    "ov09",
+    "ov0A",
+    "ov0C",
+    "ov0D",
+    "ov0E",
+    "ov10",
+    "ov11",
+    "ov12",
+    "ov13",
+    "ov1D",
+    "ov1F",
+    "ov22",
+    "ov25",
+    "ov26",
+    "ov27",
+    "ov28",
+    "ov29",
+    "ov2A",
+    "ov2B",
+    "ov2C",
+    "ov2D",
+    "ov2E",
+    "ov2F",
+    "ov30",
+    "ov31",
+    "ov32",
+    "ov33",
+    "ov34",
+    "ov35",
+    "ov37",
+    "ov38",
+    "ov39",
+    "ov3A",
+    "ov45",
+    "ov46",
+    "ov4D",
+    "ov4E",
+    "ov62",
+    "ov6B",
+    "ov77"
+   ]
+  },
+  "952": {
+   "def": "5c895d896c096c09",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "965": {
+   "def": "4508808855089548",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame0",
+    "Overworld/overlays.asm:Frame1",
+    "Overworld/overlays.asm:Frame2",
+    "Overworld/overlays.asm:Frame5",
+    "ov1E"
+   ]
+  },
+  "99C": {
+   "def": "0f190f191f151f15",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Fortress_Frame4",
+    "ov5E"
+   ]
+  },
+  "9A2": {
+   "def": "0f191f150f191f15",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Fortress_Frame0",
+    "Overworld/overlays.asm:Fortress_Frame1",
+    "Overworld/overlays.asm:Fortress_Frame2",
+    "Overworld/overlays.asm:Fortress_Frame3",
+    "ov5E"
+   ]
+  },
+  "9A3": {
+   "def": "1f150f191f150f19",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Fortress_Frame0",
+    "Overworld/overlays.asm:Fortress_Frame1",
+    "Overworld/overlays.asm:Fortress_Frame2",
+    "Overworld/overlays.asm:Fortress_Frame3",
+    "ov5E"
+   ]
+  },
+  "9C1": {
+   "def": "6e156f157e157f15",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Goron_Frame1",
+    "Overworld/overlays.asm:Goron_Frame2",
+    "ov36"
+   ]
+  },
+  "9C3": {
+   "def": "127d515d225d615d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "9CE": {
+   "def": "7619765976197659",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov23"
+   ]
+  },
+  "9CF": {
+   "def": "711d321d011d4b09",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "9E1": {
+   "def": "5b49115d6b49215d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "9E2": {
+   "def": "001d5b09101d6b09",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame1",
+    "ov1B"
+   ]
+  },
+  "9FD": {
+   "def": "237d647d427d415d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame3",
+    "ov1B"
+   ]
+  },
+  "A17": {
+   "def": "0e7d0e7d0f7d1e7d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Castle_Frame3",
+    "ov1B"
+   ]
+  },
+  "A37": {
+   "def": "053d057d143d147d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame4",
+    "ov1E"
+   ]
+  },
+  "A39": {
+   "def": "4208410852082315",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "A3B": {
+   "def": "2335071533351715",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "A6D": {
+   "def": "0755237517553375",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "A7E": {
+   "def": "4008524823554248",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "A7F": {
+   "def": "4208331552085108",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "A81": {
+   "def": "7435743512351235",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov2F"
+   ]
+  },
+  "A8C": {
+   "def": "4815485558155855",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:TailPalace_Frame0",
+    "ov2F"
+   ]
+  },
+  "ABE": {
+   "def": "3355524850084248",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:Frame6",
+    "ov1E"
+   ]
+  },
+  "AF1": {
+   "def": "fe1cfe1cfe1cfe1c",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:TailPalace_Frame2",
+    "ov2F"
+   ]
+  },
+  "AF3": {
+   "def": "3a1d3a5d5b5d5b1d",
+   "categories": [
+    "asm_draw_persist",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/overlays.asm:TailPalace_Frame1",
+    "Overworld/overlays.asm:TailPalace_Frame2",
+    "ov2F"
+   ]
+  },
+  "B82": {
+   "def": "e808e910f808f910",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "B83": {
+   "def": "ea50e848fa10f808",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "DA4": {
+   "def": "e808fe08f808ff08",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:Lyra_SemanticNeighborSite0",
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "DA6": {
+   "def": "fe08e848ff08f848",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:Lyra_SemanticNeighborSite0",
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "DBE": {
+   "def": "1e0d0c091e4d0c09",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1A",
+    "ov1B",
+    "ov1C",
+    "ov24"
+   ]
+  },
+  "DBF": {
+   "def": "0c090c090c090c09",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1A",
+    "ov1B",
+    "ov1C",
+    "ov24"
+   ]
+  },
+  "DC0": {
+   "def": "0c091e4d0c091e0d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1A",
+    "ov1B",
+    "ov1C",
+    "ov24"
+   ]
+  },
+  "DC1": {
+   "def": "7d3d7d7d1e4d0c09",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1A",
+    "ov1B",
+    "ov1C",
+    "ov24"
+   ]
+  },
+  "DC2": {
+   "def": "7d3d7d7d0c090c09",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1A",
+    "ov1B",
+    "ov1C",
+    "ov24"
+   ]
+  },
+  "DC3": {
+   "def": "7d3d7d7d0c091e0d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov1A",
+    "ov1B",
+    "ov1C",
+    "ov24"
+   ]
+  },
+  "DC5": {
+   "def": "ac19ac59ac99acd9",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:tall_grass_rock_reveal"
+   ]
+  },
+  "DC6": {
+   "def": "af09af49bf09bf49",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:sign_reveal"
+   ]
+  },
+  "DC7": {
+   "def": "8f198f599f199f59",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:bush_reveal"
+   ]
+  },
+  "DC8": {
+   "def": "8f0d8f4d9f0d9f4d",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:dark_bush_reveal"
+   ]
+  },
+  "DC9": {
+   "def": "8e098e498e898ec9",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:rock_dirt_reveal"
+   ]
+  },
+  "DCA": {
+   "def": "8e098e498e898ec9",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:hammer_stake_reveal"
+   ]
+  },
+  "DCB": {
+   "def": "ab19ab59bb19bb59",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:hammer_stake_reveal"
+   ]
+  },
+  "DCC": {
+   "def": "0710075017101750",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:stump_reveal"
+   ]
+  },
+  "DCD": {
+   "def": "8e09ba09aa098308",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:stump_reveal"
+   ]
+  },
+  "DCE": {
+   "def": "ba498e498348aa49",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:stump_reveal"
+   ]
+  },
+  "DCF": {
+   "def": "aa8983088e89ba89",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:stump_reveal"
+   ]
+  },
+  "DD0": {
+   "def": "8308aac9bac98ec9",
+   "categories": [
+    "bank1b_interactive"
+   ],
+   "policy": "block",
+   "users": [
+    "bank1b:stump_reveal"
+   ]
+  },
+  "DD1": {
+   "def": "003d473d103d573d",
+   "categories": [
+    "bank02_map32_update",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles",
+    "bank02:Map32UpdateTiles_q326",
+    "ov0F",
+    "ov14"
+   ]
+  },
+  "DD2": {
+   "def": "477d007d577d107d",
+   "categories": [
+    "bank02_map32_update",
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles",
+    "bank02:Map32UpdateTiles_q326",
+    "ov0F",
+    "ov14"
+   ]
+  },
+  "DD3": {
+   "def": "2e9d021d371d0f0d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DD4": {
+   "def": "e41de41de41de41d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DD5": {
+   "def": "e41de41de41d00fc",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DD6": {
+   "def": "087c09280abc0b28",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DD7": {
+   "def": "0c480c4806080608",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DD8": {
+   "def": "0948081c0b480adc",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DD9": {
+   "def": "e41de41d0d9ce41d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DDA": {
+   "def": "e41d0efc00fc0ffc",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DDB": {
+   "def": "10bc11fcf4a8f5e8",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DDC": {
+   "def": "f6a80b28f6a80b28",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DDD": {
+   "def": "0608060806080608",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DDE": {
+   "def": "0b48f6c80b48f6c8",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "warn",
+   "users": [
+    "bank02:Map32UpdateTiles_base_legacy"
+   ]
+  },
+  "DDF": {
+   "def": "5251a0185251a018",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DE0": {
+   "def": "4c2d4d2d5c2d5d2d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DE1": {
+   "def": "2118221831183218",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DE2": {
+   "def": "2258211832583158",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DE3": {
+   "def": "73293c295b31ac88",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DE4": {
+   "def": "4435533553355335",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DE5": {
+   "def": "a0185211a0185211",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DE6": {
+   "def": "a018a018a0180a11",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DE7": {
+   "def": "a018a0180a51a018",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DE8": {
+   "def": "4d6d4c6d5c6d5d6d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DE9": {
+   "def": "5d6d5c6d6d6d6c6d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DEA": {
+   "def": "2c0939296c494149",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DEB": {
+   "def": "39692c4941096d69",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DEC": {
+   "def": "2d69384941296d69",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DED": {
+   "def": "5e915ed1a018a018",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DEE": {
+   "def": "a0180a91a018a018",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DEF": {
+   "def": "0ad1a018a018a018",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DF0": {
+   "def": "2a154b153a155b15",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DF1": {
+   "def": "4c154b155c155b15",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DF2": {
+   "def": "4c152b155c153b15",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DF3": {
+   "def": "6239633972397339",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DF4": {
+   "def": "0875087518551855",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DF5": {
+   "def": "6308630847884788",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DF6": {
+   "def": "8e088e089e089e08",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DF7": {
+   "def": "d3486809e0087809",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DF8": {
+   "def": "2c156b153a155b15",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DF9": {
+   "def": "4d156b155c155b15",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DFA": {
+   "def": "4d152d155c153d15",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DFB": {
+   "def": "43284428c438c538",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DFC": {
+   "def": "53285428c578c478",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DFD": {
+   "def": "ef08ef48ff08ff48",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DFE": {
+   "def": "2c112d11c108c048",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "DFF": {
+   "def": "6909d3087909e048",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "E00": {
+   "def": "2c154f153a153d15",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "E01": {
+   "def": "5f154f153a153d15",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "E02": {
+   "def": "5f152d153a153d15",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "E03": {
+   "def": "e818fe18f898ff18",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "E04": {
+   "def": "fe18e858ff18f8d8",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "E05": {
+   "def": "2c112d11c008c108",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3B",
+    "ov7B"
+   ]
+  },
+  "E06": {
+   "def": "2c112d11c108c108",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E07": {
+   "def": "6909e0487909e048",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E08": {
+   "def": "0009010910091109",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E09": {
+   "def": "0209030912091309",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E0A": {
+   "def": "0511061115111611",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E13": {
+   "def": "2711281137113811",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E14": {
+   "def": "2c112d113c113d11",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E15": {
+   "def": "3e113e513e113e51",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E16": {
+   "def": "6611671176117711",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E17": {
+   "def": "6909680979097809",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E18": {
+   "def": "4011411150115131",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E19": {
+   "def": "4231433173317231",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E1A": {
+   "def": "4411451154315511",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov3C",
+    "ov3D",
+    "ov3E",
+    "ov3F",
+    "ov40",
+    "ov41",
+    "ov48",
+    "ov49"
+   ]
+  },
+  "E1B": {
+   "def": "3d1d2d5d3e1d2e5d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4A",
+    "ov4F",
+    "ov50",
+    "ov51",
+    "ov52",
+    "ov53",
+    "ov54",
+    "ov55",
+    "ov56",
+    "ov57",
+    "ov58",
+    "ov59",
+    "ov60",
+    "ov61"
+   ]
+  },
+  "E1C": {
+   "def": "2e112f112e912f91",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4A",
+    "ov4F",
+    "ov50",
+    "ov51",
+    "ov52",
+    "ov53",
+    "ov54",
+    "ov55",
+    "ov56",
+    "ov57",
+    "ov58",
+    "ov59",
+    "ov60",
+    "ov61"
+   ]
+  },
+  "E1D": {
+   "def": "3f113f113f113f11",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4A",
+    "ov4F",
+    "ov50",
+    "ov51",
+    "ov52",
+    "ov53",
+    "ov54",
+    "ov55",
+    "ov56",
+    "ov57",
+    "ov58",
+    "ov59",
+    "ov60",
+    "ov61"
+   ]
+  },
+  "E1E": {
+   "def": "2f112f112f912f91",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4A",
+    "ov4F",
+    "ov50",
+    "ov51",
+    "ov52",
+    "ov53",
+    "ov54",
+    "ov55",
+    "ov56",
+    "ov57",
+    "ov58",
+    "ov59",
+    "ov60",
+    "ov61"
+   ]
+  },
+  "E20": {
+   "def": "6011611170097109",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4A",
+    "ov4F",
+    "ov50",
+    "ov51",
+    "ov52",
+    "ov53",
+    "ov54",
+    "ov55",
+    "ov56",
+    "ov57",
+    "ov58",
+    "ov59",
+    "ov60",
+    "ov61"
+   ]
+  },
+  "E21": {
+   "def": "6f096f497f097f49",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov15",
+    "ov16",
+    "ov17",
+    "ov18",
+    "ov19",
+    "ov20",
+    "ov21"
+   ]
+  },
+  "E22": {
+   "def": "6411651174097509",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov15",
+    "ov16",
+    "ov17",
+    "ov18",
+    "ov19",
+    "ov20",
+    "ov21"
+   ]
+  },
+  "E23": {
+   "def": "3e1d2e5d3e1d2e5d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov16",
+    "ov17",
+    "ov18",
+    "ov19",
+    "ov20",
+    "ov21"
+   ]
+  },
+  "E25": {
+   "def": "3e113e512e912ed1",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov15",
+    "ov16",
+    "ov17",
+    "ov18",
+    "ov19",
+    "ov20",
+    "ov21"
+   ]
+  },
+  "E2D": {
+   "def": "2f112f113f113f11",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5D",
+    "ov5F",
+    "ov66",
+    "ov67"
+   ]
+  },
+  "E2E": {
+   "def": "2e112f113e113f11",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5D",
+    "ov5F",
+    "ov66",
+    "ov67"
+   ]
+  },
+  "E2F": {
+   "def": "2f112e513f113e51",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5D",
+    "ov5F",
+    "ov66",
+    "ov67"
+   ]
+  },
+  "E31": {
+   "def": "88106d1598108310",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5D",
+    "ov5F",
+    "ov66",
+    "ov67"
+   ]
+  },
+  "E32": {
+   "def": "6d55881083109810",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E33": {
+   "def": "3d993e19d70d2e19",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E34": {
+   "def": "3f113e513f113e51",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E35": {
+   "def": "3f113f112f912f91",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E36": {
+   "def": "3e113f112e912f91",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E37": {
+   "def": "3f113e512f912ed1",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E38": {
+   "def": "3d193e193e193e19",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E39": {
+   "def": "3e193d193e193e19",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E3A": {
+   "def": "3e193e192e193e19",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E3B": {
+   "def": "3e193d992e59d70d",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E3C": {
+   "def": "f358b90cf358b90c",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E3D": {
+   "def": "9a4cf3589a4cf358",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E3E": {
+   "def": "f358a90cf358b90c",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov00",
+    "ov01",
+    "ov02"
+   ]
+  },
+  "E3F": {
+   "def": "a94cf3589a4cf358",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5A",
+    "ov5B",
+    "ov5C",
+    "ov63",
+    "ov64"
+   ]
+  },
+  "E40": {
+   "def": "ef18ef58ff18ff58",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5A",
+    "ov5B",
+    "ov5C",
+    "ov63",
+    "ov64"
+   ]
+  },
+  "E41": {
+   "def": "f138f178f538f538",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5A",
+    "ov5B",
+    "ov5C",
+    "ov63",
+    "ov64"
+   ]
+  },
+  "E44": {
+   "def": "d218d398f618f758",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5A",
+    "ov5B",
+    "ov5C",
+    "ov63",
+    "ov64"
+   ]
+  },
+  "E45": {
+   "def": "d3d8d258f758f658",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5A",
+    "ov5B",
+    "ov5C",
+    "ov63",
+    "ov64"
+   ]
+  },
+  "E46": {
+   "def": "3f183f18f4583f18",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5A",
+    "ov5B",
+    "ov5C",
+    "ov63",
+    "ov64"
+   ]
+  },
+  "E47": {
+   "def": "3f183f183f18f418",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov5A",
+    "ov5B",
+    "ov5C",
+    "ov63",
+    "ov64"
+   ]
+  },
+  "E64": {
+   "def": "e9580c19f9581d19",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "E66": {
+   "def": "a110a110f151f111",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "E68": {
+   "def": "0708ee49ee49ee49",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "E69": {
+   "def": "ee490748ee49ee49",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "E6A": {
+   "def": "b310b310b310b310",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "E70": {
+   "def": "ee49ee491708ee49",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "E71": {
+   "def": "ee49ee49ee491748",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov65",
+    "ov68",
+    "ov69",
+    "ov6A",
+    "ov6C",
+    "ov6D",
+    "ov6E",
+    "ov6F",
+    "ov70",
+    "ov71",
+    "ov78",
+    "ov79"
+   ]
+  },
+  "E96": {
+   "def": "d188d288d3880608",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4B"
+   ]
+  },
+  "E97": {
+   "def": "c8d0c9d006080608",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4B"
+   ]
+  },
+  "E9A": {
+   "def": "2ee8306831683268",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4B"
+   ]
+  },
+  "E9B": {
+   "def": "30282ea832283128",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4B"
+   ]
+  },
+  "E9C": {
+   "def": "2ba8d5882d282c08",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4B"
+   ]
+  },
+  "E9D": {
+   "def": "d288d28806080608",
+   "categories": [
+    "overlay_stream"
+   ],
+   "policy": "block",
+   "users": [
+    "ov4B"
+   ]
+  },
+  "EB1": {
+   "def": "211d021d371d0f0d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "EB2": {
+   "def": "025d215d0f4d375d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "EB3": {
+   "def": "381d1f0d2e1d2f1d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "EB4": {
+   "def": "1f4d385d2f5d2e5d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "EB5": {
+   "def": "213d023d371d3f0d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "EB6": {
+   "def": "027d217d3f4d375d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "EB7": {
+   "def": "381d3e0d2e1d2f1d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "EB8": {
+   "def": "3e4d385d2f5d2e5d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "F83": {
+   "def": "211d021d371dee1d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "F84": {
+   "def": "025d215dee1d375d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "F85": {
+   "def": "381dee1d2e1d2f1d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "F86": {
+   "def": "ee1d385d2f5d2e5d",
+   "categories": [
+    "bank02_map32_update"
+   ],
+   "policy": "block",
+   "users": [
+    "bank02:Map32UpdateTiles_q326"
+   ]
+  },
+  "FFC": {
+   "def": "e808ef09f808ef09",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  },
+  "FFD": {
+   "def": "ef09e848ef09f808",
+   "categories": [
+    "asm_draw_persist"
+   ],
+   "policy": "block",
+   "users": [
+    "Overworld/entrances.asm:OverworldDoorStyles"
+   ]
+  }
+ }
+}
