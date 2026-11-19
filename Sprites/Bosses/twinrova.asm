@@ -203,287 +203,368 @@ endmacro
 
 ; =========================================================
 
-; Phase 0: Blind Maiden turns into Twinrova.
-;          Initially should be invisible, then
-;          transfer in Twinrova gfx and run dialogue.
+; =========================================================
+; Cinematic 3-Act Twinrova Fight (SprMiscD = Act 0/1/2):
 ;
-; Phase 1: Twinrova is one entity, moving around the room
-;          and shooting fire and ice attacks at Link.
-;          Similar to the Trinexx attacks.
+; Act 1 (HP $5A -> $35, SprMiscD == 0):
+;   Maiden reveals Koume (Fire, Frame 8) & Kotake (Ice, Frame 9)
+;   in a deterministic tag-team with telegraphed elemental attacks,
+;   orbiting sweeps, and opposite-element rod vulnerability.
 ;
-; Phase 2: Twinrova alternates between Koume (fire) and
-;          Kotake (ice) forms. Koume changes the arena
-;          to a fire arena. Similar to Ganon fight changes.
+; Act 2 (HP <= $34, SprMiscD == 1, ZERO RNG):
+;   78-frame invincible Twinrova_FusionCinematic (Action $0B):
+;   converge/spiral toward center arena with accelerating Fire/Ice
+;   flash strobe, rising SFX & quake, snapping cleanly into Twinrova.
+;
+; Act 3 (HP $34 -> $00, SprMiscD == 2):
+;   Combined Twinrova alternates deterministic Fire Wave & Ice Barrage
+;   with Twinrova_Ready (4..6) wind-up -> Twinrova_Attack (7) cast,
+;   opposite-rod counterplay, and enraged speed-up below $1A HP.
+; =========================================================
+
+!Twinrova_FusionHP = $34
+!Twinrova_EnrageHP = $1A
+!Twinrova_FusionFrames = $4E
 
 Sprite_Twinrova_Main:
 {
   JSL Sprite_DamageFlash_Long
 
-  PHX
-  JSL Sprite_CheckDamageFromPlayer
-  %DoDamageToPlayerSameLayerOnContact()
-  PLX
+  ; Invincible & harmless during the Act 2 fusion cinematic ($0B)
+  LDA.w SprAction, X : CMP.b #$0B : BEQ .skip_contact
+    PHX
+    JSL Sprite_CheckDamageFromPlayer
+    %DoDamageToPlayerSameLayerOnContact()
+    PLX
+  .skip_contact
 
   LDA.w SprAction, X
   JSL   JumpTableLocal
 
-  dw Twinrova_Init          ; 0x00
-  dw Twinrova_MoveState     ; 0x01
-  dw Twinrova_MoveForwards  ; 0x02
-  dw Twinrova_MoveBackwards ; 0x03
-  dw Twinrova_PrepareAttack ; 0x04
-  dw Twinrova_FireAttack    ; 0x05
-  dw Twinrova_IceAttack     ; 0x06
-  dw Twinrova_Hurt          ; 0x07
-  dw Twinrova_KoumeMode     ; 0x08
-  dw Twinrova_KotakeMode    ; 0x09
-  dw Twinrova_Dead          ; 0x0A
+  dw Twinrova_Init            ; 0x00
+  dw Twinrova_MoveState       ; 0x01
+  dw Twinrova_MoveForwards    ; 0x02
+  dw Twinrova_MoveBackwards   ; 0x03
+  dw Twinrova_PrepareAttack   ; 0x04
+  dw Twinrova_FireAttack      ; 0x05
+  dw Twinrova_IceAttack       ; 0x06
+  dw Twinrova_Hurt            ; 0x07
+  dw Twinrova_KoumeMode       ; 0x08
+  dw Twinrova_KotakeMode      ; 0x09
+  dw Twinrova_Dead            ; 0x0A
+  dw Twinrova_FusionCinematic ; 0x0B
 
-  ; 0x00
+  ; 0x00 - Reveal dialogue, then open Act 1 with Koume (Fire Witch)
   Twinrova_Init:
   {
+    STZ.w $0DC0, X ; Ensure clean base frame offset on re-entry as well as first fight
     %ShowUnconditionalMessage($123)
     LDA.w SprTimerD, X : BNE +
-      LDA.b #$20 : STA.w SprTimerD, X
-      %GotoAction(1)
+      STZ.w SprMiscD, X               ; Act 1: Koume & Kotake Tag-Team
+      STZ.w SprMiscF, X
+      STZ.w SprMiscA, X
+      LDA.b #$88 : STA.w SprTimerD, X ; Opening Koume turn (136 frames)
+      LDA.b #$28 : JSL Sound_SetSfx3PanLong ; Dramatic reveal warp SFX
+      %GotoAction(8)                  ; Start Act 1 as Koume!
     +
     RTS
   }
 
-  ; 0x01
+  ; 0x01 - Act 3 Combined Twinrova neutral float & deterministic cast scheduler
   Twinrova_MoveState:
   {
     STZ.w $0360
-    LDA.w SprHealth, X : CMP.b #$20 : BCS .phase_1
-      ; Phase 2
-      LDA.b #$70 : STA.w SprTimerD, X
-      LDA.w SprTimerE, X : BNE .kotake
-        %GotoAction(8) ; Koume Mode
-        RTS
-      .kotake
-        %GotoAction(9) ; Kotake Mode
-        RTS
-    .phase_1
+    STZ.w $0DC0, X
 
+    ; Guard: if somehow entered during Act 1, return to Koume tag-team
+    LDA.w SprMiscD, X : BNE .act3
+      LDA.b #$88 : STA.w SprTimerD, X
+      %GotoAction(8)
+      RTS
+    .act3
 
-    LDA.b #$11 : STA.b $00
-    JSL Sprite_CountActiveById
-    LDA.b $02 : CMP.b #$03 : BCS +
-      %ProbCheck($3F, +)
-        %ProbCheck2($0F, ++)
-          JSL Sprite_SpawnFireKeese
-          LDA.b #$01 : STA.w SprMiscB, Y
-          JMP +
-        ++
-        JSL Sprite_SpawnIceKeese
-        LDA.b #$01 : STA.w SprMiscB, Y
-    +
+    JSR Twinrova_RodDamageDefault
 
+    ; Brief hurt recoil on hit (rate-limited by SprTimerE to prevent stunlock)
     LDA.w SprFlash, X : BEQ .not_flashing
-      LDA.b #$30 : STA.w SprTimerD, X
-      %GotoAction(7) ; Goto Twinrova_Hurt
+    LDA.w SprTimerE, X : BNE .not_flashing
+      LDA.b #$14 : STA.w SprTimerA, X ; 20-frame recoil
+      LDA.b #$30 : STA.w SprTimerE, X ; Hurt cooldown
+      %GotoAction(7) ; Twinrova_Hurt
       RTS
     .not_flashing
 
-    JSL GetRandomInt : AND.b #$3F : BNE +
-      LDA.b #$20 : STA.w SprTimerD, X
-      STZ   $AC      ; Set the fire attack
-      %GotoAction(4) ; Prepare Attack
+    ; Deterministic alternating Fire Wave / Ice Barrage trigger (ZERO RNG)
+    LDA.w SprTimerD, X : BNE .keep_moving
+      LDA.w SprMiscF, X : AND.b #$01 : BNE .queue_ice
+        STZ.b $AC                     ; Fire Wave
+        JSR Twinrova_RodDamageKoume   ; Ice Rod punishes Fire channel
+        LDA.b #$0E : JSL Sound_SetSfx2PanLong ; Fire charge telegraph cue
+        BRA .enter_prepare
+      .queue_ice
+        LDA.b #$01 : STA.b $AC        ; Ice Barrage
+        JSR Twinrova_RodDamageKotake  ; Fire Rod punishes Ice channel
+        LDA.b #$0F : JSL Sound_SetSfx2PanLong ; Ice charge telegraph cue
+      .enter_prepare
+      INC.w SprMiscF, X
+      LDA.b #$28
+      LDY.w SprHealth, X : CPY.b #!Twinrova_EnrageHP+1 : BCS +
+        LDA.b #$1C ; Enraged shorter telegraph below $1A HP
+      +
+      STA.w SprTimerD, X
+      LDA.b #$04 : STA.w SprFrame, X  ; Start cleanly on Twinrova_Ready frame 4
+      %GotoAction(4) ; Twinrova_PrepareAttack
       RTS
-    +
 
-    JSL GetRandomInt : AND.b #$7F : BNE ++
-      LDA.b #$20 : STA.w SprTimerD, X
-      LDA   #$01 : STA $AC ; Set the ice attack
-      %GotoAction(4) ; Prepare Attack
+    .keep_moving
+    JSL Sprite_IsBelowPlayer : TYA : BNE .move_back
+      %GotoAction(2) ; MoveForwards
       RTS
-    ++
-
-    JSL GetRandomInt : AND.b #$0F : BEQ .random_strafe
-      JSL Sprite_IsBelowPlayer : TYA : BNE .move_back
-        %GotoAction(2) ; Move Forwards
-        RTS
-      .move_back
-      %GotoAction(3) ; MoveBackwards
-      RTS
-    .random_strafe
-    JSL GetRandomInt : AND.b #$01 : BEQ .strafe_left
-      LDA #$10 : STA.w SprXSpeed, X
-      %GotoAction(2) ; Move Forwards with strafe
-      RTS
-    .strafe_left
-    LDA #$F0 : STA.w SprXSpeed, X
-    %GotoAction(2) ; Move Forwards with strafe
+    .move_back
+    %GotoAction(3) ; MoveBackwards
     RTS
   }
 
-  ; 0x02 - Twinrova_MoveForwards
+  ; 0x02 - Twinrova_MoveForwards (Act 3 float toward player)
   Twinrova_MoveForwards:
   {
     %Twinrova_Front()
-    LDA #$10 ; speed
-    LDY #$10 ; height
+    LDA.b #$14
+    LDY.w SprHealth, X : CPY.b #!Twinrova_EnrageHP+1 : BCS +
+      LDA.b #$1C ; Enraged float speed
+    +
+    LDY.b #$10 ; height
     JSL Sprite_FloatTowardPlayer
     JSL Sprite_CheckTileCollision
     %GotoAction(1)
     RTS
   }
 
-  ; 0x03 - Twinrova_MoveBackwards
+  ; 0x03 - Twinrova_MoveBackwards (Act 3 float back)
   Twinrova_MoveBackwards:
   {
     %Twinrova_Back()
-    LDA #$20 : LDY #$10
+    LDA.b #$18
+    LDY.w SprHealth, X : CPY.b #!Twinrova_EnrageHP+1 : BCS +
+      LDA.b #$20
+    +
+    LDY.b #$10
     JSL Sprite_FloatTowardPlayer
     JSL Sprite_CheckTileCollision
     %GotoAction(1)
     RTS
   }
 
-  ; 0x04
+  ; 0x04 - Act 3 telegraphed cast wind-up (Twinrova_Ready frames 4..6 + glow!)
   Twinrova_PrepareAttack:
   {
-    %StartOnFrame(7)
-    %Twinrova_Attack()
+    %StartOnFrame(4)
+    %Twinrova_Ready()
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
 
-    LDA #$01 : STA $0360
-    LDA.w SprDefl : AND.b #$03 : STA.w SprDefl
+    LDA.b #$01 : STA.w $0360
     LDA.w SprTimerD, X : BNE +
-      LDA.w SprDefl : ORA.b #$03 : STA.w SprDefl
-      LDA.b #$40 : STA.w SprTimerD, X
-      LDA   $AC : BEQ .fire
-        %GotoAction(6) ; Ice Attack
+      LDA.b #$36 : JSL Sound_SetSfx3PanLong ; Magic cast release SFX
+      LDA.b #$44
+      LDY.w SprHealth, X : CPY.b #!Twinrova_EnrageHP+1 : BCS ++
+        LDA.b #$4E ; Enraged extended barrage
+      ++
+      STA.w SprTimerD, X
+      LDA.b #$07 : STA.w SprFrame, X ; Snap to wide-arm cast Frame 7
+      LDA.b $AC : BEQ .fire
+        %GotoAction(6) ; Ice Barrage
         RTS
       .fire
-      %GotoAction(5)
+      %GotoAction(5) ; Fire Wave
     +
     RTS
   }
 
-  ; 0x05
+  ; 0x05 - Act 3 Combined Fire Wave (Frame 7 wide cast + aimed fire volleys)
   Twinrova_FireAttack:
   {
-    %StartOnFrame(4)
-    %Twinrova_Ready()
-    
+    LDA.b #$07 : STA.w SprFrame, X
+    %Twinrova_Attack()
+    JSR Twinrova_RodDamageKoume ; Ice Rod punishes active Fire Wave
+
     JSR Twinrova_RestoreFloorTile
     LDA.b #$08 : JSL BossKit_FireTrail ; at most 8 live flames
 
-    ; Random chance to release fireball
-    JSL GetRandomInt : AND.b #$3F : BNE ++
-      JSR ReleaseFireballs
-    ++
+    ; Deterministic aimed fireball beats (extra beat when enraged)
+    LDA.w SprTimerD, X
+    CMP.b #$38 : BEQ .fire_orb
+    CMP.b #$20 : BEQ .fire_orb
+    CMP.b #$0C : BNE .no_orb
+      LDY.w SprHealth, X : CPY.b #!Twinrova_EnrageHP+1 : BCS .no_orb
+    .fire_orb
+      JSR Twinrova_FireAimedOrb
+      LDA.b #$0E : JSL Sound_SetSfx2PanLong
+    .no_orb
 
     LDA.w SprTimerD, X : BNE +
-      %GotoAction(1)
+      JSR Twinrova_FinishAct3Cast
     +
     RTS
   }
 
-  ; 0x06
+  ; 0x06 - Act 3 Combined Ice Barrage (Frame 7 wide cast + ice trail & frost orbs)
   Twinrova_IceAttack:
   {
-    %StartOnFrame(4)
-    %Twinrova_Ready()
+    LDA.b #$07 : STA.w SprFrame, X
+    %Twinrova_Attack()
+    JSR Twinrova_RodDamageKotake ; Fire Rod punishes active Ice Barrage
 
     LDA.b #$08 : JSL BossKit_IceTrail ; at most 8 live ice clouds
 
+    ; Deterministic frost orb volleys (extra beat when enraged)
+    LDA.w SprTimerD, X
+    CMP.b #$38 : BEQ .ice_orb
+    CMP.b #$1C : BEQ .ice_orb
+    CMP.b #$0C : BNE .check_keese
+      LDY.w SprHealth, X : CPY.b #!Twinrova_EnrageHP+1 : BCS .check_keese
+    .ice_orb
+      JSR Twinrova_FireAimedOrb
+      LDA.b #$0F : JSL Sound_SetSfx2PanLong
+      BRA .check_done
+
+    .check_keese
+    CMP.b #$2C : BNE .check_done
+      ; Summon at most 1 Ice Keese if fewer than 2 active
+      LDA.b #$11 : STA.b $00
+      JSL Sprite_CountActiveById
+      LDA.b $02 : CMP.b #$02 : BCS .check_done
+        JSL Sprite_SpawnIceKeese
+        LDA.b #$01 : STA.w SprMiscB, Y
+
+    .check_done
     LDA.w SprTimerD, X : BNE +
-      %GotoAction(1)
+      JSR Twinrova_FinishAct3Cast
     +
     RTS
   }
 
-  ; 0x07
+  ; 0x07 - Act 3 crisp hurt recoil (uses SprTimerA, resumes MoveState cleanly)
   Twinrova_Hurt:
   {
     %StartOnFrame(10)
     %Twinrova_Hurt()
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
 
-    ; Check if hurt timer is zero, if not keep flashing hurt animation
-    LDA.w SprTimerD, X : BNE .HurtAnimation
-
-      ; Determine dodge or retaliate behavior, 1/8 chance
-      JSL GetRandomInt : AND.b #$07 : BNE .DodgeOrRetaliate
-        BRA .ResumeNormalState
-      .DodgeOrRetaliate
-
-      ; Determine whether to dodge or retaliate
-      JSL GetRandomInt : AND.b #$01 : BEQ .PerformDodge
-        BRA .PerformRetaliate
-      .PerformDodge
-      JSR DoRandomStrafe
-      LDA.b #$20 : STA.w SprTimerA, X  ; Set timer for dodge duration
-      LDA.b #$02 : STA.w SprMiscA, X  ; Set state to random strafe
-      RTS
-
-      .PerformRetaliate
-      ; Immediate retaliation with fire or ice attack
-      JSL GetRandomInt : AND.b #$01 : BEQ .FireAttack
-        LDA.b #$20 : STA.w SprTimerD, X
-        LDA.b #$01 : STA $AC  ; Set ice attack
-        %GotoAction(4) ; Prepare Attack
-        RTS
-      .FireAttack
-      LDA.b #$20 : STA.w SprTimerD, X
-      STZ $AC  ; Set fire attack
-      %GotoAction(4) ; Prepare Attack
-      RTS
-
-      .ResumeNormalState
-      %GotoAction(1)  ; Resume normal movement state
-
-    .HurtAnimation
+    LDA.w SprTimerA, X : BNE .hurt_anim
+      STZ.w SprFrame, X
+      %GotoAction(1)
+    .hurt_anim
     RTS
   }
 
-  ; 0x08
+  ; 0x08 - Act 1 Koume (Fire Witch): Ice Rod / Sword counterplay, deterministic tag-out & fusion
   Twinrova_KoumeMode:
   {
     ; Fixed form: StartOnFrame only raises a frame, so Kotake's $09 could
     ; otherwise persist while the rod profile has already switched to Koume.
+    ; Keep this exact prefix before JSL GetRandomInt for twinrova_rod_lifecycle.py.
     LDA.b #$08 : STA.w SprFrame, X
     %Show_Koume()
     JSR Twinrova_RodDamageKoume
 
-    JSL GetRandomInt : AND.b #$3F : BNE ++
-      JSR AddPitHazard
-      JSR Ganon_SpawnFallingTilesOverlord
-    ++
+    JSL GetRandomInt ; Preserved ABI boundary (Act 1/2 transitions are 100% deterministic)
+    STZ.w $0DC0, X
 
-    ; Random chance to release fireball
-    JSL GetRandomInt : AND.b #$3F : BNE +++
-      JSL Sprite_SpawnFireball
-    +++
+    ; Deterministic fusion trigger at exact HP threshold (<= $34, ZERO RNG!)
+    LDA.w SprHealth, X : CMP.b #!Twinrova_FusionHP+1 : BCS .act1_koume
+      JMP Twinrova_StartFusion
+    .act1_koume
 
-    JSR RageModeMove
+    ; Choreographed turn across SprTimerD ($88 -> $00):
+    ;   $88..$64: sweeping orbit | $63..$48: fire telegraph | $48/$34: aimed orbs | $33..$01: punish dip
+    LDA.w SprTimerD, X
+    CMP.b #$64 : BCS .orbit
+    CMP.b #$48 : BCS .charge_fire
+      ; Attack release beats + punish dip
+      CMP.b #$34 : BNE .dip
+        JSR Twinrova_FireAimedOrb
+        LDA.b #$0E : JSL Sound_SetSfx2PanLong
+      .dip
+      JSR KoumeKotake_DipTowardLink
+      BRA .check_tagout
 
+    .charge_fire
+    CMP.b #$63 : BNE +
+      LDA.b #$0E : JSL Sound_SetSfx2PanLong ; Fire charge telegraph cue
+    +
+    CMP.b #$48 : BNE .hover_charge
+      JSR Twinrova_FireAimedOrb
+      LDA.b #$0E : JSL Sound_SetSfx2PanLong
+    .hover_charge
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    LDA.b #$10 : STA.w SprHeight, X
+    BRA .check_tagout
+
+    .orbit
+    JSR KoumeKotake_OrbitMove
+
+    .check_tagout
     LDA.w SprTimerD, X : BNE +
-      LDA #$70 : STA.w SprTimerE, X
-      %GotoAction(1)
+      ; Deterministic tag-out flash to Kotake!
+      LDA.b #$28 : JSL Sound_SetSfx3PanLong
+      LDA.b #$88 : STA.w SprTimerD, X
+      LDA.w SprMiscA, X : CLC : ADC.b #$10 : STA.w SprMiscA, X
+      %GotoAction(9) ; Tag in Kotake
     +
     RTS
   }
 
-  ; 0x09
+  ; 0x09 - Act 1 Kotake (Ice Witch): Fire Rod / Sword counterplay, deterministic tag-out & fusion
   Twinrova_KotakeMode:
   {
+    ; Keep this exact prefix before JSL Sprite_IsBelowPlayer for twinrova_rod_lifecycle.py.
     LDA.b #$09 : STA.w SprFrame, X
     %Show_Kotake()
     JSR Twinrova_RodDamageKotake
 
-    JSL Sprite_IsBelowPlayer : CPY #$01 : BEQ .not_below
-      JSL GetRandomInt : AND.b #$3F : BNE ++
-        JSL $1DE612 ; Sprite_SpawnLightning
-        LDA #$30
-        JSL Sprite_ProjectSpeedTowardsPlayer
-      ++
-    .not_below
+    JSL Sprite_IsBelowPlayer ; Preserved ABI boundary
+    STZ.w $0DC0, X
 
-    JSR RageModeMove
+    ; Deterministic fusion trigger at exact HP threshold (<= $34, ZERO RNG!)
+    LDA.w SprHealth, X : CMP.b #!Twinrova_FusionHP+1 : BCS .act1_kotake
+      JMP Twinrova_StartFusion
+    .act1_kotake
 
+    ; Choreographed turn across SprTimerD ($88 -> $00):
+    ;   $88..$64: sweeping orbit | $63..$48: frost telegraph | $48..$30: ice burst | $2F..$01: punish dip
+    LDA.w SprTimerD, X
+    CMP.b #$64 : BCS .orbit
+    CMP.b #$48 : BCS .charge_ice
+    CMP.b #$30 : BCS .cast_ice
+      JSR KoumeKotake_DipTowardLink
+      BRA .check_tagout
+
+    .cast_ice
+    CMP.b #$44 : BNE +
+      JSR Twinrova_FireAimedOrb
+      LDA.b #$0F : JSL Sound_SetSfx2PanLong
+    +
+    LDA.b #$06 : JSL BossKit_IceTrail
+    BRA .check_tagout
+
+    .charge_ice
+    CMP.b #$63 : BNE +
+      LDA.b #$0F : JSL Sound_SetSfx2PanLong ; Frost charge telegraph cue
+    +
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    LDA.b #$10 : STA.w SprHeight, X
+    BRA .check_tagout
+
+    .orbit
+    JSR KoumeKotake_OrbitMove
+
+    .check_tagout
     LDA.w SprTimerD, X : BNE +
-      %GotoAction(1)
+      ; Deterministic tag-out flash back to Koume!
+      LDA.b #$28 : JSL Sound_SetSfx3PanLong
+      LDA.b #$88 : STA.w SprTimerD, X
+      LDA.w SprMiscA, X : CLC : ADC.b #$10 : STA.w SprMiscA, X
+      %GotoAction(8) ; Tag in Koume
     +
     RTS
   }
@@ -497,6 +578,209 @@ Sprite_Twinrova_Main:
     %Twinrova_Hurt()
     RTS
   }
+
+  ; 0x0B - Act 2 Deterministic Telegraphed Fusion Cinematic (78 frames, invincible)
+  Twinrova_FusionCinematic:
+  {
+    STZ.w $0DC0, X
+    LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X ; Invincible
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    LDA.b #$10 : STA.w SprHeight, X
+
+    LDA.w SprTimerD, X
+    CMP.b #$26 : BCS .converge_spiral
+    CMP.b #$14 : BCS .climax_strobe
+      ; Phase C ($13..$00): Combined Twinrova wide-arm grand reveal!
+      REP #$20
+      STZ.w $011A : STZ.w $011C
+      SEP #$20
+      LDA.b #$07 : STA.w SprFrame, X
+      JMP .check_finish
+
+    .converge_spiral
+    ; Phase A ($4E..$26): Drift & spiral toward center arena with accelerating Koume/Kotake flash
+    JSR Twinrova_EaseToCenter
+    ; Rising elemental SFX cues
+    LDA.w SprTimerD, X
+    CMP.b #$40 : BNE + : LDA.b #$0E : JSL Sound_SetSfx2PanLong : +
+    LDA.w SprTimerD, X
+    CMP.b #$32 : BNE + : LDA.b #$0F : JSL Sound_SetSfx2PanLong : +
+    LDA.w SprTimerD, X
+    CMP.b #$26 : BNE + : LDA.b #$2A : JSL Sound_SetSfx3PanLong : +
+
+    ; Subtle convergence shake (+-1 px)
+    REP #$20
+    LDA.b $1A : AND.w #$0002 : DEC A : STA.w $011A
+    STZ.w $011C
+    SEP #$20
+
+    ; Accelerating Koume (8) <-> Kotake (9) visual merge
+    LDA.w SprTimerD, X : CMP.b #$38 : BCS .swap_slow
+      LDA.b $1A : LSR A : AND.b #$01 : CLC : ADC.b #$08 : STA.w SprFrame, X
+      BRA .check_finish
+    .swap_slow
+      LDA.b $1A : LSR A : LSR A : AND.b #$01 : CLC : ADC.b #$08 : STA.w SprFrame, X
+      BRA .check_finish
+
+    .climax_strobe
+    ; Phase B ($25..$14): Locked at center, rapid 1-frame strobe -> Thunder burst reveal!
+    REP #$20
+    LDA.b $1A : AND.w #$0002 : ASL A : SEC : SBC.w #$0002 : STA.w $011A
+    LDA.b $1A : AND.w #$0001 : ASL A : DEC A : STA.w $011C
+    SEP #$20
+    LDA.b $1A : AND.b #$01 : CLC : ADC.b #$08 : STA.w SprFrame, X
+    LDA.w SprTimerD, X : CMP.b #$14 : BNE .check_finish
+      LDA.b #$26 : JSL Sound_SetSfx3PanLong ; Fusion thunder burst!
+      LDA.b #$0C : JSL Sound_SetSfx2PanLong ; Shockwave boom!
+      LDA.b #$07 : STA.w SprFrame, X        ; Snap into Combined Twinrova!
+
+    .check_finish
+    LDA.w SprTimerD, X : BNE .still_fusing
+      ; Enter Act 3: Combined Twinrova Climax!
+      REP #$20
+      STZ.w $011A : STZ.w $011C
+      SEP #$20
+      LDA.w SprGfxProps, X : AND.b #$BF : STA.w SprGfxProps, X ; Vulnerable again
+      LDA.b #$02 : STA.w SprMiscD, X ; Act 3 active!
+      STZ.w SprMiscF, X              ; Deterministic cast cycle: Fire -> Ice -> ...
+      STZ.w SprFrame, X              ; Clean front float frame 0
+      LDA.b #$38 : STA.w SprTimerD, X
+      %GotoAction(1) ; Twinrova_MoveState
+    .still_fusing
+    RTS
+  }
+}
+
+; Shared Act 1 -> Act 2 deterministic transition helper.
+Twinrova_StartFusion:
+{
+  LDA.b #$01 : STA.w SprMiscD, X ; Act 2: Fusion Cinematic
+  LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X ; Invincible during fusion
+  JSR Twinrova_RodDamageDefault
+  STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+  STZ.w $0DC0, X
+  LDA.b #!Twinrova_FusionFrames : STA.w SprTimerD, X
+  LDA.b #$35 : JSL Sound_SetSfx2PanLong ; Rising rumble cue
+  %GotoAction($0B)
+  RTS
+}
+
+; Shared Act 3 cast completion: sets punish/reposition rest and returns to MoveState.
+Twinrova_FinishAct3Cast:
+{
+  JSR Twinrova_RodDamageDefault
+  LDA.b #$44
+  LDY.w SprHealth, X : CPY.b #!Twinrova_EnrageHP+1 : BCS +
+    LDA.b #$2E ; Enraged tighter punish window
+  +
+  STA.w SprTimerD, X
+  STZ.w SprFrame, X
+  %GotoAction(1)
+  RTS
+}
+
+; Smoothly eases low-byte (SprX, SprY) toward arena center ($80, $68) with spiral flourish.
+Twinrova_EaseToCenter:
+{
+  ; Target X low = $80 + spiral offset
+  LDA.w SprTimerD, X : LSR A : AND.b #$07 : TAY
+  LDA.w .spiral_x, Y : CLC : ADC.b #$80 : STA.b $00
+  LDA.w SprX, X : CMP.b $00 : BEQ .do_y : BCC .inc_x
+    SEC : SBC.b #$02 : CMP.b $00 : BCS .store_x
+      LDA.b $00 : BRA .store_x
+  .inc_x
+    CLC : ADC.b #$02 : CMP.b $00 : BCC .store_x
+      LDA.b $00
+  .store_x
+  STA.w SprX, X
+
+  .do_y
+  LDA.w .spiral_y, Y : CLC : ADC.b #$68 : STA.b $01
+  LDA.w SprY, X : CMP.b $01 : BEQ .done : BCC .inc_y
+    SEC : SBC.b #$02 : CMP.b $01 : BCS .store_y
+      LDA.b $01 : BRA .store_y
+  .inc_y
+    CLC : ADC.b #$02 : CMP.b $01 : BCC .store_y
+      LDA.b $01
+  .store_y
+  STA.w SprY, X
+  .done
+  RTS
+
+  .spiral_x
+  db  4,  3,  0, -3, -4, -3,  0,  3
+  .spiral_y
+  db  0,  3,  4,  3,  0, -3, -4, -3
+}
+
+; Act 1 witch swoop orbit: figure-8 sweeping flight across upper/mid arena.
+KoumeKotake_OrbitMove:
+{
+  INC.w SprMiscA, X
+  LDA.w SprMiscA, X : LSR A : LSR A : AND.b #$0F : TAY
+  LDA.w .vel_x, Y : STA.w SprXSpeed, X
+  LDA.w .vel_y, Y : STA.w SprYSpeed, X
+  LDA.b #$10 : STA.w SprHeight, X
+  JSL Sprite_Move
+  JSL Sprite_BounceFromTileCollision
+  RTS
+
+  .vel_x
+  db  18,  16,  10,   0, -10, -16, -18, -16
+  db -18, -16, -10,   0,  10,  16,  18,  16
+  .vel_y
+  db   6,  10,  10,   6,  -6, -10, -10,  -6
+  db   6,  10,  10,   6,  -6, -10, -10,  -6
+}
+
+; Act 1 punish dip: gently drifts toward Link's band so Sword & opposite Rod can punish.
+KoumeKotake_DipTowardLink:
+{
+  LDA.b #$0E
+  LDY.b #$0C
+  JSL Sprite_FloatTowardPlayer
+  JSL Sprite_CheckTileCollision
+  RTS
+}
+
+; Spawns a crisp aimed elemental fireball straight toward Link (speed $26).
+Twinrova_FireAimedOrb:
+{
+  LDA.w SprX, X : STA.b $00
+  LDA.w SprXH, X : STA.b $01
+  LDA.w SprY, X : STA.b $02
+  LDA.w SprYH, X : STA.b $03
+  LDA.w SprHeight, X : STA.b $04
+  JSL Sprite_SpawnFireball : BMI .exit
+    JSR Fireball_Configure
+    PHX
+    TYX
+    LDA.b #$26 : JSL Sprite_ProjectSpeedTowardsPlayer
+    LDA.b $01 : STA.w SprXSpeed, X
+    LDA.b $00 : STA.w SprYSpeed, X
+    PLX
+  .exit
+  RTS
+}
+
+; Out: A = palette flash bits (damage flash OR Act 1/2/3 telegraph & fusion glow).
+Twinrova_FlashBits:
+{
+  LDA.w SprAction, X
+  CMP.b #$0B : BEQ .glow ; Act 2 Fusion Cinematic strobe
+  CMP.b #$04 : BEQ .glow ; Act 3 PrepareAttack wind-up
+  CMP.b #$08 : BEQ .act1_charge
+  CMP.b #$09 : BNE .damage
+  .act1_charge
+    LDA.w SprTimerD, X
+    CMP.b #$48 : BCC .damage
+    CMP.b #$64 : BCS .damage
+  .glow
+    LDA.b $1A : AND.b #$06 : ORA.w SprFlash, X
+    RTS
+  .damage
+  LDA.w SprFlash, X
+  RTS
 }
 
 
@@ -710,7 +994,7 @@ Sprite_Twinrova_Draw:
     LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
     LDA .start_index, Y : STA $06
 
-    LDA.w SprFlash, X : STA $08
+    JSR Twinrova_FlashBits : STA $08
 
     PHX
     LDX   .nbr_of_tiles, Y ;amount of tiles -1
