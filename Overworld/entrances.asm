@@ -57,10 +57,15 @@ if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
 else
     LDA.l Map16Definitions+2, X
 endif
-    AND.w #$41FF : CMP.w #$00E9 : BEQ .open_door
+    AND.w #$41FF : CMP.w #$00E9 : BNE .not_left_plain_door
+      TYX
+      JSL OverworldDoor_FindOpenStyle : BCS .styled
+      BRA .check_right_neighbor
+    .not_left_plain_door
     CMP.w #$0149 : BEQ .left_side_castle_door
     CMP.w #$0169 : BEQ .left_side_castle_door
 
+    .check_right_neighbor
     TYX
 
     LDA.l $7E2002, X
@@ -87,13 +92,22 @@ endif
 
     DEY
     DEY
-
-    .open_door
     TYX
-
     JSL OverworldDoor_FindOpenStyle : BCS .styled
-      LDA.w #$0DA6 : TAY
-      LDA.w #$0DA4
+      ; Never stamp vanilla house open-door tiles ($0DA4/$0DA6) onto non-door
+      ; scenery that shares char $00E9/$40E9 (e.g. SW $99 Pirate Ship stairs).
+      INY
+      INY
+      TYX
+      LDA.l $7E2002, X
+      ASL #3
+      TAX
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+      BRL .check_neighbor_door_type
+else
+      BRL .check_door_type
+endif
+
     .styled
     PHY
     JSL Overworld_DrawMap16_Persist
@@ -376,13 +390,18 @@ pushpc
 org $5E8000
 Overworld_ExpandedEntrances_Start:
 Overworld_ExpandedEntranceScreens:
-  fillbyte $FF : fill 256
+  ; DW $63 Windmill dual-arch companion cells alongside vanilla row 41 ($035E):
+  ; Y=$035C (checks Y+2=FE6), Y=$0360 (checks Y+2=FE8), Y=$0362 (checks Y+2=FE9) -> Ent $33.
+  dw $0063, $0063, $0063
+  fillbyte $FF : fill 250
 assert pc() == $5E8100, "Overworld_ExpandedEntranceScreens must end at $5E8100"
 Overworld_ExpandedEntranceTileIndex:
-  fillbyte $FF : fill 256
+  dw $035C, $0360, $0362
+  fillbyte $FF : fill 250
 assert pc() == $5E8200, "Overworld_ExpandedEntranceTileIndex must end at $5E8200"
 Overworld_ExpandedEntranceID:
-  fillbyte $FF : fill 256
+  db $33, $33, $33
+  fillbyte $FF : fill 253
 assert pc() == $5E8300, "Overworld_ExpandedEntranceID must end at $5E8300"
 Overworld_ExpandedEntrances_End:
 pullpc

@@ -744,5 +744,135 @@ class SpecialOverworldQualityTests(unittest.TestCase):
             self.assertEqual(f.get(vortex_world), 0x00, f"Special OW ${area:02X} capture must clear VortexWorld")
 
 
+class TestEntranceDoorStyleGuardAndWindmill(unittest.TestCase):
+    """Compiled 65816 proof for Overworld/entrances.asm bug_010526 non-door guard
+    (SW $99 Pirate Ship stairs) and DW $63 Windmill dual-arch expanded rows."""
+
+    def test_non_door_char_e9_never_stamps_house_door_and_windmill_arches_enter(self) -> None:
+        buf = bytearray(0x400000)
+
+        def put_bytes(snes: int, raw: bytes) -> None:
+            pc = snes_to_pc(snes)
+            buf[pc:pc + len(raw)] = raw
+
+        def put_u16(snes: int, val: int) -> None:
+            pc = snes_to_pc(snes)
+            buf[pc] = val & 0xFF
+            buf[pc + 1] = (val >> 8) & 0xFF
+
+        # Seed OverworldDoor_ExitOpen preimages asserted by entrances.asm
+        put_bytes(0x02EEF7, bytes.fromhex("A9A40D9F00207E"))
+        put_bytes(0x02EF1A, bytes.fromhex("9F02207E"))
+        put_bytes(0x02EF26, bytes.fromhex("9C9606"))
+        # Vanilla OW entrance tables ($1BB96F/$1BBA71/$1BBB73) empty ($FFFF)
+        for i in range(129):
+            put_u16(0x1BB96F + i * 2, 0xFFFF)
+            put_u16(0x1BBA71 + i * 2, 0xFFFF)
+            buf[snes_to_pc(0x1BBB73 + i)] = 0xFF
+
+        # Seed Map16 definitions at $3D8000:
+        #   0x0856 / 0x0858 / 0x085B: SW $99 Pirate Ship stairs (0x085B TL=$48E9!)
+        for tid, ws in (
+            (0x0856, (0xC88A, 0x149B, 0x8887, 0x089D)),
+            (0x0858, (0x549B, 0x48E9, 0x489D, 0x090A)),
+            (0x085B, (0x48E9, 0x48E9, 0x090A, 0x090A)),
+            # Real closed wooden house door (0x00FB, 0x00FC)
+            (0x00FB, (0x0001, 0x00E9, 0x0002, 0x0003)),
+            (0x00FC, (0x40E9, 0x0004, 0x0005, 0x0006)),
+            # DW $63 Windmill dual-arch tiles (0xFE5..0xFE9 at cells $035C..$0364)
+            (0x0FE5, (0x0000, 0x0000, 0x0138, 0x0139)),
+            (0x0FE6, (0x0000, 0x0000, 0x01A4, 0x01A4)),
+            (0x0FE7, (0x0000, 0x0000, 0x0131, 0x0131)),
+            (0x0FE8, (0x0000, 0x0000, 0x01A4, 0x01A4)),
+            (0x0FE9, (0x0000, 0x0000, 0x0139, 0x0138)),
+        ):
+            for q, w in enumerate(ws):
+                put_u16(0x3D8000 + tid * 8 + q * 2, w)
+
+        asm_src = f"""
+lorom
+!SPECIAL_OVERWORLD_NATIVE = 0
+!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0
+!ENABLE_SKY_OVERWORLD_ROUTE = 0
+!ENABLE_HORSE_FORM = 0
+
+org $368000
+Overworld_DrawMap16_Persist:
+  STA.l $7E2000, X
+  PHA : SEP #$20 : LDA.l $7F1200 : INC A : STA.l $7F1200 : REP #$20 : PLA
+  RTL
+org $1BC983
+  RTL
+org $0EDD40
+  RTL
+org $0FFDAA
+  RTL
+
+org $358000
+incsrc "{ROOT}/Overworld/entrances.asm"
+"""
+        with tempfile.TemporaryDirectory() as td:
+            rom, labels = _assemble(Path(td), "entrances_guard", buf, asm_src)
+            lib = _compile_lakesnes(Path(td))
+            entry = labels["Overworld_UseEntranceEntry"]
+
+            # 1. SW $99 Pirate Ship stairs (cell $0836 = c=27, r=16): neighbor c=28 has TL=$48E9.
+            #    Must NOT overwrite $0834/$0836 with $0DA4/$0DA6 and must NOT fire door SFX!
+            f = Fixture(lib, rom, labels)
+            f.word(0x7E040A, 0x0099)
+            f.word(0x7E0708, 0x0000)
+            f.word(0x7E070A, 0x01F0)
+            f.word(0x7E070C, 0x0000)
+            f.word(0x7E070E, 0x007E)
+            f.word(0x7E0020, 0x0100 - 7)  # r=16 ($0100)
+            f.word(0x7E0022, 27 * 16)     # c=27 -> cell $0836
+            f.put(0x7E002F, 0x00)         # facing UP
+            f.word(0x7E2000 + 0x0834, 0x0856)
+            f.word(0x7E2000 + 0x0836, 0x0858)
+            f.word(0x7E2000 + 0x0838, 0x085B)
+            f.put(0x7F1200, 0)
+            f.put(0x7E012F, 0)
+            _run_call(f, entry)
+            def rword(fx: Fixture, addr: int) -> int:
+                return fx.get(addr) | (fx.get(addr + 1) << 8)
+
+            self.assertEqual(f.get(0x7F1200), 0, "Non-door $48E9 stairs must NOT call DrawMap16_Persist")
+            self.assertEqual(rword(f, 0x7E2000 + 0x0834), 0x0856, "SW $99 stair left tile must stay $0856")
+            self.assertEqual(rword(f, 0x7E2000 + 0x0836), 0x0858, "SW $99 stair right tile must stay $0858")
+            self.assertEqual(f.get(0x7E012F), 0, "Door-open SFX $15 must NOT play on stairs")
+
+            # 2. Real closed wooden door (0x00FB, 0x00FC) MUST still open to ($0DA4, $0DA6)!
+            f.word(0x7E040A, 0x0023)
+            f.word(0x7E2000 + 0x0836, 0x00FB)
+            f.word(0x7E2000 + 0x0838, 0x00FC)
+            f.put(0x7F1200, 0)
+            f.put(0x7E012F, 0)
+            _run_call(f, entry)
+            self.assertEqual(f.get(0x7F1200), 1, "Real wooden house door must open")
+            self.assertEqual(rword(f, 0x7E2000 + 0x0836), 0x0DA4)
+            self.assertEqual(rword(f, 0x7E2000 + 0x0838), 0x0DA6)
+            self.assertEqual(f.get(0x7E012F), 0x15)
+
+            # 3. DW $63 Windmill dual-arch expanded cells ($035C->FE6, $0360->FE8, $0362->FE9) -> Ent $33!
+            for col, cell in ((46, 0x035C), (48, 0x0360), (49, 0x0362)):
+                f = Fixture(lib, rom, labels)
+                f.word(0x7E040A, 0x0063)
+                f.word(0x7E0708, 0x0000)
+                f.word(0x7E070A, 0x03F0)
+                f.word(0x7E070C, 0x0000)
+                f.word(0x7E070E, 0x007E)
+                f.word(0x7E0020, 6 * 16 - 7)  # r=6
+                f.word(0x7E0022, col * 16)
+                f.put(0x7E002F, 0x00)
+                for c_off, t16 in (
+                    (0x035C, 0x0FE5), (0x035E, 0x0FE6), (0x0360, 0x0FE7),
+                    (0x0362, 0x0FE8), (0x0364, 0x0FE9),
+                ):
+                    f.word(0x7E2000 + c_off, t16)
+                _run_call(f, entry)
+                self.assertEqual(f.get(0x7E0010), 0x0F, f"Windmill cell ${cell:04X} must enter dungeon module $0F")
+                self.assertEqual(f.get(0x7E010E), 0x33, f"Windmill cell ${cell:04X} must resolve to Ent $33")
+
+
 if __name__ == "__main__":
     unittest.main()
