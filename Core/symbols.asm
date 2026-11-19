@@ -276,6 +276,14 @@ DBG_WARP_ROOM_LO      = $7FF3CE ; target dungeon room ID (16-bit LE, req=3)
 DBG_WARP_ROOM_HI      = $7FF3CF
 assert DBG_WARP_ROOM_HI < $7FF400
 
+; Heavy Sword / Goronblade Hurricane Spin volatile state (Items/heavy_sword.asm).
+; Uses 3 bytes of vanilla-free UNUSED_7FF180 ($7FF3D0-$7FF3D2, strictly < $7FF400).
+; Not saved to SRAM; self-clears whenever Link is not spinning or dizzy.
+HeavySword_HurricaneActive = $7FF3D0 ; 0 = normal spin, 1 = steerable Hurricane Spin active
+HeavySword_HurricaneRevs   = $7FF3D1 ; extra Hurricane revolutions completed this spin (0..4)
+HeavySword_DizzyTimer      = $7FF3D2 ; Wind Waker dizzy recovery countdown (0..45 frames)
+assert HeavySword_DizzyTimer < $7FF400
+
 ; Current Song
 CurrentSong    = $030F
 
