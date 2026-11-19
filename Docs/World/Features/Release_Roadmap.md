@@ -1,11 +1,6 @@
 # Oracle of Secrets Release Roadmap
 
-> **HISTORICAL (2026-09-14).** Do not use this Dec 2025 roadmap as current work.
-> Calendar + content gates: AFS archive/repo-slim-2026-10-06/repo/Docs/Planning/release_timeline_2026.md,
-> AFS archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/release_2026_definition.md,
-> AFS archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/rc_content_checklist.md.
-> Story rulings: `Docs/Planning/story_canon_beat_sheet.md`.
-> Current work: `.context/scratchpad/agent_handoff.md`.
+> **HISTORICAL (December 2025).** Retained for archive reference only; do not use as active milestone tracking.
 
 **Created**: December 2025
 **Status**: Historical

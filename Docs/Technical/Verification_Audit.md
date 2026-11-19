@@ -27,18 +27,15 @@
 | Docs/Technical/MemoryMap.md | UNKNOWN | ROM + runtime | Needs audit | TBD | Check SRAM usage notes |
 | Docs/Technical/SystemArchitecture.md | UNKNOWN | ROM + docs | Needs audit | TBD | Confirm TimeState and transitions |
 | Docs/Technical/Flag_Ledger.md | 2026-01-23 | ROM (sram.asm) | Partial | TBD | Runtime verification pending |
-| AFS archive/repo-slim-2026-10-06/repo/Docs/Planning/Story_Event_Graph.md | 2026-01-23 | ROM + lore | Partial | TBD | Map routines + rooms |
 
 ## Evidence Locations
 
-- Scratchpad: `~/.context/projects/oracle-of-secrets/scratchpad/`
-- Screenshots: AFS scratchpad screenshots (if captured)
 - Save states: `Roms/SaveStates/`
+- Automated checks: `Tests/` and `Scripts/Validate/`
 
 ## Suggested Audit Order
 
 1) `Docs/Technical/Flag_Ledger.md`
-2) AFS archive/repo-slim-2026-10-06/repo/Docs/Planning/Story_Event_Graph.md
-3) `Docs/Technical/Ram.md`
-4) `Docs/Technical/MemoryMap.md`
-5) `Docs/Technical/SystemArchitecture.md`
+2) `Docs/Technical/Ram.md`
+3) `Docs/Technical/MemoryMap.md`
+4) `Docs/Technical/SystemArchitecture.md`

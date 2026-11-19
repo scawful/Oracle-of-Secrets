@@ -87,7 +87,7 @@ and post-D4 Song of Storms/whirlpool route remain part of this middle game.
 3. **Current direction:** keep Power Glove inside the shrine; cut the early Ember Seed/forge grant quest and supersede the required D3 Glove-garden proposal. Hide Rock Meat on nearby Lyra maps, accessible with the shrine's basic Glove and D6-stage items.
 4. Return five Meat to the desert Goron for the existing Mines opening. Eon Goron/Lupo Mountain is optional, not a required Abyss detour. Exact hiding places and the return path remain a map-design task. No Mitt or Hammer is required for this sequence.
 
-**Geography planning:** Fortress `$4B` / Lupo `$5E` remains a recorded placement direction, not applied terrain. The Lupo trip is optional under the current direction. See [Power/Glove reconciliation](/Users/scawful/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/POWER_GLOVE_ROUTE.md). Use the selected local Lyra supply role; choose exact hiding places and return before binding new map records.
+**Geography planning:** Fortress `$4B` / Lupo `$5E` remains a recorded placement direction, not applied terrain. The Lupo trip is optional under the current direction. Use the selected local Lyra supply role; choose exact hiding places and return before binding new map records.
 
 ### D7: Dragon Ship -> Farore rescued and Somaria
 

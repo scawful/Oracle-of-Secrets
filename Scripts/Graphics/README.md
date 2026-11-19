@@ -28,8 +28,8 @@ node Scripts/Graphics/sprite_pose.js \
 
 The second recipe reproduces the three approved Ganondorf poses exactly. It
 contains its original indexed source, all rectangle definitions, transforms,
-clips, ankle repairs, protected feet, and expected pixel hashes. It has no
-external art-file or AFS dependency.
+clips, ankle repairs, protected feet, and expected pixel hashes, with no
+external art-file dependencies.
 
 Outputs are `source.png`, `pose-<name>.png`, `contact.png`, `atlas.png`, and
 `poses.json`. Individual PNGs retain transparent pixels and square integer
@@ -218,18 +218,11 @@ The existing recipe `tickRate` (default60) controls ticks. A state is limited to
 36000 ticks/4096 steps, the rig to256 frames/128 states, and each rendered sheet
 to the existing16777216-pixel budget. Split large recipes before rendering.
 
-Each state produces `state-NAME-1x.png`, `state-NAME-4x.png` and labelled4x cells.
+Each state produces `state-NAME-1x.png`, `state-NAME-4x.png` and labelled 4x cells.
 With `--gif`, an existing ffmpeg makes `state-NAME.gif` from those cells at the
-specified ticks; nothing is installed. GIF delays have10ms precision, so a60Hz
-sequence uses alternating10/20ms delays. JSON retains exact ticks. The original
+specified ticks; nothing is installed. GIF delays have 10ms precision, so a 60Hz
+sequence uses alternating 10/20ms delays. JSON retains exact ticks. The original
 pose/atlas outputs and optional original sequence GIF remain available.
-
-The accepted Normalize+rig replay and first Ganondorf/Ganon rigs are retained
-in AFS `scratchpad/handoffs/art_pipeline_unified_2026-11-02/codex-normalize-rig-20261102/`.
-They preserve source SHA256s, exact Ganondorf replay, source timer windows,
-Link comparison pixels, contact sheets and GIF timing receipts. These are
-read-only art/tooling fixtures; no new game art, tile allocation, ASM, AI, ROM
-write, native behavior or merge is implied.
 
 # Tile placement by tile type
 

@@ -42,7 +42,7 @@ Requires the sibling mesen2-oos checkout or `MESEN2_OOS_ROOT` (`Scripts/Mesen2/m
    - `python3 Scripts/Mesen2/mesen2_client.py savestate-label set 1 --label "Dark World south crash"`
    - `python3 Scripts/Mesen2/mesen2_client.py lib-save "Dark World south crash"`
 4. **Log actions explicitly**
-   - Record whether inputs are agent-driven or user-driven in scratchpad.
+   - Record whether inputs are automated or manual in the test log.
 
 ---
 
@@ -125,14 +125,14 @@ After changes to sprite detection/AI:
 ### Response Steps
 
 1. **Major:** Revert changes immediately, document what broke
-2. **Minor:** Keep stable version, create issue doc in an issue note under the AFS scratchpad (~/.context/projects/oracle-of-secrets/scratchpad/, AGENTS.md rule 5)
+2. **Minor:** Keep stable version, log an issue note with reproduction details
 3. **Always:** Add NOTE comment explaining disabled code
 
 ### Comment Template for Disabled Code
 ```asm
 ; NOTE: [Feature] was causing [problem description]
 ; The [specific mechanism] interfered with [other system].
-; Disabled pending investigation. See the issue note [issue_file].md in the AFS scratchpad (~/.context/projects/oracle-of-secrets/scratchpad/).
+; Disabled pending investigation. See the recorded issue notes for details.
 ; JSL DisabledRoutine
 ```
 

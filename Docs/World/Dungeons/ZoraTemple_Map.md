@@ -593,13 +593,8 @@ Re-enable `!ENABLE_WATER_GATE_ROOMENTRY_RESTORE` and validate:
 
 ## Related Documents
 
-Archived planning/debug notes live in AFS: ~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/.
-
-- AFS archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/zora_mask_origin.md — Alternative Zora Mask origin story (River Zora ghost)
-- AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/dungeon_transition_blackout.md — Blackout bug root cause and fix
-- AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/WaterCollision_Handoff.md — Water collision technical spec
 - `Docs/World/Lore/dungeon_narratives.md` — D4 narrative design
-- AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Testing/save_data_profiles/zora_temple_debug.json — Debug loadout
+- `Docs/Technical/Flag_Ledger.md` — SRAM water-gate flags (`WaterGateStates`)
 
 ## Open Questions (Updated)
 
