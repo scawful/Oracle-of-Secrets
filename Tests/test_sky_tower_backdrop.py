@@ -390,8 +390,8 @@ class SkyTowerBackdropCompiledTests(unittest.TestCase):
                 self.assertEqual(f.get(0x7E0015), 1, "CGRAM refresh queued")
 
     def test_fixed_color_0bfeb6_and_0ed8ae_preserve_dm_95_and_9c(self) -> None:
-        """LW Death Mountain ($95) and DW Lava ($9C) retain their exact vanilla COLDATA."""
-        for ov, want_coldata in ((0x95, [0x26, 0x4C, 0x8C]),
+        """Tree-Snow ($95) and Sky ($94) keep neutral COLDATA ($20/$40/$80) for Day/Night; DW Lava ($9C) keeps vanilla."""
+        for ov, want_coldata in ((0x95, [0x20, 0x40, 0x80]),
                                  (0x9C, [0x26, 0x4A, 0x87]),
                                  (0x94, [0x20, 0x40, 0x80])):
             with self.subTest(ov=hex(ov)):

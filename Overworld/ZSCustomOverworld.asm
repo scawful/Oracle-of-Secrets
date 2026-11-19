@@ -2216,13 +2216,14 @@ Spotlight_ConfigureTableAndControl_Interupt:
 
     REP #$30
 
-    ; Setup fixed color values based on area number.
-    LDX.w #$4C26
-    LDY.w #$8C4C
-        
-    ; TODO: Wtf why is this 0x00?
-    ; Check for LW death mountain.
-    JSL.l ReadOverlayArray : CMP.w #$0095 : BEQ .mountain
+    ; ReadOverlayArray clobbers X (X = $8A * 2); load fixed color AFTER so
+    ; cave exits onto Snowpeak ($05/$06/$07) never write stale area*2 to $9C!
+    JSL.l ReadOverlayArray
+    LDX.w #$4020
+    LDY.w #$8040
+
+    ; Check for LW death mountain (Tree-Snow $95 -> neutral COLDATA).
+    CMP.w #$0095 : BEQ .mountain
         LDX.w #$4A26
         LDY.w #$874A
         
@@ -2834,27 +2835,11 @@ if !Func02C02D == 1
 org $02C02D ; $01402D
 OverworldScrollTransition_Interupt:
 {
-    PHA
-    JSL.l ReadOverlayArray2
-    PLA
-    
-    ; Check for the pyramid BG.
-    CPY.b #$96 : BEQ .dontMoveBg1  
-        ; This shifts the BG over by a half small area's width. This is to
-        ; line up the mountain with the tower in the distance at the appropriate
-        ; location when coming into the pyramid area from the right.
-        ; This also keeps the BG aligned when entering the area from below, 
-        ; keeping you from seeing the mountains through the trees.
-        STA.b $E0, X 
-
-        ; NOTE: There is currently a bug in vanilla where if you exit a dungeon
-        ; into the LW death mountain the sky background will become miss-aligned
-        ; and this movement will cause the sky to flicker or jump when moving to
-        ; another area. In order to fix this you would have to find the
-        ; alignment exit code and change how the game aligns BG2 when exiting.
-        ; Possibly when using the bird too.
-    
-    .dontMoveBg1
+    ; Smooth-scroll ($11=$06) Tree-Snow ($95) / Falling Snow ($9D) pan BG1
+    ; relative to its current scroll so parallax/drift never pops mid-scroll;
+    ; mosaic ($11=$14) syncs BG1 directly to BG2 while hidden behind mosaic.
+    JSL.l OverworldScrollTransition_UpdateBG1
+    NOP #8
 }
 assert pc() <= $02C039 ; $014039
 
@@ -2890,7 +2875,81 @@ ReadOverlayArray2:
 
     RTL
 }
+
+; Called from $02C02D (M=16, X=8, Y=8): A = new BG2 scroll (must return in A),
+; X = 0 (H-scroll $E0/$E2) or 6 (V-scroll $E6/$E8), Y = dir*2 ($02BEBA,Y step).
+OverworldScrollTransition_UpdateBG1:
+{
+    PHA
+    PHY                         ; preserve Y (dir*2) before ReadOverlayArray2 clobbers Y
+    JSL.l ReadOverlayArray2
+    CPY.b #$96 : BEQ .done
+    SEP #$20
+    LDA.b $11 : CMP.b #$14 : REP #$20 : BEQ .syncDirect
+    CPY.b #$95 : BEQ .panRelative
+    CPY.b #$9D : BEQ .panRelative
+    .syncDirect
+    PLY
+    PLA
+    STA.b $E0, X
+    RTL
+    .panRelative
+    PLY
+    PHB : PEA.w $0202 : PLB : PLB
+    LDA.b $E0, X : CLC : ADC.w $BEBA, Y : STA.b $E0, X
+    PLB
+    PLA
+    RTL
+    .done
+    PLY
+    PLA
+    RTL
+}
+
+; Called from $02BD07 and $0EAF97 (M=16, X=8, X = active overlay ID $8C):
+; Keeps Fog 1 ($97) bit-for-bit identical to vanilla (+0.125 Y, +0.125 X) and
+; drives Falling Snow ($9D) downward (-$9000 ~= 0.56 px/fr) with a gentle
+; alternating alpine breeze sideways (+$2800 / +$5800) and zero thunder/flash.
+OverlayDrift_FogOrSnow:
+{
+    CPX.b #$97 : BNE .checkSnow
+        LDA.w $0622 : CLC : ADC.w #$2000 : STA.w $0622
+        LDA.b $E6   :       ADC.w #$0000 : STA.b $E6
+        LDA.w $0620 : CLC : ADC.w #$2000 : STA.w $0620
+        LDA.b $E0   :       ADC.w #$0000 : STA.b $E0
+        RTL
+    .checkSnow
+    CPX.b #$9D : BNE .done
+        LDA.w $0622 : SEC : SBC.w #$9000 : STA.w $0622
+        LDA.b $E6   :       SBC.w #$0000 : STA.b $E6
+        LDA.b $1A   : AND.w #$0040 : BNE .gust
+            LDA.w #$2800
+            BRA .applyX
+        .gust
+            LDA.w #$5800
+        .applyX
+        CLC : ADC.w $0620 : STA.w $0620
+        LDA.b $E0   : ADC.w #$0000 : STA.b $E0
+    .done
+    RTL
+}
 pushpc
+
+; Hook Fog 1 ($97) / Falling Snow ($9D) drift in Bank $02 and Bank $0E.
+; Leaves $02BD03/$0EAF93 (CPX #$9C) and $02BD33/$0EAFC3 (DW Lava) untouched.
+assert read1($02BD07) == $E0 || read1($02BD07) == $22
+org $02BD07 ; $013D07 ; @hook module=Overworld name=SnowOverlayDriftBank02 kind=jsl target=OverlayDrift_FogOrSnow expected_m=16 expected_x=8
+    JSL.l OverlayDrift_FogOrSnow
+    JMP.w $BD4C
+    NOP
+assert pc() == $02BD0F
+
+assert read1($0EAF97) == $E0 || read1($0EAF97) == $22
+org $0EAF97 ; $072F97 ; @hook module=Overworld name=SnowOverlayDriftBank0E kind=jsl target=OverlayDrift_FogOrSnow expected_m=16 expected_x=8
+    JSL.l OverlayDrift_FogOrSnow
+    JMP.w $AFDC
+    NOP
+assert pc() == $0EAF9F
 
 ; ==============================================================================
 
@@ -3539,8 +3598,8 @@ CheckForChangeGraphicsTransitionLoad:
         CMP.w #$0040 : BEQ .noSpecialColor
             ; Pyramid area.
             CMP.w #$0096 : BEQ .specialColor
-                LDX.w #$4C26
-                LDY.w #$8C4C
+                LDX.w #$4020
+                LDY.w #$8040
                     
                 ; LW death mountain.
                 CMP.w #$0095 : BEQ .specialColor
@@ -4080,8 +4139,8 @@ endif
     ; Check for lost woods?, skull woods, and pyramid area.
     CMP.w #$009D : BEQ .noCustomFixedColor
     CMP.w #$0096 : BEQ .noCustomFixedColor
-        LDX.w #$4C26
-        LDY.w #$8C4C
+        LDX.w #$4020
+        LDY.w #$8040
         
         ; Check for LW Death mountain.
         CMP.w #$0095 : BEQ .setCustomFixedColor
@@ -4368,8 +4427,8 @@ Palette_RestoreFixedColor_Interupt:
             CMP.w #$0040 : BEQ .noSpecialColor
                 ; Pyramid area.
                 CMP.w #$0096 : BEQ .specialColor
-                    LDX.w #$4C26
-                    LDY.w #$8C4C
+                    LDX.w #$4020
+                    LDY.w #$8040
                     
                     ; LW death mountain.
                     CMP.w #$0095 : BEQ .specialColor

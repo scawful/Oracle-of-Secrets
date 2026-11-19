@@ -566,6 +566,39 @@ SpecialOverworld_ShouldMosaic:
     JMP .yes
   .check_special
 
+  ; 2b. Light/Dark World ($00-$7F) Snowpeak overlay-mismatch guard:
+  ; Smooth scroll ($11=$01-$08) never calls Overworld_ReloadSubscreenOverlay,
+  ; so crossing into/out of Tree-Snow ($0095) or Falling Snow ($009D) must
+  ; mosaic even when Pool_MosaicTable omits the edge bit (without disturbing
+  ; Docks $28/$29<->$30<->$32 or other non-Snowpeak smooth scrolls).
+  ; Stack top: 1,S = saved Y, 2,S = saved X (old_parent).
+  LDA $02,S                           ; old_parent
+  CMP.b #$80 : BCS .check_sw_bounds
+  LDA.b $8A
+  CMP.b #$80 : BCS .ret_no
+  CMP $02,S : BEQ .ret_no             ; same parent: always smooth scroll
+  REP #$30
+  LDA $02,S : AND.w #$00FF : ASL : TAX
+  JSL Lyra_ReadOverlay
+  PHA                                 ; 1,S = old_ov
+  LDA.b $8A : AND.w #$00FF : ASL : TAX
+  JSL Lyra_ReadOverlay                ; A = new_ov
+  CMP $01,S : BEQ .lw_same_ov
+    CMP.w #$0095 : BEQ .lw_force_mosaic
+    CMP.w #$009D : BEQ .lw_force_mosaic
+    LDA $01,S
+    CMP.w #$0095 : BEQ .lw_force_mosaic
+    CMP.w #$009D : BEQ .lw_force_mosaic
+  .lw_same_ov
+  PLA
+  SEP #$30
+  JMP .no
+  .lw_force_mosaic
+  PLA
+  SEP #$30
+  JMP .yes
+
+  .check_sw_bounds
   ; 3. Special Overworld ($80-$BF) graphic/overlay compatibility check
   ; Stack top: 1,S = saved Y, 2,S = saved X (old_parent)
   LDA $02,S                           ; old_parent
