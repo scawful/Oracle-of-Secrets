@@ -56,9 +56,61 @@ org $0DA435 ; @hook module=Items name=GustJar_LinkPoseOamHook kind=jsl target=Gu
   JSL GustJar_LinkPoseOamHook
   NOP
 assert pc() == $0DA43A
+
+; Hook Sprite_Main per-slot dispatch ($0683A1, M/X=8, DBR=$06) to cleanly hide
+; and freeze a sprite slot absorbed inside the Gust Jar while inhaling.
+org $0683A1 ; @hook module=Items name=GustJar_SpriteHideHook kind=jsl target=GustJar_SpriteHideHook expected_m=8 expected_x=8 protected_size=6
+  assert read4($0683A1) == $200FA08E && read2($0683A5) == $84E2, "Sprite_Main loop moved"
+  JSL GustJar_SpriteHideHook
+  NOP : NOP
+assert pc() == $0683A7
+
+; Hook Ancilla_ExecuteAll per-slot dispatch ($08832D, M/X=8, DBR=$08) to cleanly
+; hide and pause a Bomb ($07) or Somaria Block ($2C) absorbed inside the Gust Jar.
+org $08832D ; @hook module=Items name=GustJar_AncillaHideHook kind=jsl target=GustJar_AncillaHideHook expected_m=8 expected_x=8 protected_size=6
+  assert read4($08832D) == $BD0FA08E && read2($088331) == $0C4A, "Ancilla_ExecuteAll moved"
+  JSL GustJar_AncillaHideHook
+  NOP : NOP
+assert pc() == $088333
 pullpc
 
 GustJar_CodeStart:
+
+; ---------------------------------------------------------
+; Sprite_Main per-slot hide hook ($0683A1, M/X=8, DBR=$06, X = sprite slot 0..$0F).
+; While inhaling with an absorbed sprite (!GustJarState==1 && !GustJarCapKind==1
+; && X==!GustJarCapSlot), skips Sprite_ExecuteSingle so the entity is 100% hidden,
+; non-colliding, and immune to offscreen despawn. Automatically restores on the
+; very first frame of release, abort, damage, or room transition!
+; ---------------------------------------------------------
+GustJar_SpriteHideHook:
+{
+  STX.w $0FA0
+  LDA.w !GustJarState : CMP.b #$01 : BNE .run
+  LDA.w !GustJarCapKind : CMP.b #$01 : BNE .run
+  TXA : CMP.w !GustJarCapSlot : BNE .run
+    RTL
+.run
+  JML $0684DA ; vanilla Sprite_ExecuteSingle_Long (PHB:PHK:PLB : JSR $84E2 : PLB:RTL)
+}
+
+; ---------------------------------------------------------
+; Ancilla_ExecuteAll per-slot hide hook ($08832D, M/X=8, DBR=$08, X = slot 0..9).
+; While inhaling with an absorbed Bomb/Somaria (!GustJarState==1 && !GustJarCapKind==2
+; && X==!GustJarCapSlot), returns A=0 (Z=1) so BEQ $088338 skips JSR $833C cleanly.
+; ---------------------------------------------------------
+GustJar_AncillaHideHook:
+{
+  STX.w $0FA0
+  LDA.w !GustJarState : CMP.b #$01 : BNE .normal
+  LDA.w !GustJarCapKind : CMP.b #$02 : BNE .normal
+  TXA : CMP.w !GustJarCapSlot : BNE .normal
+    LDA.b #$00
+    RTL
+.normal
+  LDA.w $0C4A, X
+  RTL
+}
 
 ; ---------------------------------------------------------
 ; LinkOAM_ContinueWithAnimation ($0DA435) pose & OAM render hook (M/X=8, DBR=$0D).
@@ -286,14 +338,18 @@ GustJar_ReleasePose:
 
 ; ---------------------------------------------------------
 ; Immediate safe abort & cleanup (transition, damage, swim, doorway, menu, mask).
+; Snaps any absorbed sprite/ancilla back to the nozzle and grounds it cleanly so
+; zero orphaned invisible entities can ever remain on cancel/hurt/transition.
 ; ---------------------------------------------------------
 GustJar_Abort:
 {
   LDA.w !GustJarState : CMP.b #$01 : BNE .clear_state
   LDA.w !GustJarCapKind : BEQ .clear_state
-  CMP.b #$01 : BNE .release_ancilla
-    ; Ground captured sprite cleanly and leave short stun.
+  JSR GustJar_ComputeNozzle
+  LDA.w !GustJarCapKind : CMP.b #$01 : BNE .release_ancilla
+    ; Materialize & ground absorbed sprite cleanly at nozzle with brief stun.
     LDY.w !GustJarCapSlot : CPY.b #$10 : BCS .clear_state
+    JSR GustJar_SnapSprToNozzleY
     LDA.b #$00 : STA.w SprHeight, Y
     LDA.w SprState, Y : CMP.b #$0B : BNE .clear_state
     LDA.b #$10 : STA.w SprStunTimer, Y
@@ -301,11 +357,32 @@ GustJar_Abort:
     BRA .clear_state
   .release_ancilla
     LDX.w !GustJarCapSlot : CPX.b #$05 : BCS .clear_state
-    LDA.b #$00 : STA.w $029E, X
+    JSR GustJar_SnapAncToNozzleX
+    LDA.b #$00 : STA.w $029E, X : STA.w $0C22, X : STA.w $0C2C, X
   .clear_state
   JSR GustJar_ReleasePose
   LDA.b #$40 : TRB.b $3A ; defense-in-depth if aborted mid-init
   JMP GustJar_ClearVars
+}
+
+; Position ancilla X at nozzle ($08/$0A). Preserves X/Y.
+GustJar_SnapAncToNozzleX:
+{
+  LDA.b $08 : STA.w $0C04, X : LDA.b $09 : STA.w $0C18, X
+  LDA.b $0A : STA.w $0BFA, X : LDA.b $0B : STA.w $0C0E, X
+  RTS
+}
+
+; Position sprite Y centered at nozzle ($08/$0A) -> ($08-8, $0A-8). Preserves Y.
+GustJar_SnapSprToNozzleY:
+{
+  REP #$20
+  LDA.b $08 : SEC : SBC.w #$0008 : STA.b $04
+  LDA.b $0A : SEC : SBC.w #$0008 : STA.b $06
+  SEP #$20
+  LDA.b $04 : STA.w SprX, Y : LDA.b $05 : STA.w SprXH, Y
+  LDA.b $06 : STA.w SprY, Y : LDA.b $07 : STA.w SprYH, Y
+  RTS
 }
 
 ; ---------------------------------------------------------
@@ -380,17 +457,24 @@ GustJar_TickInhale:
   .set_speed
   STA.b $5E
 
-  ; Periodic suction SFX cadence (faster at higher tiers).
+  ; Periodic suction SFX cadence (gentler pressure throb when full/corked).
+  LDA.w !GustJarCapKind : BEQ .sfx_inhale
+    LDA.w !GustJarCharge : AND.b #$0F : BNE .sfx_done
+    BRA .sfx_play
+  .sfx_inhale
   LDA.w !GustJarCharge : AND.b #$07 : BNE .sfx_done
+  .sfx_play
   LDA.w $012E : BNE .sfx_done
-  LDA.b #$09 : STA.w $012E ; SFX2.09 suction fwish
+  LDA.b #$09 : STA.w $012E ; SFX2.09 suction / pressure pulse
   .sfx_done
 
   ; Compute nozzle world position ($08=X16, $0A=Y16).
   JSR GustJar_ComputeNozzle
 
-  ; Keep captured entity pinned at nozzle (if any).
+  ; Keep absorbed entity synced to nozzle (if any); when full, pause further
+  ; vacuum pull so the sealed jar waits cleanly to unleash its stored payload!
   JSR GustJar_HoldCaptured
+  LDA.w !GustJarCapKind : BNE .done
 
   ; Pull sprites & ancillae in inhale cone.
   JSR GustJar_InhaleSprites
@@ -436,14 +520,16 @@ GustJar_HoldCaptured:
 
   .hold_ancilla
   LDX.w !GustJarCapSlot : CPX.b #$05 : BCS .drop
-  LDA.w $0C4A, X : CMP.b #$07 : BNE .drop
+  LDA.w $0C4A, X
+  CMP.b #$2C : BEQ .anc_ok
+  CMP.b #$07 : BNE .drop
   LDA.w $0C5E, X : BNE .drop ; bomb exploded: release!
-  LDA.b $08 : STA.w $0C04, X
-  LDA.b $09 : STA.w $0C18, X
-  LDA.b $0A : STA.w $0BFA, X
-  LDA.b $0B : STA.w $0C0E, X
+  .anc_ok
+  JSR GustJar_SnapAncToNozzleX
   STZ.w $0C22, X : STZ.w $0C2C, X
-  LDA.b #$04 : STA.w $029E, X
+  LDA.w $0C4A, X : CMP.b #$07 : BNE .anc_done
+    LDA.b #$04 : STA.w $029E, X
+  .anc_done
   RTS
 
   .hold_sprite
@@ -451,19 +537,12 @@ GustJar_HoldCaptured:
   LDA.w SprState, Y : CMP.b #$09 : BEQ .sp_ok
   CMP.b #$0B : BNE .drop
   .sp_ok
-  ; Subtle 1 px suction vibration on frame bit 1.
-  LDA.b $1A : AND.b #$02 : LSR A : STA.b $00 : STZ.b $01
-  REP #$20
-  LDA.b $08 : SEC : SBC.w #$0008 : CLC : ADC.b $00 : STA.b $04
-  LDA.b $0A : SEC : SBC.w #$0008 : STA.b $06
-  SEP #$20
-  LDA.b $04 : STA.w SprX, Y : LDA.b $05 : STA.w SprXH, Y
-  LDA.b $06 : STA.w SprY, Y : LDA.b $07 : STA.w SprYH, Y
+  JSR GustJar_SnapSprToNozzleY
   LDA.b #$00
   STA.w SprXSpeed, Y : STA.w SprYSpeed, Y
   STA.w SprTimerF, Y
   LDA.b #$04 : STA.w SprHeight, Y
-  ; Keep enemy frozen in stun state while captured.
+  ; Keep enemy frozen in stun state while absorbed inside the jar.
   LDA.w SprType, Y : CMP.b #$EC : BEQ .sp_done
   LDA.b #$0B : STA.w SprState, Y
   LDA.b #$30 : STA.w SprStunTimer, Y
@@ -583,9 +662,12 @@ GustJar_InhaleSprites:
   .not_throwable
 
   ; 3. Movable Statue ($1C, excluding Elegy of Stone echo) & Ice Block ($D5).
+  ; Stop pulling once right in front of the nozzle (fwd < 19 px) so heavy blocks
+  ; never slide on top of Link's body or overlap the jar!
   CMP.b #$1C : BNE .not_statue
     LDA.w SprFrame, Y : CMP.b #!Stone_Marker : BEQ .next
   .pull_block
+    LDA.b $04 : CMP.b #$13 : BCC .next
     LDA.b #$01 : STA.b $07
     JSR GustJar_PullSpriteReverseDir
     STZ.w $0642 ; statue recomputes pressure-plate contact
@@ -647,8 +729,12 @@ GustJar_TryCaptureOrPullSprite:
   JSR GustJar_HoldCaptured
   RTS
   .pull_only
+  ; Stop non-capturable heavy enemies right outside the nozzle (fwd < 19 px)
+  ; so they never slide onto Link's hitbox.
+  LDA.b $04 : CMP.b #$13 : BCC .pull_done
   LDA.w !GustJarTier : STA.b $07 ; 1/2/3 px/frame pull
   JSR GustJar_PullSpriteToLink
+  .pull_done
   RTS
 }
 
@@ -735,13 +821,12 @@ GustJar_InhaleAncillae:
   JSR GustJar_LoadAncPos16X
   JSR GustJar_InCone : BCC .next
 
-  ; Capture live Bomb within 20 px of nozzle.
-  LDA.w $0C4A, X : CMP.b #$07 : BNE .pull_ancilla
+  ; Capture & absorb live Bomb ($07) OR Somaria Block ($2C) within 20 px of nozzle!
   LDA.w !GustJarCapKind : BNE .pull_ancilla
   LDA.b $04 : CMP.b #$15 : BCS .pull_ancilla
     LDA.b #$02 : STA.w !GustJarCapKind
     TXA : STA.w !GustJarCapSlot
-    LDA.b #$13 : STA.w $012F ; SFX3.$13 capture pop cue
+    LDA.b #$13 : STA.w $012F ; SFX3.$13 crisp absorb pop cue
     JSR GustJar_HoldCaptured
     BRA .next
 
@@ -808,16 +893,29 @@ GustJar_FireBlast:
   CMP.b #$01 : BEQ .launch_sprite
   CMP.b #$02 : BNE .done
 
-  ; Launch captured Bomb ($07) with arc velocity across gaps/water.
+  ; Launch absorbed Bomb ($07) or Somaria Block ($2C) cleanly from the nozzle!
   LDX.w !GustJarCapSlot : CPX.b #$05 : BCS .done
-  LDA.w $0C4A, X : CMP.b #$07 : BNE .done
+  LDA.w $0C4A, X
+  CMP.b #$2C : BEQ .launch_somaria
+  CMP.b #$07 : BNE .done
+  JSR GustJar_SnapAncToNozzleX
   JSR GustJar_ApplyAncillaBlastVel
   LDA.b #$0A : STA.w $029E, X ; airborne arc
   STZ.w $0BF0, X
   BRA .mark_launched
 
+  .launch_somaria
+  ; Pop Somaria Block cleanly ahead of the Crescent Wave crest (+10 px clear of
+  ; nozzle); GustJar_WaveAncillae then rockets it forward (+ Portal Rod warps)!
+  JSR GustJar_SnapAncToNozzleX
+  STZ.w $029E, X
+  LDA.b #$0A : STA.b $07
+  LDA.w !GustJarDir : JSR GustJar_StepAncillaDir
+  BRA .mark_launched
+
   .launch_sprite
   LDY.w !GustJarCapSlot : CPY.b #$10 : BCS .done
+  JSR GustJar_SnapSprToNozzleY
   LDX.w !GustJarTier : LDA.w GustJar_LaunchSpd-1, X
   JSR GustJar_DirVel
   LDA.b $00 : STA.w SprXSpeed, Y : STA.w SprXRecoil, Y
@@ -932,9 +1030,11 @@ GustJar_TickLaunched:
   RTS
 
   .bomb
-  ; Launched bomb: check Portal Rod node warp.
+  ; Launched Bomb ($07) or Somaria Block ($2C): check Portal Rod node warp.
   LDX.w !GustJarCapSlot : CPX.b #$05 : BCS .clear
-  LDA.w $0C4A, X : CMP.b #$07 : BNE .clear
+  LDA.w $0C4A, X
+  CMP.b #$2C : BEQ .done ; Somaria pushed & portal-warped by GustJar_WaveAncillae
+  CMP.b #$07 : BNE .clear
   LDA.w $0C5E, X : BNE .clear
   JSR GustJar_LoadAncPos16X
   JSR GustJar_FindPortalExit : BCC .done
@@ -1535,21 +1635,29 @@ GustJar_DrawHeldJar:
   LDA.b #$F0 : STA.b $07 ; default clipped Y
   LDA.b #$00 : STA.b $06 ; default mouth X
   LDA.w !GustJarState : CMP.b #$02 : BNE .m_inhale
-    LDA.w !GustJarFlags : BIT.b #$08 : BEQ .m_write
+    LDA.w !GustJarFlags : BIT.b #$08 : BNE + : JMP .m_write : +
     LDA.b #$A9 : PHA
     LDA.b $1A : AND.b #$06 : ASL #5 : ORA.b #$04 : ORA.b $04
     BRA .m_pos
 
   .m_inhale
+  ; FULL / PRIMED & WAITING TO UNLEASH (absorbed payload or Tier 3):
+  ; draw a rapidly spinning glowing wind-pressure core orb ($19, Pal 2) right
+  ; inside the flared nozzle mouth across ALL D/L/R directions!
+  JSR GustJar_IsHighCharge : BCS .m_primed
   LDA.w !GustJarDir : CMP.b #$02 : BEQ .m_down
-    ; Side L/R: custom flared suction-ring sheen ($1A) pulsing V-flip on frame bit 2.
+    ; Active inhale Side L/R (Tier 1/2): flared suction-ring sheen ($1A) pulsing V-flip.
     LDA.b #$1A : PHA
     LDA.b $1A : AND.b #$04 : ASL #5 ; $00 or $80 V-flip
     LDX.w !GustJarDir : CPX.b #$04 : BNE + : ORA.b #$40 : + ; H-flip on Left
     ORA.b #$04 : ORA.b $04
     BRA .m_pos
+  .m_primed
+    LDA.b #$19 : PHA
+    LDA.b $1A : ASL #6 : ORA.b #$04 : ORA.b $04 ; 4-step rapid H/V vortex spin
+    BRA .m_pos
   .m_down
-    ; Down: custom curled air-loop wisp ($19) shimmering at circular mouth.
+    ; Active inhale Down: custom curled air-loop wisp ($19) shimmering at circular mouth.
     LDA.b #$19 : PHA
     LDA.b $1A : AND.b #$06 : ASL #5 : ORA.b #$04 : ORA.b $04
 
@@ -1598,15 +1706,21 @@ GustJar_DrawHeldJar:
 }
 
 ; ---------------------------------------------------------
-; Minish Cap Directional Wind-Suction Funnel OAM FX (4/5/6 wind streaks & curls).
+; Minish Cap Directional Wind-Suction Funnel / Full Coiled Pressure Halo OAM FX.
 ; Uses custom 4BPP Minish Cap Inhale Wind Set streamed to VRAM $4090/$4190:
-;   - $09: Horizontal tapered wind speed-streak (oriented inward into jar!)
-;   - $0A: Vertical swooping airflow ribbon (oriented inward into jar!)
-;   - $19: Hollow curled Minish wind wisp / air-loop puff (spinning inward!)
-;   - $1A: Flared suction-ring sheen near nozzle mouth!
+;   - When FULL / ABSORBED (!GustJarCapKind != 0): collapses the long vacuum
+;     funnel into a compact 4-sprite orbiting pressure vortex halo tightly
+;     circling the flared nozzle mouth ($19 swirling orbs + $1A pressure rings)
+;     so it is unmistakable that the jar is FULL and waiting to unleash!
+;   - When Active Inhale (!GustJarCapKind == 0): 4/5/6 inward suction streaks
+;     ($09 H, $0A V) & air curls ($19/$1A) funneling into the nozzle!
 ; ---------------------------------------------------------
 GustJar_DrawInhaleOAM:
 {
+  LDA.w !GustJarCapKind : BEQ +
+    JMP .draw_full_halo
+  +
+
   LDA.w !GustJarTier : CLC : ADC.b #$03 : STA.b $04
   ASL #2
   JSL !GustJarOamAllocA
@@ -1699,9 +1813,38 @@ GustJar_DrawInhaleOAM:
   INX : CPX.b $04 : BCS + : JMP .part : +
   RTS
 
+  .draw_full_halo
+  ; FULL / ABSORBED state: 4 tightly orbiting pressure vortex sprites around nozzle!
+  LDA.b #$10 ; 4 x 4B OAM sprites
+  JSL !GustJarOamAllocA
+  JSR GustJar_GetPrio : ORA.b #$04 : STA.b $07 ; BG prio | Pal 2 (white/mint/aqua)
+  REP #$20
+  LDA.b $08 : SEC : SBC.b $E2 : SEC : SBC.w #$0004 : STA.b $0C
+  LDA.b $0A : SEC : SBC.b $E8 : SEC : SBC.w #$0004 : STA.b $0E
+  SEP #$20
+  LDA.b $1A : LSR A : STA.b $02 ; orbit step advances every 2 frames
+  LDY.b #$00
+  LDX.b #$00
+  .halo_loop
+  TXA : ASL A : CLC : ADC.b $02 : AND.b #$07 : PHX : TAX
+  LDA.w .orb_fwd, X : STA.b $05
+  LDA.w .orb_perp, X : STA.b $06
+  PLX
+  JSR GustJar_ApplyDirOffset16
+  TXA : AND.b #$01 : BNE .halo_ring
+    LDA.b #$19 : BRA .halo_emit ; swirling pressure core orb
+  .halo_ring
+    LDA.b #$1A                  ; pulsing pressure ring arc
+  .halo_emit
+  JSR GustJar_EmitWindOam8
+  INX : CPX.b #$04 : BCC .halo_loop
+  RTS
+
   .phase_off : db 0, 11, 21, 5, 16, 26
   .lane_sign : db 1, 2, 1, 2, 0, 2
   .swirl     : db 0, 2, 3, 2, 0, -2, -3, -2
+  .orb_fwd   : db 10, 7, 2, -1, -2, -1, 2, 7
+  .orb_perp  : db  0, 6, 8,  6,  0, -6, -8, -6
 }
 
 ; ---------------------------------------------------------
@@ -1842,18 +1985,26 @@ GustJar_NmiUpload:
   LDA.b $5D : ORA.w $02E0 : BNE .slot2
     LDA.w !GustJarDir : BEQ .jar_up
     CMP.b #$02 : BEQ .jar_down
-    ; Side L/R: swollen belly frame 1 when corked, blast recoil peak, or Tier>=2 pulse.
-    LDA.w !GustJarCapKind : BNE .jar_swollen
+    ; Side L/R: swollen belly frame 1 when full/corked, Tier 3, blast recoil peak, or Tier 2 pulse.
     LDA.w !GustJarState : CMP.b #$02 : BNE .jar_inhale_side
       LDA.w !GustJarFlags : BIT.b #$08 : BNE .jar_swollen
       BRA .jar_normal
     .jar_inhale_side
+    JSR GustJar_IsHighCharge : BCS .jar_swollen
     LDA.w !GustJarTier : CMP.b #$02 : BCC .jar_normal
     LDA.b $1A : AND.b #$04 : BNE .jar_swollen
-    .jar_normal  : LDA.b #$00 : BRA .jar_dma
-    .jar_swollen : LDA.b #$01 : BRA .jar_dma
-    .jar_down    : LDA.b #$02 : BRA .jar_dma
-    .jar_up      : LDA.b #$03
+    .jar_normal    : LDA.b #$00 : BRA .jar_dma
+    .jar_swollen   : LDA.b #$01 : BRA .jar_dma
+    .jar_down
+    ; Front/Down: swollen full frame 9 when corked, Tier 3, or blast recoil peak; else frame 2.
+    LDA.w !GustJarState : CMP.b #$02 : BNE .jar_inhale_down
+      LDA.w !GustJarFlags : BIT.b #$08 : BNE .jar_down_full
+      BRA .jar_down_norm
+    .jar_inhale_down
+    JSR GustJar_IsHighCharge : BCS .jar_down_full
+    .jar_down_norm : LDA.b #$02 : BRA .jar_dma
+    .jar_down_full : LDA.b #$09 : BRA .jar_dma
+    .jar_up        : LDA.b #$03
     .jar_dma
     LDX.w #$4070
     JSR .upload_16x16
@@ -1913,7 +2064,7 @@ GustJar_NmiUpload:
 GustJarWorldGfx:
   incbin "Data/graphics/items/gust_jar_world.4bpp"
 GustJarWorldGfxEnd:
-assert GustJarWorldGfxEnd-GustJarWorldGfx == $0480, "Gust Jar world GFX must be 9 x 16x16 frames (1152B)"
+assert GustJarWorldGfxEnd-GustJarWorldGfx == $0500, "Gust Jar world GFX must be 10 x 16x16 frames (1280B)"
 assert (GustJarWorldGfx>>16) == ((GustJarWorldGfxEnd-1)>>16), "Gust Jar DMA source crosses bank"
 print "End of GustJar Bank $34 block     ", pc
 assert pc() <= $34F000, "Gust Jar Bank $34 NMI upload/GFX exceeded $34E000-$34EFFF"

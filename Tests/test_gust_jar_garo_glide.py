@@ -46,6 +46,7 @@ STUB_OAM_C = 0x0DBA88
 STUB_OAM_D = 0x0DBA8C
 STUB_OW_TILE_ACT = 0x1BBD7A
 STUB_CANCEL_DASH = 0x0790B0
+STUB_SPR_EXEC_SINGLE = 0x0684DA
 STUB_SELECTED_ITEM = 0x548800
 
 
@@ -73,8 +74,12 @@ def _assemble_suite(folder: Path) -> tuple[bytes, dict[str, int]]:
     put_rom(0x0287E5, bytes.fromhex("C2 21 A5 E2"))
     put_rom(0x028053, bytes.fromhex("6B"))
     put_rom(0x02A5CC, bytes.fromhex("22 FA E3 00 20 90 BB"))
-    # Preimage asserted by Items/gust_jar.asm (LinkOAM_ContinueWithAnimation)
+    # Preimages asserted by Items/gust_jar.asm (LinkOAM_ContinueWithAnimation, Sprite_Main, Ancilla_ExecuteAll)
     put_rom(0x0DA435, bytes.fromhex("8C 54 03 C0 05"))
+    put_rom(0x0683A1, bytes.fromhex("8E A0 0F 20 E2 84"))
+    put_rom(0x08832D, bytes.fromhex("8E A0 0F BD 4A 0C"))
+    # Vanilla Sprite_ExecuteSingle_Long ($0684DA) stubbed by Q323Fixture (RTL = $6B)
+    put_rom(0x0684DA, bytes.fromhex("6B"))
     # Preimages asserted by Items/bombchu.asm
     put_rom(0x098127, bytes.fromhex("AF 43 F3 7E"))
     put_rom(0x098133, bytes.fromhex("8F 43 F3 7E"))
@@ -217,6 +222,7 @@ class Q323Fixture(Fixture):
             STUB_OAM_D: "oam_d",
             STUB_OW_TILE_ACT: "ow_tile_act",
             STUB_CANCEL_DASH: "cancel_dash",
+            STUB_SPR_EXEC_SINGLE: "spr_exec_single",
         }
         self.oam_allocs: list[int] = []
         self.oam_records: list[tuple[str, int, int, int]] = []  # (region, size, low_addr, hi_addr)
@@ -226,6 +232,7 @@ class Q323Fixture(Fixture):
         self._oam_d_off = 0x0030
         self.ow_cuts: list[tuple[int, int, int]] = []
         self.cancel_dash_calls = 0
+        self.spr_exec_slots: list[int] = []
         self.cpu.db = 0x07  # Gameplay DBR mirror
         # SNES hardware register & DMA0 tracking for NMI VRAM upload tests
         self.hw_regs: dict[int, int] = {
@@ -370,6 +377,8 @@ class Q323Fixture(Fixture):
         elif name == "cancel_dash":
             self.cancel_dash_calls += 1
             self.put(0x0372, 0)
+        elif name == "spr_exec_single":
+            self.spr_exec_slots.append(self.cpu.x & 0xFF)
 
     def run_jsl(self, label: str, a: int = 0, x: int = 0, y: int = 0, db: int = 0x07, limit: int = 60000):
         c = self.cpu
@@ -1367,7 +1376,7 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
 
     def test_gust_jar_nmi_upload_vram_slots_frames_restore_and_bombchu_chain(self):
         gfx_bytes = (ROOT / "Data/graphics/items/gust_jar_world.4bpp").read_bytes()
-        self.assertEqual(len(gfx_bytes), 0x480)
+        self.assertEqual(len(gfx_bytes), 0x500)
         gfx_addr = self.labels["GustJarWorldGfx"]
         self.assertEqual(gfx_addr >> 16, 0x34, "GustJarWorldGfx must reside in Bank $34")
         self.assertGreaterEqual(gfx_addr & 0xFFFF, 0xE000)
@@ -1391,15 +1400,18 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
         fx.run_nmi_jsl("GustJar_NmiUpload")
         self.assertEqual(fx.dma_transfers, [])
 
-        # 3. Inhale frames across all directions, Tier 1 vs Tier 2/3 pulse vs Corked ->
-        #    Slot 1 ($4070/$4170) gets exact Jar block 0..3; Slot 2 ($4090/$4190) gets Inhale block 4!
+        # 3. Inhale frames across all directions, Tier 1 vs Tier 2 pulse vs Tier 3 / Corked ->
+        #    Slot 1 ($4070/$4170) gets exact Jar block 0/1/2/3/9; Slot 2 ($4090/$4190) gets Inhale block 4!
         inhale_cases = [
             ("right_t1",      6, 1, 0, 0x00, 0),
             ("left_t1",       4, 1, 0, 0x04, 0),
             ("right_t2_even", 6, 2, 0, 0x00, 0),
             ("right_t2_odd",  6, 2, 0, 0x04, 1),  # Swollen pulse!
+            ("right_t3",      6, 3, 0, 0x00, 1),  # Tier 3 always swollen!
             ("left_corked",   4, 1, 1, 0x00, 1),  # Corked -> always swollen!
-            ("down_front",    2, 3, 0, 0x04, 2),
+            ("down_t1",       2, 1, 0, 0x04, 2),  # Normal open front nozzle
+            ("down_t3_full",  2, 3, 0, 0x04, 9),  # Swollen full front jar (Block 9)!
+            ("down_corked",   2, 1, 2, 0x00, 9),  # Corked front jar (Block 9)!
             ("up_back",       0, 3, 0, 0x04, 3),
         ]
         for name, facing, tier, cap, frame_ctr, exp_jar_blk in inhale_cases:
@@ -1483,6 +1495,98 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
         gust_src = (ROOT / "Items/gust_jar.asm").read_text()
         self.assertNotIn("#$EE", gust_src, "Items/gust_jar.asm must never reference Portal Rod tile #$EE")
         self.assertNotIn("#$72", gust_src, "Items/gust_jar.asm must never reference Small Magic Jar tile #$72")
+
+    def test_gust_jar_absorbs_hides_and_restores_sprites_and_somaria_safely(self):
+        # 1. Absorbed Sprite (enemy / throwable $EC): GustJar_SpriteHideHook skips
+        #    Sprite_ExecuteSingle ONLY for captured slot while inhaling, and restores
+        #    immediately on release OR abort!
+        fx = self.make_fx()
+        self._start_gust(fx, button=1, facing=6)
+        fx.place_sprite(0, 0x0D, 0x114, 0x102, health=4)  # Light enemy near nozzle -> captured!
+        fx.place_sprite(1, 0x12, 0x138, 0x102, health=10) # Other sprite -> NOT hidden!
+        fx.run_jsl("GustJar_FrameTick")
+        self.assertEqual((fx.get(0x0278), fx.get(0x0279)), (1, 0))
+
+        fx.spr_exec_slots.clear()
+        fx.run_jsl("GustJar_SpriteHideHook", x=0, db=0x06)
+        fx.run_jsl("GustJar_SpriteHideHook", x=1, db=0x06)
+        self.assertEqual(fx.spr_exec_slots, [1], "Captured sprite slot 0 must be hidden; slot 1 must still run")
+
+        # Abort (e.g. Link hurt) -> snaps sprite to nozzle, grounds SprHeight=0, unhides immediately!
+        fx.put(0x46, 0x10)
+        fx.run_jsl("GustJar_FrameTick")
+        self.assertEqual(fx.get(0x0273), 0)
+        self.assertEqual(fx.get(0x0F70), 0)
+        fx.spr_exec_slots.clear()
+        fx.run_jsl("GustJar_SpriteHideHook", x=0, db=0x06)
+        self.assertEqual(fx.spr_exec_slots, [0], "Aborted sprite must immediately become visible again")
+
+        # 2. Absorbed Somaria Block ($2C): pulls into nozzle, gets captured & hidden by
+        #    GustJar_AncillaHideHook (A=0, Z=1), then pops out & blasts forward on release!
+        fx2 = self.make_fx()
+        self._start_gust(fx2, button=1, facing=6)
+        fx2.place_ancilla(0, 0x2C, 0x118, 0x10A)  # Somaria within 20 px of nozzle -> absorbed!
+        fx2.place_ancilla(1, 0x07, 0x140, 0x10A)  # Other bomb -> NOT hidden!
+        fx2.run_jsl("GustJar_FrameTick")
+        self.assertEqual((fx2.get(0x0278), fx2.get(0x0279)), (2, 0), "Close Somaria Block must be absorbed into jar")
+
+        a0, _, z0 = fx2.run_jsl("GustJar_AncillaHideHook", x=0, db=0x08)
+        a1, _, z1 = fx2.run_jsl("GustJar_AncillaHideHook", x=1, db=0x08)
+        self.assertEqual((a0, z0), (0x00, True), "Absorbed Somaria slot 0 must be hidden (A=0, Z=1)")
+        self.assertEqual((a1, z1), (0x07, False), "Non-captured ancilla slot 1 must stay visible")
+
+        # Release Y -> unhides immediately, pops out of nozzle, and blasts right with wave!
+        fx2.put(0xF0, 0x00)
+        fx2.run_jsl("GustJar_FrameTick")
+        self.assertEqual(fx2.get(0x0273), 2)
+        a0_rel, _, z0_rel = fx2.run_jsl("GustJar_AncillaHideHook", x=0, db=0x08)
+        self.assertEqual((a0_rel, z0_rel), (0x2C, False), "Released Somaria must immediately unhide")
+        som_x0 = fx2.get(0x0C04) | (fx2.get(0x0C18) << 8)
+        self.assertEqual(som_x0, 0x100 + 22 + 10, "Released Somaria must pop 10px clear of nozzle ahead of wave crest")
+        for f in range(5):
+            fx2.put(0x1A, f + 1)
+            fx2.run_jsl("GustJar_FrameTick")
+        som_x1 = fx2.get(0x0C04) | (fx2.get(0x0C18) << 8)
+        self.assertGreater(som_x1, som_x0 + 6, "Released Somaria must ride Crescent Wave forward")
+
+        # 3. Heavy Movable Statue ($1C) stops cleanly outside nozzle (fwd < 19 px) without sliding onto Link!
+        fx3 = self.make_fx()
+        self._start_gust(fx3, button=1, facing=6)
+        fx3.place_sprite(0, 0x1C, 0x110, 0x102, frame=0)  # center 0x118 -> fwd = 16 px (< 19)
+        fx3.run_jsl("GustJar_FrameTick")
+        self.assertEqual(fx3.get(0x0D10) | (fx3.get(0x0D30) << 8), 0x110, "Heavy statue must not pull onto Link")
+
+    def test_gust_jar_full_primed_coiled_pressure_halo_and_mouth_core_oam(self):
+        # When FULL / ABSORBED (!GustJarCapKind != 0):
+        #   - Region C Slot 0 emits rapid spinning glowing mouth core orb ($19) cycling H/V flips!
+        #   - Region C Slot 1 emits swollen pulsing jar ($07) with +/-1px tremble & Pal 4<->2!
+        #   - Region A collapses long suction funnel into tight 4-sprite orbiting pressure halo ($19/$1A)
+        #     strictly within 16 px of the nozzle!
+        fx = self.make_fx()
+        self._start_gust(fx, button=1, facing=6)
+        fx.place_sprite(0, 0xEC, 0x114, 0x102)  # Pot near nozzle -> absorbed!
+        fx.run_jsl("GustJar_FrameTick")
+        self.assertEqual(fx.get(0x0278), 1)
+
+        mouth_flips = set()
+        for f in range(4):
+            fx.reset_oam_frame()
+            fx.put(0x1A, f)
+            fx.run_jsl("GustJar_FrameTick")
+            fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+            reg_c = fx.read_oam_sprites("C")
+            self.assertEqual(reg_c[0][3], 0x19, "Full/primed mouth FX must be glowing pressure orb $19")
+            mouth_flips.add(reg_c[0][4] & 0xC0)
+            halo = fx.read_oam_sprites("A")
+            self.assertEqual(len(halo), 4, "Full/absorbed state must emit 4-sprite coiled pressure halo")
+            nozzle_sx, nozzle_sy = 0x60 + 22 - 4, 0x60 + 10 - 4
+            for _, sx, sy, tile, attr, hi in halo:
+                self.assertIn(tile, (0x19, 0x1A), f"Halo must use custom pressure tiles $19/$1A, got {tile:#04x}")
+                self.assertEqual(attr & 0x0E, 0x04)
+                self.assertEqual(hi, 0x00)
+                self.assertLessEqual(abs(sx - nozzle_sx), 14, "Coiled halo must stay tight around nozzle X")
+                self.assertLessEqual(abs(sy - nozzle_sy), 14, "Coiled halo must stay tight around nozzle Y")
+        self.assertEqual(mouth_flips, {0x00, 0x40, 0x80, 0xC0}, "Primed mouth core must spin through all 4 H/V quadrants")
 
     def test_switch_hook_trade_gate_isolated_from_gust_jar_1d(self):
         fx = self.make_fx()

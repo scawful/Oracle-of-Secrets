@@ -2,7 +2,7 @@
 """Generate custom 4BPP Minish Cap-style Gust Jar & Wind Effect world tiles.
 
 Output:
-  Data/graphics/items/gust_jar_world.4bpp (1,152 bytes = $0480 = 9 x 16x16 blocks)
+  Data/graphics/items/gust_jar_world.4bpp (1,280 bytes = $0500 = 10 x 16x16 blocks)
 
 Each 128-byte block is stored in SNES 16x16 OBJ row-major DMA order:
   +$00..$3F (64 B): Top row    (TL tile 32B + TR tile 32B) -> VRAM $4070 / $4090
@@ -10,7 +10,7 @@ Each 128-byte block is stored in SNES 16x16 OBJ row-major DMA order:
 
 Block map (streamed during NMI by GustJar_NmiUpload in Bank $34):
   0 (+$000): Jar 0 — Side Normal (Right; H-flip for Left)        [Pal 4 $08 / Pal 2 $04]
-  1 (+$080): Jar 1 — Side Swollen/Bulging (Tier 2/3 or Corked)   [Pal 4 $08 / Pal 2 $04]
+  1 (+$080): Jar 1 — Side Swollen/Full (Tier 2/3 or Corked)      [Pal 4 $08 / Pal 2 $04]
   2 (+$100): Jar 2 — Front / Down View (Open Circular Nozzle)    [Pal 4 $08 / Pal 2 $04]
   3 (+$180): Jar 3 — Back / Up View (Flared Top Nozzle)          [Pal 4 $08 / Pal 2 $04]
   4 (+$200): Inhale Wind Set (4 x 8x8 tiles: $09,$0A,$19,$1A)    [Pal 2 $04]
@@ -18,6 +18,7 @@ Block map (streamed during NMI by GustJar_NmiUpload in Bank $34):
   6 (+$300): Blast H1 — Horizontal Billowing Gust Wave B (R)     [Pal 2 $04]
   7 (+$380): Blast V0 — Vertical Crescent Air-Gust Wave A (D)    [Pal 2 $04]
   8 (+$400): Blast V1 — Vertical Billowing Gust Wave B (D)       [Pal 2 $04]
+  9 (+$480): Jar 4 — Front / Down Swollen & Full (Corked/T3)     [Pal 4 $08 / Pal 2 $04]
 
 Palette invariants verified against live ROM global sprite tables ($1BD218 / $1BD290):
   - Held Jar uses ONLY indices {0, 8, 9, 11, 12, 13, 14, 15}:
@@ -126,23 +127,24 @@ JAR_0_SIDE_NORMAL = [
     "................",
 ]
 
-# Block 1: Side Swollen / Bulging (Tier 2/3 pulse or Corked, Facing Right) — compact 12x11 (x=1..12, y=3..13)
-# Nozzle bell stays rock-steady at x=9..12, y=4..12 while ONLY the emerald belly puffs +/-1px!
+# Block 1: Side Swollen / FULL & Pressurized (Tier 2/3 pulse or Corked, Facing Right)
+# Belly swells boldly outward (x=0..8, y=2..14) with expanded taut highlight & bright
+# pressurized glow inside the flared mouth while nozzle bell stays rock-steady at x=9..12!
 JAR_1_SIDE_SWOLLEN = [
     "................",
     "................",
-    "................",
-    "...kkkk.........",
-    "..kgwwgk.kkk....",
-    ".kggwwggkwwyk...",
-    ".koggdygwy0yk...",
-    ".kygddygoy00k...",
-    ".kygddygyo00k...",
-    ".kogddggyo00k...",
-    ".kdddddgyo0yk...",
-    "..kddddkkoook...",
-    "...kkkk..kkk....",
-    "................",
+    "..kkkkk.........",
+    ".kgwwwgk........",
+    "kggwwwggkkkk....",
+    "koggwgygkwwyk...",
+    "kygddgygwywyk...",
+    "kygddgygoyw0k...",
+    "kygddgygyow0k...",
+    "kogddgggyow0k...",
+    "kdddddddgo0yk...",
+    "kddddddkkoook...",
+    ".kddddk..kkk....",
+    "..kkkkk.........",
     "................",
     "................",
 ]
@@ -187,6 +189,27 @@ JAR_3_BACK_UP = [
     "................",
 ]
 
+# Block 9: Front / Down Swollen & FULL (Corked / Tier 3 Primed) — taut bulging 12x12 belly
+# with gleaming specular pressure sheen and luminous core glint inside the circular mouth!
+JAR_4_FRONT_SWOLLEN = [
+    "................",
+    "....kkkkkkkk....",
+    "...kggwwwwggk...",
+    "..kggwwggwggdk..",
+    "..kgdggyyggddk..",
+    "..kgdddddddddk..",
+    "...kkyywwyykk...",
+    "..kyww0ww0wwyk..",
+    "..kyw0wwww0wok..",
+    "..kow00ww00wok..",
+    "...kooywwyook...",
+    "....kkkkkkkk....",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
 # =============================================================================
 # 2. MINISH CAP INHALE WIND SET (Block 4, $200..$27F: 4 distinct 8x8 tiles)
 #    TL = $09 (Horizontal Tapered Speed-Streak, pointing Right; H-flip for Left)
@@ -220,11 +243,11 @@ TILE_0A_V_RIBBON = [
 TILE_19_AIR_CURL = [
     "..TTMM..",
     ".TMWWWM.",
-    "TWWC.TWW",
-    "MWB...MW",
-    "MC.MW.CT",
-    ".CTWT.B.",
-    "..BBT...",
+    "TWWMMWW.",
+    "MWBWWMW.",
+    "MCWWWMCT",
+    ".CMWWCB.",
+    "..TMBB..",
     "........",
 ]
 
@@ -343,15 +366,16 @@ BLAST_V1_BILLOW = [
 ]
 
 BLOCKS: list[tuple[str, list[str], dict[str, int], str]] = [
-    ("jar_0_side_normal",  JAR_0_SIDE_NORMAL,  JAR_LEGEND,  "jar"),
-    ("jar_1_side_swollen", JAR_1_SIDE_SWOLLEN, JAR_LEGEND,  "jar"),
-    ("jar_2_front_down",   JAR_2_FRONT_DOWN,   JAR_LEGEND,  "jar"),
-    ("jar_3_back_up",      JAR_3_BACK_UP,      JAR_LEGEND,  "jar"),
-    ("inhale_wind_set",    INHALE_WIND_SET,    WIND_LEGEND, "wind"),
-    ("blast_h0_crescent",  BLAST_H0_CRESCENT,  WIND_LEGEND, "wind"),
-    ("blast_h1_billow",    BLAST_H1_BILLOW,    WIND_LEGEND, "wind"),
-    ("blast_v0_crescent",  BLAST_V0_CRESCENT,  WIND_LEGEND, "wind"),
-    ("blast_v1_billow",    BLAST_V1_BILLOW,    WIND_LEGEND, "wind"),
+    ("jar_0_side_normal",   JAR_0_SIDE_NORMAL,   JAR_LEGEND,  "jar"),
+    ("jar_1_side_swollen",  JAR_1_SIDE_SWOLLEN,  JAR_LEGEND,  "jar"),
+    ("jar_2_front_down",    JAR_2_FRONT_DOWN,    JAR_LEGEND,  "jar"),
+    ("jar_3_back_up",       JAR_3_BACK_UP,       JAR_LEGEND,  "jar"),
+    ("inhale_wind_set",     INHALE_WIND_SET,     WIND_LEGEND, "wind"),
+    ("blast_h0_crescent",   BLAST_H0_CRESCENT,   WIND_LEGEND, "wind"),
+    ("blast_h1_billow",     BLAST_H1_BILLOW,     WIND_LEGEND, "wind"),
+    ("blast_v0_crescent",   BLAST_V0_CRESCENT,   WIND_LEGEND, "wind"),
+    ("blast_v1_billow",     BLAST_V1_BILLOW,     WIND_LEGEND, "wind"),
+    ("jar_4_front_swollen", JAR_4_FRONT_SWOLLEN, JAR_LEGEND,  "jar"),
 ]
 
 
@@ -409,7 +433,7 @@ def build_4bpp() -> bytes:
     for name, rows, legend, _kind in BLOCKS:
         grid = parse_grid(name, rows, legend)
         out += encode_block_16x16(grid)
-    assert len(out) == 9 * 128 == 0x480, f"Unexpected 4BPP size {len(out)}"
+    assert len(out) == 10 * 128 == 0x500, f"Unexpected 4BPP size {len(out)}"
     return bytes(out)
 
 
@@ -449,17 +473,17 @@ def render_preview(out_png: Path, scale: int = 8) -> None:
             ("Jar0 Side R",    jar_grids["jar_0_side_normal"],  PAL4_RGB, False, False),
             ("Jar0 Side L",    jar_grids["jar_0_side_normal"],  PAL4_RGB, True,  False),
             ("Jar1 Swollen R", jar_grids["jar_1_side_swollen"], PAL4_RGB, False, False),
-            ("Jar2 Front D",   jar_grids["jar_2_front_down"],   PAL4_RGB, False, False),
-            ("Jar3 Back U",    jar_grids["jar_3_back_up"],      PAL4_RGB, False, False),
-            ("Jar0 (Dungeon)", jar_grids["jar_0_side_normal"],  PAL4_RGB, False, False),
+            ("Jar2 Front D",   jar_grids["jar_2_front_down"],    PAL4_RGB, False, False),
+            ("Jar4 Full D",    jar_grids["jar_4_front_swollen"], PAL4_RGB, False, False),
+            ("Jar3 Back U",    jar_grids["jar_3_back_up"],       PAL4_RGB, False, False),
         ]),
-        ("Row 2: Held Jar - OAM Pal 2 ($04) Tier 3 / Blast Peak Glow", (48, 52, 68, 255), [
-            ("Glow Side R",    jar_grids["jar_0_side_normal"],  PAL2_LW_RGB, False, False),
-            ("Glow Swollen",   jar_grids["jar_1_side_swollen"], PAL2_LW_RGB, False, False),
-            ("Glow Front D",   jar_grids["jar_2_front_down"],   PAL2_LW_RGB, False, False),
-            ("Glow Back U",    jar_grids["jar_3_back_up"],      PAL2_LW_RGB, False, False),
-            ("Inhale $09-$1A", wind_grids["inhale_wind_set"],   PAL2_LW_RGB, False, False),
-            ("Inhale (Grass)", wind_grids["inhale_wind_set"],   PAL2_LW_RGB, False, False),
+        ("Row 2: Held Jar - OAM Pal 2 ($04) Tier 3 / Full Glow", (48, 52, 68, 255), [
+            ("Glow Side R",    jar_grids["jar_0_side_normal"],   PAL2_LW_RGB, False, False),
+            ("Glow Swollen",   jar_grids["jar_1_side_swollen"],  PAL2_LW_RGB, False, False),
+            ("Glow Full D",    jar_grids["jar_4_front_swollen"], PAL2_LW_RGB, False, False),
+            ("Glow Back U",    jar_grids["jar_3_back_up"],       PAL2_LW_RGB, False, False),
+            ("Inhale $09-$1A", wind_grids["inhale_wind_set"],    PAL2_LW_RGB, False, False),
+            ("Inhale (Grass)", wind_grids["inhale_wind_set"],    PAL2_LW_RGB, False, False),
         ]),
         ("Row 3: Minish Cap Blast Waves - Light World / Dungeon OAM Pal 2 ($04)", (54, 70, 82, 255), [
             ("Blast H0 (R)",   wind_grids["blast_h0_crescent"], PAL2_LW_RGB, False, False),
@@ -519,7 +543,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_bytes(data)
-    print(f"Wrote {args.out} ({len(data)} bytes = ${len(data):04X}, 9 x 16x16 blocks)")
+    print(f"Wrote {args.out} ({len(data)} bytes = ${len(data):04X}, 10 x 16x16 blocks)")
     return 0
 
 
