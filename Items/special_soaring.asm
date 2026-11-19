@@ -61,6 +61,18 @@ endif
   LDY.b #$04
   LDA.b #$27
   JSL AddTravelBird
+  ; Guarantee the Travel Bird pickup animation spawns even when all 5 ancilla
+  ; slots ($0C4A..$0C4E) are temporarily busy with transient FX (sparkles,
+  ; splashes, grass debris): evict slot 4 and retry once if $27 did not spawn.
+  LDX.b #$04
+  .verify_bird
+    LDA.l $7E0C4A, X : CMP.b #$27 : BEQ .bird_ready
+    DEX : BPL .verify_bird
+  LDA.b #$00 : STA.l $7E0C4E
+  LDY.b #$04
+  LDA.b #$27
+  JSL AddTravelBird
+  .bird_ready
   LDA.b #$00 : STA.l $7E03F8
   .done
   RTL
@@ -79,6 +91,12 @@ SpecialSoaring_CancelCleanup:
       LDA.b #$00 : STA.l $7E0C4A, X
     .next_slot
     DEX : BPL .clear_bird
+  ; If the Travel Bird grabbed Link before the 128-frame Ocarina timer ($03F0)
+  ; finished (e.g. near the left screen edge), restore full BGM volume ($F3).
+  LDA.l $7E03F0 : BEQ .no_bgm_restore
+    LDA.l $7E012C : BNE .no_bgm_restore
+      LDA.b #$F3 : STA.l $7E012C
+  .no_bgm_restore
   LDA.b #$00
   STA.l SpecialSoaring_LoadStep
   STA.b $4B                             ; Link visible again
@@ -219,6 +237,17 @@ endif
   LDA.b #$F3 : STA.w $012C
   .music_done
   STZ.w $0132
+  ; Guarantee SpawnLandingDuck ($0AB982 -> AncillaAdd_Duck_drop_off) always has
+  ; a free slot and no stray $27, preventing any hidden/locked landing softlock.
+  PHX
+  LDX.b #$04
+  .clear_landing_bird
+    LDA.l $7E0C4A, X : CMP.b #$27 : BNE .next_landing_slot
+      LDA.b #$00 : STA.l $7E0C4A, X
+    .next_landing_slot
+    DEX : BPL .clear_landing_bird
+  LDA.b #$00 : STA.l $7E0C4E
+  PLX
   ; Preserve Module $08's clean HDMA mask ($9B) for SpawnLandingDuck's restore.
   LDA.b $9B : STA.l $7EC229
   ; Ensure Bird-carry locks stay armed while FluteMenu_FadeInAndQuack brightens

@@ -178,12 +178,19 @@ def main():
             bird_calls = []
 
             def stub_bird(fx):
-                bird_calls.append((fx.cpu.a & 0xFF, fx.cpu.y & 0xFF))
+                aid = fx.cpu.a & 0xFF
+                max_slot = fx.cpu.y & 0xFF
+                bird_calls.append((aid, max_slot))
+                for slot in range(max_slot, -1, -1):
+                    if fx.get(0x0C4A + slot) == 0:
+                        fx.put(0x0C4A + slot, aid)
+                        break
 
             res = run_until(f, open_addr, db=0x07, long_return=True, jsl_stubs={ADD_TRAVEL_BIRD: stub_bird})
             assert res == "RETURN"
             if opens:
                 assert bird_calls == [(0x27, 0x04)], (hex(source), bird_calls)
+                assert f.get(0x0C4E) == 0x27
                 assert f.get(LOAD_STEP_WRAM) == 0x00 and f.get(0x037A) == 0x00 and f.get(0x03F8) == 0x00
                 # Does NOT shortcut directly into Module $0E — Bird carries Link first!
                 assert f.get(0x10) == 0x09 and f.get(0x11) == 0x00
@@ -192,6 +199,33 @@ def main():
                 assert f.get(LOAD_STEP_WRAM) == 0x02
             cases.append(f"open-bird-{source:02x}")
             f.close()
+
+        # Full ancilla table ($0C4A..$0C4E all busy with transient FX $0E):
+        # SpecialSoaring_Open must evict slot 4 and retry AddTravelBird so the
+        # Travel Bird pickup animation ALWAYS spawns.
+        f = fresh(area=0x83, module=0x09, sub=0x00, step=0x00)
+        for slot in range(5):
+            f.put(0x0C4A + slot, 0x0E)
+        bird_calls = []
+
+        def stub_bird_full(fx):
+            aid = fx.cpu.a & 0xFF
+            max_slot = fx.cpu.y & 0xFF
+            bird_calls.append((aid, max_slot, [fx.get(0x0C4A + s) for s in range(5)]))
+            for slot in range(max_slot, -1, -1):
+                if fx.get(0x0C4A + slot) == 0:
+                    fx.put(0x0C4A + slot, aid)
+                    break
+
+        res = run_until(f, open_addr, db=0x07, long_return=True, jsl_stubs={ADD_TRAVEL_BIRD: stub_bird_full})
+        assert res == "RETURN"
+        assert len(bird_calls) == 2, bird_calls
+        assert bird_calls[0][2] == [0x0E, 0x0E, 0x0E, 0x0E, 0x0E]
+        assert bird_calls[1][2] == [0x0E, 0x0E, 0x0E, 0x0E, 0x00]
+        assert [f.get(0x0C4A + s) for s in range(5)] == [0x0E, 0x0E, 0x0E, 0x0E, 0x27]
+        assert f.get(0x03F8) == 0x00
+        cases.append("open-full-ancilla-evicts-slot4-and-spawns-bird")
+        f.close()
 
         # Duplicate Travel Bird guard across all 5 ancilla slots ($0C4A..$0C4E)
         for slot in range(5):
@@ -213,7 +247,7 @@ def main():
                 f, open_addr, db=0x07, long_return=True,
                 jsl_stubs={
                     horse_dismount: lambda fx: (events.append("dismount"), fx.put(0x02B2, 0x00)),
-                    ADD_TRAVEL_BIRD: lambda fx: events.append("bird"),
+                    ADD_TRAVEL_BIRD: lambda fx: (events.append("bird"), fx.put(0x0C4E, 0x27)),
                 },
             )
             assert res == "RETURN" and events == ["dismount", "bird"], events
@@ -409,8 +443,25 @@ def main():
             assert f.get(0x0C4C) == 0x00 and f.get(LOAD_STEP_WRAM) == 0x00
             for addr in (0x4B, 0x5D, 0x02DA, 0x02E4, 0x037B, 0x02F9, 0x0300, 0x0301, 0x037A, 0x03F0, 0x0FC1):
                 assert f.get(addr) == 0x00, (tag, hex(addr), hex(f.get(addr)))
+            # Because $03F0 was still non-zero (early grab near left edge), full BGM volume ($F3) is restored.
+            assert f.get(0x012C) == 0xF3, (tag, hex(f.get(0x012C)))
             assert (f.get(0x3A) & 0x40) == 0x00
             cases.append(f"sw-cancel-cleanup-{tag}")
+            f.close()
+
+        # Cancel after $03F0 already finished (normal case): does not clobber $012C;
+        # and if $012C already has a queued track switch while $03F0 != 0, preserves it.
+        for timer, init_12c, exp_12c, subtag in (
+            (0x00, 0x00, 0x00, "timer-zero-leaves-12c"),
+            (0x40, 0x07, 0x07, "queued-song-preserved"),
+        ):
+            f = fresh(area=0x83, module=0x0E, sub=0x0A, step=0x05)
+            f.put(0x03F0, timer)
+            f.put(0x012C, init_12c)
+            f.put(0xF4, 0x80)
+            assert run_until(f, 0x0AB78F, stop_addrs=(0x0AB79D,)) == "RETURN"
+            assert f.get(0x012C) == exp_12c and f.get(0x03F0) == 0x00
+            cases.append(f"sw-cancel-bgm-{subtag}")
             f.close()
 
         # SW confirm: A ($F6=$80) and START ($F4=$10)
@@ -554,9 +605,13 @@ def main():
             assert f.get(0x10) == 0x0E and f.get(0x11) == 0x0A and f.get(0x0200) == 0x07
 
             # Frame 3: runs Module08 Sub 2 -> loaded -> hands off to FluteMenu_FadeInAndQuack ($0200 = 9)!
+            # Seed stray $27 + occupied slot 4 to prove landing duck slot is guaranteed free.
+            f.put(0x0C4B, 0x27)
+            f.put(0x0C4E, 0x0E)
             assert run_until(f, 0x0AB8C5, stop_addrs=(0x0ABC54, 0x0AB8C9), jsl_stubs=stubs) == "RETURN"
             assert mod08_subs == [0, 1, 2], (label, mod08_subs)
             assert f.get(LOAD_STEP_WRAM) == 0x00
+            assert f.get(0x0C4B) == 0x00 and f.get(0x0C4E) == 0x00
             assert f.get(0x10) == 0x0E and f.get(0x11) == 0x0A and f.get(0x0200) == 0x09
             assert f.get(0x010C) == 0x09 and f.get(0x13) == 0x00 and f.get(0xB0) == 0x00
             assert f.get(0x7EC229) == 0x00  # clean HDMA mask saved for SpawnLandingDuck

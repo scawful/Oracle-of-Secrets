@@ -242,11 +242,12 @@ LinkItem_NewFlute:
   LDA.b #$3E : STA.w $012E
 
   ; Are we indoors?
-  LDA.b $1B : BNE .return
+  LDA.b $1B : BNE .early_return
 
   ; Are we in the dark world? Then become Moosh form.
   LDA.b $8A : AND #$40 : BEQ .light_world
     JSL Link_TransformMoosh
+  .early_return
     RTS
   .light_world
 
@@ -258,7 +259,10 @@ if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
     RTS
   .normal_soaring
 else
-  LDA.b $10 : CMP.b #$0B : BEQ .return
+  LDA.b $10 : CMP.b #$0B : BEQ .early_return
+  LDA.b $8A : CMP.b #$80 : BCC .normal_soaring
+  CMP.b #$C0 : BCC .early_return
+  .normal_soaring
 endif
 
   LDX.b #$04
@@ -266,7 +270,7 @@ endif
   .next_ancillary_slot
 
   ; Is there already a travel bird effect in this slot?
-  LDA $0C4A, X : CMP.b #$27 : BEQ .return
+  LDA $0C4A, X : CMP.b #$27 : BEQ .early_return
 
   ; If there isn't one, keep checking.
   DEX : BPL .next_ancillary_slot
@@ -306,9 +310,21 @@ endif
     RTS
   .has_destination
 
+  ; Clear stale item-anim latch ($037A) so MaybeUploadBirdGraphicsToOam always
+  ; streams Bird CHR, and evict slot 4 if all 5 ancilla slots are busy.
+  STZ.w $037A
   LDY.b #$04
   LDA.b #$27
   JSL AddTravelBird
+  LDX.b #$04
+  .verify_lw_bird
+    LDA.w $0C4A, X : CMP.b #$27 : BEQ .lw_bird_ready
+    DEX : BPL .verify_lw_bird
+  STZ.w $0C4E
+  LDY.b #$04
+  LDA.b #$27
+  JSL AddTravelBird
+  .lw_bird_ready
   STZ $03F8
 
   .return
