@@ -30,8 +30,7 @@ MenuFlow_Cost:
 
 ; ---------------------------------------------------------
 ; State $01 (Menu_UploadRight). Opens a new menu: clears the cross.
-; Preserves Ocarina Soaring on the left half when Menu_SoaringRequested
-; triggers; opens Map on pending 3 from the field map; otherwise reopens
+; Opens Map on pending 3 from the field map; otherwise reopens
 ; the last visited page from MenuFlow_LastPage (0 = Items on left with
 ; Quest behind it, 1 = Quest, 2 = Equipment, 3 = Map on right with $E4=$0100).
 MenuFlow_UploadRight:
@@ -39,9 +38,6 @@ MenuFlow_UploadRight:
   SEP #$30
   LDA.b #$00
   STA.l MenuFlow_CrossRow
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  JSL Menu_SoaringRequested_Long : BCS .items_left
-endif
   LDA.l MenuMapTravel_Pending : CMP.b #$03 : BEQ .map
   LDA.l MenuFlow_LastPage
   CMP.b #$01 : BEQ .quest

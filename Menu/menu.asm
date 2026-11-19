@@ -62,9 +62,6 @@ incsrc "menu_palette.asm"
 !MENU_STATE_SONG_MENU           = $0D
 !MENU_STATE_JOURNAL             = $0E
 !MENU_STATE_SUBMENU_RETURN      = $0F
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-!MENU_STATE_SPECIAL_SOARING     = $10
-endif
 !MENU_STATE_SPOIL_POPUP         = $11
 
 ; =========================================================
@@ -110,17 +107,9 @@ endif
     dw Menu_SongMenu           ; 0D
     dw Menu_Journal            ; 0E
     dw Menu_SubmenuReturn      ; 0F
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-    dw Menu_SpecialSoaring     ; 10
-else
-    dw Menu_HelpPopup          ; 10 (pad slot when soaring off)
-endif
+    dw Menu_HelpPopup          ; 10 (reserved pad slot; soaring uses Mode 7 map)
     dw Menu_SpoilPopup         ; 11 (Map & Spoils detail/use popup)
 }
-
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  incsrc "special_soaring_menu.asm"
-endif
 
 ; =========================================================
 ; 00 MENU INIT GRAPHICS
@@ -179,19 +168,10 @@ Menu_UploadRight:
 
 Menu_UploadLeft:
 {
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  JSR Menu_SoaringRequested : BCC .ordinary_left
-    JSR Menu_DrawSoaring
-    BRA .left_palette
-  .ordinary_left
-endif
   JSR Menu_DrawBackground
   JSR DrawYItems
   JSR Menu_DrawSelect
   JSR Menu_DrawItemName
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  .left_palette
-endif
   ; INSERT PALETTE -------
 
   REP #$30
@@ -488,9 +468,6 @@ Menu_Exit:
   SEP #$20 ; Restore M=8 before return (REP #$20 at line 432 set M=16)
   JSL SwordSlots_ExitReload            ; heavy/story swap made in Equipment
   JSL Supply_ProcessPendingExitAction
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  JSL SpecialSoaring_Complete
-endif
   JSL MenuMapTravel_ExitAction       ; Map request from the Map page
   RTS
 }
@@ -1137,10 +1114,6 @@ incsrc "menu_map_names.asm"
     JSR Menu_DrawBackground : RTL
   Menu_Page3_IsMaskItem_Long:
     JSR Menu_Page3_IsMaskItem : RTL
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  Menu_SoaringRequested_Long:
-    JSR Menu_SoaringRequested : RTL
-endif
   ; Long wrappers for Menu/menu_cursor_flow.asm (bank $2B); DBR stays $2D.
   Menu_Quest_Init_Long:
     JSR Menu_Quest_Init : RTL
