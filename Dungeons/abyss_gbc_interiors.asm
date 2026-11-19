@@ -1,8 +1,9 @@
 ; =========================================================
 ; Eon Abyss GBC interiors.
 ;
-; Indoors in the Abyss ($7EF3CA != 0), rooms listed in AbyssGbc_RoomStyle draw
-; GBC-style art:
+; Indoors in the Eon Abyss ($7EF3CA == $40), rooms listed in AbyssGbc_RoomStyle
+; draw GBC-style art; Kalyxo Light World ($00) and Special Overworld ($80) stay
+; 100% vanilla SNES even for shared room IDs:
 ;   1. AbyssGbc_RemapBg runs inside GfxSheet_GetPtr_BgCA after the normal table
 ;      lookup and swaps the BG sheet pointer for the style's GBC copy.
 ;   2. Palettes_Load_UnderworldSet ($1BEE74) gets a wrapper; after the vanilla
@@ -58,7 +59,7 @@ org $5A8000
 AbyssGbc_RemapBg:
 {
   LDA.l $7E001B : BEQ .done
-  LDA.l $7EF3CA : BEQ .done
+  LDA.l $7EF3CA : CMP.b #$40 : BNE .done
   PHX
   REP #$20
   LDA.l $7E00A0 : CMP.w #$0128 : BCS .pop
@@ -141,7 +142,7 @@ AbyssGbc_PalWrap:
 AbyssGbc_GetStyle:
 {
   LDA.l $7E001B : BEQ .none
-  LDA.l $7EF3CA : BEQ .none
+  LDA.l $7EF3CA : CMP.b #$40 : BNE .none
   REP #$30
   LDA.l $7E00A0 : CMP.w #$0128 : BCS .wide_none
   TAX
