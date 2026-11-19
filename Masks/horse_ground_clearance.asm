@@ -611,10 +611,12 @@ Horse_IsFenceTile16:
   RTS
 }
 
-; In: M=16, X=8, DP $04 = Tile16. Out: C=1 if fence or rail tile $0333/$0335 promotes prio 3.
+; In: M=16, X=8, DP $04 = Tile16. Out: C=1 if fence, long-gap (e.g. waterfall $02B8),
+; or rail tile $0333/$0335 promotes prio 3 so Epona's body stays above high-priority gaps.
 Horse_IsPriorityFenceTile16:
 {
   JSR Horse_IsFenceTile16 : BCS .hit
+  JSR HorseLong_IsGap : BCS .hit
   LDA.b $04
   CMP.w #$0333 : BEQ .hit
   CMP.w #$0335 : BEQ .hit
