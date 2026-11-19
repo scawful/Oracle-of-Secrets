@@ -31,11 +31,28 @@
 ; Latched or refused: drops the JSL return and JMLs to $07D159, the old BNE
 ; target (BRL .clear_tall_grass_flag).
 ; Entry M=8, X=8, DB=$07. Clobbers A. Keeps X, Y and the M/X widths.
+;
+; Gates:
+;   - LW $02 -> DW $42 (Lupo Mountain): requires D5 crystal (!Crystal_D5_GlaciaEstate).
+;   - LW $0B -> DW $4B (Kalyxo Castle -> Fortress of Secrets breach): requires
+;     FinaleBreach_IsUnlocked (Maku Seed / Fortress opened / Fortress cleared).
+;   - DW $4B -> LW $0B and all other pads (e.g. LW $25 -> DW $65): always allowed.
 LupoPadGate_Check:
 {
   LDA.l NOWARP : BNE .no_warp                         ; vanilla: latched
-  LDA.b $8A : CMP.b #$02 : BNE .warp                  ; only the LW $02 pad
+  LDA.b $8A
+  CMP.b #$02 : BEQ .check_lupo                        ; LW $02 -> DW $42
+  CMP.b #$0B : BEQ .check_breach                      ; LW $0B -> DW $4B
+  BRA .warp                                           ; DW $4B and all other pads stay vanilla
+
+  .check_lupo
   LDA.l Crystals : AND.b #!Crystal_D5_GlaciaEstate : BNE .warp
+  BRA .refuse
+
+  .check_breach
+  JSL FinaleBreach_IsUnlocked : BCS .warp
+
+  .refuse
     LDA.b #$01 : STA.l NOWARP                         ; hold until Link steps off
     LDA.b #$3C : STA.l SFX2                           ; SFX2.3C error beep
   .no_warp

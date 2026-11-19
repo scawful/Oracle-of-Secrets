@@ -139,7 +139,7 @@ LoadDarkWorldIntro:
 pushpc
 
 ; Module05_LoadFile
-org $028192 : JML LoadCheckpointOrWorld ; @hook module=Overworld name=LoadCheckpointOrWorld kind=jml target=LoadCheckpointOrWorld expected_m=8 expected_x=8
+org $028192 : JML FinaleContinue_LoadCheckpointOrWorld ; @hook module=Overworld name=LoadCheckpointOrWorld kind=jml target=FinaleContinue_LoadCheckpointOrWorld expected_m=8 expected_x=8
 assert pc() == $028196
 
 ; [W3 owner: Overworld] USDASM Module05_LoadFile ($0281E2): check GoldstarOwned ($7EF3A9 >= #$01, matching abyss_spawn_menu.asm) for mountain spawn so Hookshot/Switch Hook trade-back stays stable.
@@ -162,6 +162,7 @@ org $06F962 : db $90       ; snitch guard death song: BNE -> BCC (GameState >= 2
 
 pullpc
   incsrc "Overworld/storm.asm"
+  incsrc "Overworld/finale_breach_portal.asm"
   incsrc "Overworld/lupo_pad_gate.asm"
 
 LoadOverworldPitAreas:
@@ -169,8 +170,16 @@ LoadOverworldPitAreas:
   LDA $8A : CMP.b #$0F : BEQ .allow_transition
             CMP.b #$11 : BEQ .allow_transition
             CMP.b #$23 : BEQ .allow_transition
-            CMP.b #$4D : BEQ .allow_transition
+            CMP.b #$4D : BEQ .check_sanctum_gate
     SEC ; fall in the pit
+    RTL
+  .check_sanctum_gate
+  ; DW $4D (Final Sanctum pit -> Ent $7B -> Room $0002 Kydreeok):
+  ; refuse early entry until Fortress of Secrets is cleared (Dark Link sets
+  ; OOSPROG bit 7 = !Story_FortressComplete).
+  LDA.l OOSPROG : AND.b #!Story_FortressComplete : BNE .allow_transition
+    LDA.b #$3C : STA.l SFX2 ; SFX2.$3C error buzz
+    SEC ; vanilla pit bounce-back (TakeDamageFromPit at $0794DF)
     RTL
   .allow_transition
   CLC ; allow transition

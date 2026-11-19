@@ -655,6 +655,9 @@ Beast_Dead:
   LDA.w SprTimerA, X : BNE .run
     JSR Ganondorf_StopQuake
     LDA.b #$02 : STA.l GanondorfFight
+if !DISABLE_OVERWORLD == 0
+    LDA.b #$00 : STA.l FinaleContinueCheckpoint
+endif
     STZ.w SprState, X
     RTS
   .run
@@ -877,7 +880,95 @@ Beast_Draw:
   .shadow
   JSL Sprite_DrawShadow
   .skip
+  JMP Beast_DrawSafeRing
+}
+
+; =========================================================
+; Farore's Safe-Center Glow Ring (Phase 2/3 malice phases).
+; Renders 4 subtle pulsing 8x8 emerald/gold sparkles (Pal 5, low priority
+; behind Link, Page 0 vanilla sparkle tiles $83/$C7/$80/$B7) at the four
+; inner corners of the active safe center inside Malice Stage 1 / 2.
+; Allocates 4 dedicated OAM entries from Region B (below Link) and enforces
+; strict OAM low-table bounds ($0800..$09F0 -> last entry <= $09FC).
+; Keeps X.
+Beast_DrawSafeRing:
+{
+  LDA.w SprAction, X
+  CMP.b #!Beast_ActEnter : BEQ .early_done
+  CMP.b #!Beast_ActDead : BEQ .early_done
+  JSR Beast_GetPhase
+  CPY.b #$00 : BEQ .early_done ; off in Phase 1 (no inner malice bands)
+
+  ; Y = 1 (Phase 2 / Stage 1) -> offset 0; Y = 2 (Phase 3 / Stage 2) -> offset 4.
+  DEY : TYA : ASL A : ASL A : STA.b $0C
+
+  LDA.b #$10 : JSL OAM_AllocateFromRegionB
+  REP #$20
+  LDA.b $90
+  CMP.w #$0800 : BCC .oob
+  CMP.w #$09F1 : BCS .oob ; 4 entries (16B) must stay inside $0800..$09FF (<= $09FC)
+  SEP #$20
+  BRA .ready
+  .oob
+  SEP #$20
+  .early_done
   RTS
+
+  .ready
+  ; Base twinkle phase = ($1A >> 3) & 3 (gentle 8-frame pulse cadence).
+  LDA.b $1A : LSR #3 : AND.b #$03 : STA.b $0D
+
+  ; Quadrant high bytes from the beast's room position.
+  LDA.w SprXH, X : STA.b $05
+  LDA.w SprYH, X : STA.b $0B
+
+  PHX
+  LDY.b #$00 ; OAM byte offset (0, 4, 8, 12)
+  LDX.b #$00 ; corner index (0..3)
+  .corner
+    PHX
+    TXA : CLC : ADC.b $0C : TAX
+    LDA.w .corner_x, X : STA.b $04
+    LDA.w .corner_y, X : STA.b $0A
+    REP #$20
+    LDA.b $04 : SEC : SBC.b $E2 : STA.b $06 ; 16-bit screen X
+    LDA.b $0A : SEC : SBC.b $E8 : STA.b $08 ; 16-bit screen Y
+    LDA.b $06 : CLC : ADC.w #$0008 : CMP.w #$0108 : BCS .off
+    LDA.b $08 : CLC : ADC.w #$0008 : CMP.w #$00F0 : BCS .off
+    SEP #$20
+    LDA.b $06 : STA.b ($90), Y : INY
+    LDA.b $08 : STA.b ($90), Y : INY
+    LDA $01, S ; corner index (0..3)
+    CLC : ADC.b $0D : AND.b #$03 : TAX
+    LDA.w .sparkle_chr, X : STA.b ($90), Y : INY
+    LDA.b #$1A : STA.b ($90), Y ; Pal 5 emerald/gold ($0A), low prio ($10), Page 0
+    PHY
+    TYA : LSR #2 : TAY
+    LDA.b $07 : AND.b #$01 : STA.b ($92), Y ; small 8x8 tile (bit 1 = 0), X8 bit 0
+    PLY : INY
+    BRA .next
+    .off
+    SEP #$20
+    INY
+    LDA.b #$F0 : STA.b ($90), Y ; hide off-screen corner cleanly
+    INY : INY : INY
+    .next
+    PLX
+    INX : CPX.b #$04 : BCC .corner
+  PLX
+  RTS
+
+  ; Inner safe-center sanctuary corners (low bytes; high bytes from SprXH/SprYH):
+  ;   Phase 2 (Malice Stage 1 safe box $138..$1C7 x $048..$0C7): $3A/$BE x $4A/$BE
+  ;   Phase 3 (Malice Stage 2 safe box $148..$1B7 x $058..$0B7): $4A/$AE x $5A/$AE
+  .corner_x
+    db $3A, $BE, $3A, $BE ; Phase 2 TL, TR, BL, BR
+    db $4A, $AE, $4A, $AE ; Phase 3 TL, TR, BL, BR
+  .corner_y
+    db $4A, $4A, $BE, $BE ; Phase 2 TL, TR, BL, BR
+    db $5A, $5A, $AE, $AE ; Phase 3 TL, TR, BL, BR
+  .sparkle_chr
+    db $83, $C7, $80, $B7 ; vanilla Page 0 8x8 sparkle frames (GarnishSparkle)
 }
 
 ; Pulsing energy glint at the raised trident tip during Beast_Throw wind-up

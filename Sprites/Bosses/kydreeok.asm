@@ -757,6 +757,7 @@ Sprite_Kydreeok_Main:
     LDA.b #$60 : STA.w FinaleBeat
     JSR Kydreeok_SaveKill ; kill flag (QUEUE205)
     JSR Kydreeok_OpenPlate
+    JSR Kydreeok_PostHealRestBeat
     STZ.w SprState, X
     RTS
   }
@@ -854,6 +855,57 @@ Kydreeok_OpenPlate:
   .dy : db $A0, $A0, $B0, $B0
 }
 
+; Post-Song-of-Healing rest beat (Kydreeok_Gone):
+; Refills Link's hearts to max ($7EF36D = $7EF36C) and magic to full ($7EF36E = #$80),
+; plays refill chime (SFX2.$0F), arms the volatile Finale continue checkpoint
+; (FinaleContinueCheckpoint = #$A5), and spawns 2 healing fairies (Sprite $E3) gently
+; left/right of Link (safe if all sprite slots are full).
+; In: M=8 X=8, X = Kydreeok slot. Preserves X.
+Kydreeok_PostHealRestBeat:
+{
+  LDA.l MaxHealth : STA.l CurrentHealth
+  LDA.b #$80 : STA.l MagicPower
+  LDA.b #$0F : STA.l SFX2
+if !DISABLE_OVERWORLD == 0
+  LDA.b #!FinaleContinue_Magic : STA.l FinaleContinueCheckpoint
+endif
+  LDA.b #$00 : JSR Kydreeok_SpawnRestFairy ; left of Link (-24px)
+  LDA.b #$01 : JSR Kydreeok_SpawnRestFairy ; right of Link (+24px)
+  RTS
+}
+
+; In: A = 0 (left fairy, -$18) or 1 (right fairy, +$18). Preserves X.
+Kydreeok_SpawnRestFairy:
+{
+  PHA
+  LDA.b #$E3
+  JSL Sprite_SpawnDynamically : BPL .spawned
+    PLA
+    RTS
+  .spawned
+  PLA : PHA
+  REP #$20
+  AND.w #$0001 : BNE .right
+    LDA.b $22 : SEC : SBC.w #$0018
+    BRA .store_x
+  .right
+    LDA.b $22 : CLC : ADC.w #$0018
+  .store_x
+  SEP #$20
+  STA.w SprX, Y : XBA : STA.w SprXH, Y
+  REP #$20
+  LDA.b $20 : SEC : SBC.w #$0008
+  SEP #$20
+  STA.w SprY, Y : XBA : STA.w SprYH, Y
+  LDA.b $EE : STA.w SprFloor, Y
+  LDA.b #$0C : STA.w SprHeight, Y
+  LDA.b #$18 : STA.w SprTimerE, Y ; 24-frame grace before Fairy_Prancing auto-absorb
+  PLA
+  STA.w SprFrame, Y               ; alternating wing flap phase (0/1)
+  EOR.b #$01 : STA.w SprMiscC, Y  ; matching SpritePrep_Fairy
+  RTS
+}
+
 ; Kill flag (QUEUE205). Same convention as the other custom bosses
 ; (Core/sprite_macros.asm SetBossDefeated, BossPrep_DefeatedRemnant): the
 ; room's boss bit, live in $0403 bit 7 and saved in the room word at
@@ -885,6 +937,9 @@ Kydreeok_Remnant:
   LDA.b $1C : AND.b #$FE : STA.b $1C
   LDA.b $10 : CMP.b #$07 : BNE .wait
   LDA.b $11 : BNE .wait
+if !DISABLE_OVERWORLD == 0
+    LDA.b #!FinaleContinue_Magic : STA.l FinaleContinueCheckpoint
+endif
     JSR Kydreeok_OpenPlate
     JSL BossDefeated_Remnant
   .wait
