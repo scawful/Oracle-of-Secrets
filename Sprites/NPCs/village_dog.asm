@@ -35,13 +35,25 @@
 Sprite_VillageDog_Long:
 {
   PHB : PHK : PLB
+  ; While carried ($0A), Sprite_CheckActive returns CLC (requires SprState == $09),
+  ; so update the compact overhead pose here before drawing to prevent both
+  ; ground-AI drift and a 1-frame flash of wag overhang on lift frame 0.
+  LDA.w SprState, X : CMP.b #$0A : BNE .not_carried_prep
+    LDA.w SprFreeze : ORA.b $11 : BNE .not_carried_prep
+      JSR Dog_UpdateCarried
+  .not_carried_prep
   LDA.w WORLDFLAG : BEQ .village
     JSR Sprite_EonDog_Draw
-    JMP .shadow
+    BCS .after_draw
+    BRA .maybe_shadow
   .village
   JSR Sprite_VillageDog_Draw
   BCS .after_draw
-  .shadow
+  .maybe_shadow
+  ; Skip shadow while carried ($0A) so vanilla Sprite_DrawShadow never emits a
+  ; tile beneath Link or overflows the 4-tile Region C allocation on lift frames
+  ; ($7FFA1C = 0..2).
+  LDA.w SprState, X : CMP.b #$0A : BEQ .after_draw
   JSL Sprite_DrawShadow
   .after_draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -133,11 +145,62 @@ Dog_PlayAnim:
   .wait  : db 8,  8, 6, 6, 8, 8,  4,  4
 }
 
+; Clean carried overhead pose (SprState == #$0A): freeze ground motion, clear
+; SprGfx ($0DC0,X) so $0DC0+$0D90 stays in range, and select a compact pose
+; with max y_offset <= 0 matching Link's facing ($2F). Preserves X/Y.
+Dog_UpdateCarried:
+{
+  STZ.w SprXSpeed, X
+  STZ.w SprYSpeed, X
+  STZ.w SprMiscD, X
+  STZ.w SprGfx, X
+  ; If re-lifted mid-air out of Dog_Tossed ($09), clear SprAction so the next
+  ; throw still enters the fresh-toss handler.
+  LDA.w SprAction, X : CMP.b #$09 : BNE .action_ok
+    STZ.w SprAction, X
+  .action_ok
+  LDA.w WORLDFLAG : BEQ .village
+    ; Eon Dog draw table only has frames 0..3 (0/1 left, 2/3 right).
+    LDA.b $2F : CMP.b #$06 : BEQ .eon_right
+      LDA.b $1A : AND.b #$08 : BEQ .eon_l0
+        LDA.b #$01 : BRA .store
+      .eon_l0
+      LDA.b #$00 : BRA .store
+    .eon_right
+      LDA.b $1A : AND.b #$08 : BEQ .eon_r0
+        LDA.b #$03 : BRA .store
+      .eon_r0
+      LDA.b #$02 : BRA .store
+  .village
+  LDA.b $2F
+  CMP.b #$04 : BEQ .face_left
+  CMP.b #$06 : BEQ .face_right
+    LDA.b #$08 ; Compact sitting puppy between Link's raised hands (y_offset = 0)
+    BRA .store
+  .face_left
+    LDA.b $1A : AND.b #$08 : BEQ .left_f0
+      LDA.b #$03 : BRA .store ; Compact left trot/kick frame 3 (max y_offset = 0)
+    .left_f0
+    LDA.b #$02 : BRA .store   ; Compact left trot/kick frame 2 (max y_offset = 0)
+  .face_right
+    LDA.b $1A : AND.b #$08 : BEQ .right_f0
+      LDA.b #$0A : BRA .store ; Compact right frame 10 (max y_offset = 0; never 6/7)
+    .right_f0
+    LDA.b #$05                ; Compact right frame 5 (max y_offset = 0; never 6/7)
+  .store
+  STA.w SprFrame, X
+  RTS
+}
+
 Sprite_VillageDog_Main:
 {
   JSL RichardDog_Main : BCC .richard_vanilla ; Overworld/richard_quest.asm
     RTS
   .richard_vanilla
+  LDA.w SprState, X : CMP.b #$0A : BNE .not_carried
+    JSR Dog_UpdateCarried
+    RTS
+  .not_carried
   ; Bug fix (2026-09-26 playtest): vanilla CarriedSprite_CheckForThrow
   ; (usdasm bank_06 $06DF6D) restores SprState to 9, sets SprTimerF ($0F80,X,
   ; Z velocity) to +4 and SprXSpeed/SprYSpeed to a pot-throw speed, and
@@ -586,7 +649,12 @@ Sprite_VillageDog_Draw:
 
   .onscreen
   SEP   #$20
-  JSL   Sprite_OAM_AllocateDeferToPlayer
+  LDA.w SprState, X : CMP.b #$0A : BNE .alloc_defer
+    LDA.b #$10 : JSL OAM_AllocateFromRegionC ; Carried: 4 body tiles above Link
+    BRA .alloc_done
+  .alloc_defer
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
   LDA.w SprSubtype, X : BEQ .stray_mask
     STZ.b $0C
     JSL   RichardDog_PaletteMask ; $0C = Richard palette XOR ($04)
@@ -594,6 +662,12 @@ Sprite_VillageDog_Draw:
   .stray_mask
     LDA.w SprMiscG, X : STA.b $0C
   .have_mask
+  ; While carried ($0A), match Link's BG priority ($20 on layer 0, $30 on layer 1)
+  ; so Link and the dog pass behind roofs/canopies together.
+  LDA.w SprState, X : CMP.b #$0A : BNE .pri_done
+    LDA.w SprFloor, X : BNE .pri_done
+      LDA.b $0C : ORA.b #$10 : STA.b $0C ; XOR $10 turns pri 3 ($30) into pri 2 ($20)
+  .pri_done
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY ; Animation Frame
   LDA   .start_index,     Y : STA $06
@@ -737,8 +811,21 @@ Sprite_VillageDog_Draw:
 
 Sprite_EonDog_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSL Sprite_PrepOamCoord : BCC .onscreen
+    SEC
+    RTS
+  .onscreen
+  LDA.w SprState, X : CMP.b #$0A : BNE .alloc_defer
+    LDA.b #$04 : JSL OAM_AllocateFromRegionC ; Carried: 1 tile above Link
+    BRA .alloc_done
+  .alloc_defer
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
+  STZ.b $0C
+  LDA.w SprState, X : CMP.b #$0A : BNE .have_mask
+    LDA.w SprFloor, X : BNE .have_mask
+      LDA.b #$10 : STA.b $0C ; Carried layer 0: pri 3 ($30) -> pri 2 ($20)
+  .have_mask
 
   LDA.w SprFrame, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
@@ -774,7 +861,7 @@ Sprite_EonDog_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : EOR.b $0C : STA ($90), Y
 
   PHY
 
