@@ -3,126 +3,155 @@
 ;
 ; $030F - Current Song RAM
 ; 00 - No Song
-; 01 - Song of Healing
-; 02 - Song of Storms
-; 03 - Song of Soaring
-; 04 - Song of Time
-; 05 - Song of Secrets
-; 06 - Elegy of Stone
+; 01 - Song of Healing  (SFX2.$13)
+; 02 - Song of Storms   (SFX2.$2F)
+; 03 - Song of Soaring  (SFX2.$3E)
+; 04 - Song of Time     (SFX3.$27)
+; 05 - Song of Secrets  (SFX1.$19)
+; 06 - Epona's Song     (SFX1.$1B; replaces Elegy of Stone)
+;
+; Hardware pitch & timing ground truth (Bank $19/$1A SPC700 SFX engine):
+;   - 1 SFX tick = 9.143 ms (Timer 0 = $10 [2ms], step $38 -> 256/56 * 2ms).
+;   - SFX Inst $0D (SRCN $0D 16-sample loop, ADSR $F9 $6E, Mult $03) plays
+;     exactly +7 semitones (a perfect 5th) above Core/music_macros.asm labels:
+;       G4=$AB -> D5 (587Hz), A4=$AD -> E5 (659Hz), A4s=$AE -> F5 (699Hz),
+;       C5=$B0 -> G5 (784Hz), D5=$B2 -> A5 (880Hz), E5=$B4  -> B5 (989Hz),
+;       F5=$B5 -> C6 (1047Hz), G5=$B7 -> D6 (1175Hz), A5=$B9 -> E6 (1320Hz),
+;       A5s=$BA -> F6 (1397Hz).
+;   - Stream bytes: $E0 <inst>, <dur $01-$7F> [<vol $00-$7F>], <note>, $00 End.
 
-; SFX2_Accomp
-; SFX2 13 (Previous $3E)
+; Disable paired accompaniment voices for overwritten SFX2 slots:
+;   SFX2.$13 (was $3E vanilla flute echo) -> $1A8C60 = $00
+;   SFX2.$2F (was $38 water splash)       -> $1A8C7C = $00
 org $1A8C60 : db $00
+org $1A8C7C : db $00
 
-; SFX2_13
+; =========================================================
+; 1. Song of Healing — SFX2.$13 ($1A9750..$1A9764, 21B budget)
+; Concert MM melody (3/4 waltz, A minor):
+;   B5 A5 F5 | B5 A5 F5 | B5 A5 (E5 D5) | E5~~~
+; 280 ticks (~2.56s), 19 bytes.
 org $1A9750
 Song_of_Healing:
 {
   %SetInstrument($0D) ; Ocarina
-  db $2A ; length of quarter note
-  db $46
-  db B3, A3, F3
-  db B3, A3, F3
-  db B3, A3
-  db $15 ; make this half of whatever you made quarter note
-  db E3, D3
-  db $7F ; make this triple whatever you made quarter note (max value 7F)
-  db E3
+  db $18, $46         ; quarter (~219ms), warm volume
+  db E5, D5, A4s      ; concert B5 - A5 - F5
+  db E5, D5, A4s      ; concert B5 - A5 - F5
+  db E5, D5           ; concert B5 - A5
+  db $0C              ; eighth (~110ms)
+  db A4, G4           ; concert E5 - D5
+  db $40, $3E         ; dotted-half sustain (~585ms), gentle release
+  db A4               ; concert E5
   db End
 }
 assert pc() <= $1A9765
 
 ; =========================================================
-; D F D - D F D - E F E - F E C
-; D F d D F d e f e f e c
+; 3. Song of Soaring — SFX2.$3E ($1A9765..$1A977C, 24B budget)
+; Concert MM melody (rising soaring triad + ethereal wind echo):
+;   F5 B5 D6~ | F5 B5 D6~~ | (echo) F5 B5 D6~~
+; 230 ticks (~2.10s), 23 bytes.
+org $1A9765
+Song_of_Soaring:
+{
+  %SetInstrument($0D)
+  db $10, $46, A4s, E5 ; concert F5 - B5
+  db $28, $4E, G5      ; concert D6~ (soaring peak)
+  db $10, $46, A4s, E5 ; concert F5 - B5
+  db $32, $4E, G5      ; concert D6~~
+  db $0C, $28, A4s, E5 ; soft airy sky echo (F5 - B5)
+  db $34, G5           ; echo D6~~ fade
+  db End
+}
+assert pc() <= $1A977D
 
+; =========================================================
+; 2. Song of Storms — SFX2.$2F ($1A92F7..$1A931E, 40B budget)
+; Concert OoT/MM melody (3/4 Windmill waltz, D minor):
+;   D5 F5 D6~ | D5 F5 D6~ | E6. F6 E6 F6 | E6 C6 A5~
+; 294 ticks (~2.69s), 30 bytes.
 org $1A92F7 ; SFX2_2F
 Song_of_Storms:
 {
-  !Storms_Duration = $0F
-  !Storms_Params = $46
-
-  !Storms_Duration2 = $1E
-  !Storms_Params2 = $3C
-
   %SetInstrument($0D)
-
-  db !Storms_Duration
-  db !Storms_Params ; duration 1/4
-  db D3, F3
-  db !Storms_Duration2
-  db !Storms_Params ; duration 1/2
-  db D3
-
-  db !Storms_Duration
-  db !Storms_Params ; duration 1/4
-  db D3, F3
-  db !Storms_Duration2
-  db !Storms_Params ; duration 1/2
-  db D3
-
-  db !Storms_Duration
-  db !Storms_Params2 ; duration 1/4
-  db E3, F3, E3
-
-  db F3, E3
-  db !Storms_Duration2
-  db !Storms_Params2 ; duration 1/2
-  db C3
+  db $0C, $46, G4, A4s              ; concert D5 - F5 (eighths)
+  db $30, $4C, G5                   ; concert D6~ (half, accented octave leap!)
+  db $0C, $46, G4, A4s              ; concert D5 - F5
+  db $30, $4C, G5                   ; concert D6~
+  db $24, $4C, A5                   ; concert E6. (dotted quarter)
+  db $0C, $44, A5s, A5, A5s, A5, F5 ; concert F6 - E6 - F6 - E6 - C6
+  db $36, $46, D5                   ; concert A5~ (clean tonic resolution)
   db End
 }
 assert pc() <= $1A931F
 
 ; =========================================================
-
-; A, D, F, A, D, F
-; SFX3_27 Agahnim charge
-; 0x003B
-
+; 4. Song of Time — SFX3.$27 ($1A91F0..$1A922A, 59B budget)
+; Concert OoT/MM melody (4/4 stately Dorian hymn):
+;   A5 D5~ F5 | A5 D5~ F5 | (A5 C6) B5 G5 (F5 G5) | A5 D5~~
+; 330 ticks (~3.02s), 32 bytes.
 org $1A91F0
 Song_of_Time:
 {
-  !Time4th = $2A
-  !TimeParams = $46
-
   %SetInstrument($0D)
-  db !Time4th    ; duration 1/4
-  db !TimeParams ; params
-  db A3
-
-  db $54         ; duration 1/2
-  db !TimeParams ; params
-  db D3
-
-  db !Time4th    ; duration 1/4
-  db !TimeParams ; params
-  db F3
-  db A3
-
-  db $54 ; duration 1/2
-  db !TimeParams ; params
-  db D3
-
-  db !Time4th    ; duration 1/4
-  db !TimeParams ; params
-  db F3
-
+  db $16, $46, D5      ; concert A5 (quarter)
+  db $2C, G4           ; concert D5~ (half)
+  db $16, A4s, D5      ; concert F5 - A5
+  db $2C, G4           ; concert D5~ (half)
+  db $16, A4s          ; concert F5
+  db $0B, $4C, D5, F5  ; concert A5 - C6 (rising eighths)
+  db $16, E5, C5       ; concert B5 - G5
+  db $0B, $44, A4s, C5 ; concert F5 - G5
+  db $16, $46, D5      ; concert A5
+  db $36, $40, G4      ; concert D5~~ (resolved tonic)
   db End
 }
-; These two short original motifs occupy only the unused tail of the Time
-; replacement. No additional SPC upload or occupied SFX stream is overwritten.
-Song_of_Secrets:
-  %SetInstrument($0D)
-  db $18, $46, D4, A3, D4, F4, E4, D4, End
-Elegy_of_Stone:
-  %SetInstrument($0D)
-  db $18, $46, A3, G3, D3, A3, G3, D3, End
 assert pc() <= $1A922B
+
+; =========================================================
+; 5. Song of Secrets (SFX1.$19) & 6. Epona's Song (SFX1.$1B)
+; Placed in the verified-unreferenced 100-byte Bank $1A unused SFX block
+; ($1A9B2E..$1A9B91, Core/sfx.asm SFXU277E/SFXU279D/SFXU27C9; already inside
+; the vanilla $1A8B6C..$1A9C00 ARAM upload, zero pointers into this range).
+org $1A9B2E
+; Concert A minor / Dorian cavern motif (keeps A-E-A-C-B-A DNA + soft echo):
+;   A5 E5 A5 C6~ | B5 G5 A5~~ | (echo) C6 B5 A5~
+; 234 ticks (~2.14s), 26 bytes.
+Song_of_Secrets:
+{
+  %SetInstrument($0D)
+  db $10, $44, D5, A4, D5 ; concert A5 - E5 - A5
+  db $24, $4C, F5         ; concert C6~ (mysterious peak)
+  db $10, $46, E5         ; concert B5
+  db $10, $42, C5         ; concert G5 (Dorian dip)
+  db $36, $48, D5         ; concert A5~~ (home shimmer)
+  db $0C, $26, F5, E5     ; soft cavern echo (C6 - B5)
+  db $26, D5              ; echo A5~
+  db End
+}
+; Concert OoT/MM Epona's Song (pastoral D major / B minor lullaby):
+;   D6 B5 A5~ | D6 B5 A5~ | D6 B5 A5 B5 A5~~
+; 296 ticks (~2.71s), 28 bytes. Alias Elegy_of_Stone retained for symbols.
+Epona_Song:
+Elegy_of_Stone:
+{
+  %SetInstrument($0D)
+  db $14, $48, G5, E5     ; concert D6 - B5
+  db $28, $44, D5         ; concert A5~
+  db $14, $4A, G5, E5     ; concert D6 - B5
+  db $28, $44, D5         ; concert A5~
+  db $14, $4C, G5         ; concert D6 (gentle lift)
+  db $14, $46, E5, D5, E5 ; concert B5 - A5 - B5
+  db $38, $40, D5         ; concert A5~~ (warm sustain)
+  db End
+}
+assert pc() <= $1A9B92
 
 ; SFX1 $19/$1B were unused/duplicate requests. Disable their paired voices;
 ; the original Flute Boy's $0B/$0C pointers and every active SFX stay intact.
 org $1A8BA0 : dw Song_of_Secrets-$1A73B0
-org $1A8BA4 : dw Elegy_of_Stone-$1A73B0
+org $1A8BA4 : dw Epona_Song-$1A73B0
 org $1A8BC8 : db $00
 org $1A8BCA : db $00
 
