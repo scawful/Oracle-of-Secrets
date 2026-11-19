@@ -44,12 +44,16 @@ StartupMasks:
   ; set links sprite bank
   LDA #$10 : STA $BC
   JSL DekuStick_Drop
-  ; Volatile state shared by the Garo/Bombchu/Switch Hook prototypes.
+  ; Volatile state shared by the Garo/Bombchu/Switch Hook/Gust Jar prototypes.
   PHX
   LDX.b #$11
   .clear_prototypes
   STZ.w $07EE, X
   DEX : BPL .clear_prototypes
+  LDX.b #$0E
+  .clear_glide_gust
+  STZ.w $0271, X
+  DEX : BPL .clear_glide_gust
   PLX
   RTL
 }
@@ -1645,6 +1649,9 @@ if !ENABLE_HORSE_FORM == 1
   JSL HorseForm_FrameTick
 endif
   JSL GaroMask_FrameTick
+if !DISABLE_ITEMS == 0
+  JSL GustJar_FrameTick
+endif
   JSL DekuStick_Main
   PLB
   %m16()

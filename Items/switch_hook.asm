@@ -176,10 +176,14 @@ SwitchHook_Init:
   PHP : REP #$30 : PHA : PHX : PHY : PHB
   PHK : PLB : SEP #$30
   STZ.w !SwitchHookActive
+  ; Preserved for future Hookshot trade-back minigame: activates only on the
+  ; Hookshot slot ($03) after Goldstar migration ($A5) when $7EF342 == 2.
+  ; Logical item $1D ($7EF3AE) is now exclusively owned by Items/gust_jar.asm.
   %SelectedItem()
-  CMP.b #$1D : BNE .done
+  CMP.b #$03 : BNE .done
   LDA.w $0304 : CMP.b #$0E : BNE .done
-  LDA.l SwitchHookOwned : CMP.b #$01 : BNE .done
+  LDA.l GoldstarInventoryVersion : CMP.b #$A5 : BNE .done
+  LDA.l $7EF342 : CMP.b #$02 : BNE .done
   STZ.w !SwitchHookBeat
   STZ.w !SwitchHookTarget
   STZ.w !SwitchHookTile
@@ -255,9 +259,10 @@ SwitchHook_Tick:
   CMP.b #$17 : BNE .cancel                ; Module07_17_PressurePlate
   .submodule_ok
   %SelectedItem()
-  CMP.b #$1D : BNE .cancel
+  CMP.b #$03 : BNE .cancel
   LDA.w $0304 : CMP.b #$0E : BNE .cancel
-  LDA.l SwitchHookOwned : CMP.b #$01 : BNE .cancel
+  LDA.l GoldstarInventoryVersion : CMP.b #$A5 : BNE .cancel
+  LDA.l $7EF342 : CMP.b #$02 : BNE .cancel
   LDA.b $1B : BEQ .place                  ; layer is a dungeon key only
   LDA.b $EE : CMP.w !SwitchHookLayer : BNE .cancel
   .place
@@ -687,8 +692,9 @@ SwitchHook_ContextValid:
   LDA.b $5D : CMP.b #$13 : BNE .no
   LDA.w $0304 : CMP.b #$0E : BNE .no
   %SelectedItem()
-  CMP.b #$1D : BNE .no
-  LDA.l SwitchHookOwned : CMP.b #$01 : BNE .no
+  CMP.b #$03 : BNE .no
+  LDA.l GoldstarInventoryVersion : CMP.b #$A5 : BNE .no
+  LDA.l $7EF342 : CMP.b #$02 : BNE .no
   LDA.b $10 : CMP.b #$09 : BEQ .overworld
   CMP.b #$07 : BNE .no
   LDA.b $1B : CMP.b #$01 : BNE .no

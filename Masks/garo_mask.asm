@@ -1,16 +1,27 @@
 ; =========================================================
 ; Garo Master prototype. Y standing still opens a timed contact parry, then
 ; Y counters. Y while walking toward Link's facing is a short sword lunge;
-; Y again during the lunge is a Roc's Cape style forward jump. A d-pad tap
-; away from Link's facing while the guard is open is a short evasive leap.
+; Y again during the lunge is a Roc's Cape style forward jump, and holding Y
+; at/past the apex unfurls a full low-gravity Roc's Cape Glide (also entered
+; by holding Y while airborne from a Roc's Feather hop). A d-pad tap away
+; from Link's facing while the guard is open is a short evasive leap.
 ; Player art by Herowho (garomaster.1.zspr); palette 1 retained.
 ; Gameplay entries use M/X=8; LinkMain_FrameHook owns full preservation.
-; State is volatile. Local lunge JSRs remain in this graphics/behavior bank.
+; State is volatile. Local lunge/glide JSRs remain in this bank.
 ; =========================================================
+
+; Volatile Cape Glide scratch in vanilla free RAM ($0224-$027F, zero SRAM).
+; StartupMasks clears $0271-$027F on boot; GlideTick clears on landing/cancel.
+GaroGlideTimer = $0271 ; 0 = ready, 1..52 = active glide frames, $80 = spent this jump
+GaroGlideTick  = $0272 ; active glide frame counter (SFX/flutter cadence)
+!GaroGlideFrames    = 52  ; ~52 glide frames: crosses 4-8 tile gaps cleanly
+!GaroGlideSpeed     = $16 ; forward carry along facing (1.375 px/frame)
+!GaroGlideSteer     = $06 ; gentle perpendicular steering (+/- 0.375 px/frame)
+!GaroGlideOamAllocD = $0DBA8C ; vanilla OAM_AllocateFromRegionD
 
 ; Called once by LinkMain_FrameHook (Masks/mask_routines.asm).
 ; M/X=8, DBR=$07. The shared wrapper owns the displaced instructions and
-; full register/flags preservation. Keep local lunge JSRs in this bank.
+; full register/flags preservation. Keep local lunge/glide JSRs in this bank.
 GaroMask_FrameTick:
 {
   ; The cooldown also runs while inactive: a leap is vanilla recoil, which
@@ -19,6 +30,7 @@ GaroMask_FrameTick:
   DEC.w GaroCooldown
   +
   JSR GaroMask_LungeTick
+  JSR GaroMask_GlideTick
   JSL GaroMask_CanAct : BCS .active
   JSL GaroMask_Clear
   BRA .done
@@ -283,6 +295,186 @@ GaroMask_CapeHop:
   db $E8, $18, $00, $00
   .speed_x
   db $00, $00, $E8, $18
+}
+
+; =========================================================
+; Roc's Cape Glide (Garo Mask).
+; Entered seamlessly from either:
+;   1. GaroMask_CapeHop (Lunge -> Y -> hold Y at/past apex), OR
+;   2. Roc's Feather jump ($5D=2, $4D=2 while wearing Garo Mask -> hold Y).
+; Runs in FrameTick immediately before vanilla LinkState_Recoil ($0786B5):
+;   - Link_HandleChangeInZVelocity subtracts 2 from $29 each frame, so setting
+;     $29=$FE yields $FC (-4/16 = -0.25 px/frame smooth low-gravity descent).
+;   - Steady forward carry (+/- $16 along $2F) + perpendicular D-pad steering
+;     (+/- $06) carries Link ~100 px (6+ tiles) across Sky/Pit/Lava gaps.
+;   - Vanilla Link_HandleDiagonalCollision + Link_HandleCardinalCollision run
+;     every frame ($46 kept < $21), preventing wall clipping or tunneling.
+;   - Releasing Y (or timer expiry) immediately restores normal fall gravity
+;     and marks GaroGlideTimer=$80 so the player cannot re-glide mid-fall.
+GaroMask_GlideTick:
+{
+  ; Must wear owned Garo Mask in live airborne hop state ($5D=2, $4D=2).
+  LDA.w !CurrentMask : CMP.b #$08 : BNE .reset
+  LDA.l GaroMaskOwned : CMP.b #$01 : BNE .reset
+  LDA.b $10 : CMP.b #$07 : BEQ .mod_ok
+  CMP.b #$09 : BEQ .mod_ok
+  CMP.b #$0B : BNE .reset
+  .mod_ok
+  LDA.b $11 : ORA.b $6C : BNE .reset
+  LDA.w $0FFC : ORA.w $02E4 : BNE .reset
+  LDA.b $5D : CMP.b #$02 : BNE .reset
+  LDA.b $4D : CMP.b #$02 : BNE .reset
+
+  LDA.w GaroGlideTimer
+  BEQ .check_enter
+  BMI .done ; $80 = already glided/cancelled this jump; let vanilla land cleanly
+
+  ; Active glide: require Y still held and height >= 2 px above ground.
+  LDA.b $F0 : AND.b #$40 : BEQ .cancel
+  LDA.b $24 : BMI .cancel
+  CMP.b #$02 : BCC .cancel
+  DEC.w GaroGlideTimer : BEQ .cancel
+  BRA .apply_glide
+
+  .reset
+  STZ.w GaroGlideTimer
+  STZ.w GaroGlideTick
+  .done
+  RTS
+
+  .cancel
+  ; Release Y or timer expiry: immediately restore crisp drop and damp carry
+  ; so landings on narrow platforms are accurate.
+  LDA.b #$80 : STA.w GaroGlideTimer
+  STZ.w GaroGlideTick
+  LDA.b #$02 : STA.b $46
+  LDA.b #$F8 : STA.b $29
+  LDA.b $27 : CMP.b #$80 : ROR A : STA.b $27
+  LDA.b $28 : CMP.b #$80 : ROR A : STA.b $28
+  RTS
+
+  .check_enter
+  ; Hold Y ($F0 bit 6) once airborne ($24 >= 6) at/past hop apex ($29 <= 4).
+  LDA.b $F0 : AND.b #$40 : BEQ .done
+  LDA.b $24 : BMI .done
+  CMP.b #$06 : BCC .done
+  LDA.b $29 : BMI .engage
+  CMP.b #$05 : BCS .done
+
+  .engage
+  LDA.b #!GaroGlideFrames : STA.w GaroGlideTimer
+  STZ.w GaroGlideTick
+  LDA.b #$03 : STA.w $02C6 ; single clean landing, no bounce
+  LDA.b #$01 : STA.w $037B ; damage immunity throughout glide
+  LDA.b #$07 : STA.w $012E ; SFX2.07 crisp cape-unfurl whoosh
+
+  .apply_glide
+  INC.w GaroGlideTick
+  LDA.b #$08 : STA.b $46   ; keep recoil state live & < $21 for per-frame collision
+  LDA.b #$03 : STA.w $02C6 ; keep no-bounce landing
+  LDA.b #$01 : STA.w $037B ; keep damage immunity
+  STZ.b $6B                ; prevent vanilla corner-bounce velocity inversion
+  LDA.b #$FE : STA.b $29   ; vanilla -2 -> $FC (-0.25 px/frame damped descent)
+
+  ; Forward carry along facing $2F + gentle perpendicular D-pad steering.
+  LDA.b $2F : AND.b #$06
+  CMP.b #$04 : BCS .horiz_facing
+
+  ; Vertical facing (0=Up, 2=Down): forward in $27, steer X in $28.
+  CMP.b #$00 : BNE .face_down
+    LDA.b #-!GaroGlideSpeed : BRA .set_fy
+  .face_down
+    LDA.b #!GaroGlideSpeed
+  .set_fy
+  STA.b $27
+  LDX.b $F0
+  TXA : AND.b #$02 : BEQ .chk_steer_r
+    LDA.b #-!GaroGlideSteer : BRA .set_sx
+  .chk_steer_r
+  TXA : AND.b #$01 : BEQ .no_sx
+    LDA.b #!GaroGlideSteer : BRA .set_sx
+  .no_sx
+  LDA.b #$00
+  .set_sx
+  STA.b $28
+  BRA .feedback
+
+  .horiz_facing
+  ; Horizontal facing (4=Left, 6=Right): forward in $28, steer Y in $27.
+  CMP.b #$04 : BNE .face_right
+    LDA.b #-!GaroGlideSpeed : BRA .set_fx
+  .face_right
+    LDA.b #!GaroGlideSpeed
+  .set_fx
+  STA.b $28
+  LDX.b $F0
+  TXA : AND.b #$08 : BEQ .chk_steer_d
+    LDA.b #-!GaroGlideSteer : BRA .set_sy
+  .chk_steer_d
+  TXA : AND.b #$04 : BEQ .no_sy
+    LDA.b #!GaroGlideSteer : BRA .set_sy
+  .no_sy
+  LDA.b #$00
+  .set_sy
+  STA.b $27
+
+  .feedback
+  ; Periodic soft wind flutter cue every 16 frames if channel free.
+  LDA.w GaroGlideTick : AND.b #$0F : BNE .draw
+  LDA.w $012E : BNE .draw
+  LDA.b #$09 : STA.w $012E ; SFX2.09 soft wind flutter
+  .draw
+  JSR GaroMask_DrawGlideOAM
+  RTS
+}
+
+; Draws 2 subtle trailing wind/cape-flutter OAM wisps behind airborne Link
+; using vanilla Region D ($0DBA8C) and always-resident OBJ page-0 puff tiles
+; ($CF/$DF) without touching Link's OAM or Garo Master's sprite tiles.
+GaroMask_DrawGlideOAM:
+{
+  ; Screen coords matching LinkOAM_Main ($22-$E2, $20-$E8-$24).
+  LDA.b $22 : SEC : SBC.b $E2 : STA.b $00
+  CMP.b #$04 : BCC .skip
+  CMP.b #$F0 : BCS .skip
+  LDA.b $20 : SEC : SBC.b $E8 : SEC : SBC.b $24 : STA.b $01
+  CMP.b #$D8 : BCS .skip ; near bottom/offscreen
+
+  LDA.b #$08 ; 2 OAM sprites
+  JSL !GaroGlideOamAllocD
+
+  ; Flutter tile toggles $CF / $DF every 4 frames; H-flip alternates every 2.
+  LDA.w GaroGlideTick : AND.b #$04 : BEQ .tile_a
+    LDA.b #$DF : BRA .tile_ok
+  .tile_a
+    LDA.b #$CF
+  .tile_ok
+  STA.b $02
+  LDA.w GaroGlideTick : AND.b #$02 : BEQ .attr_a
+    LDA.b #$64 : BRA .attr_ok ; H-flip, prio 2, pal 2
+  .attr_a
+    LDA.b #$24                ; prio 2, pal 2
+  .attr_ok
+  STA.b $03
+
+  ; Left & right cloak-edge wisps trailing below/beside Link's body.
+  LDY.b #$00
+  LDA.b $00 : SEC : SBC.b #$03 : STA.b ($90), Y : INY
+  LDA.b $01 : CLC : ADC.b #$0E : STA.b ($90), Y : INY
+  LDA.b $02 : STA.b ($90), Y : INY
+  LDA.b $03 : STA.b ($90), Y : INY
+
+  LDA.b $00 : CLC : ADC.b #$0B : STA.b ($90), Y : INY
+  LDA.b $01 : CLC : ADC.b #$0E : STA.b ($90), Y : INY
+  LDA.b $02 : STA.b ($90), Y : INY
+  LDA.b $03 : EOR.b #$40 : STA.b ($90), Y
+
+  ; Both sprites 8x8, X-MSB = 0.
+  LDA.b #$00
+  LDY.b #$00 : STA.b ($92), Y
+  INY : STA.b ($92), Y
+  .skip
+  RTS
 }
 
 ; Called by the existing contact-damage/Armor Ring hook after damage is queued.

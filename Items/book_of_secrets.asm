@@ -53,7 +53,7 @@ Dungeon_RevealSecrets:
   LDA $1B : AND #$01 : BEQ .end
 
     ; Check if we have the book of secrets
-    LDA $7EF34D : CMP #$01 : BNE $0F ; if not, go to enable BG2
+    LDA $7EF34E : CMP #$01 : BNE $0F ; if not, go to enable BG2
 
     ; load unfiltered joypad 1 register (AXLR|????)
     ; delete all bits except those for L

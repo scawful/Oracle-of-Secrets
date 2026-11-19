@@ -957,6 +957,12 @@ Hookshot_Init:
 
 BeginGoldstarOrHookshot:
 {
+  ; Logical item $1D ($7EF3AE, GustJarOwned) dispatches to Gust Jar instead
+  ; of Hookshot/Goldstar/Switch Hook on both Y and X.
+  %SelectedItem()
+  CMP.b #$1D : BNE .not_gust_jar
+    JML GustJar_Start
+  .not_gust_jar
   JSL SwitchHook_Init
 if !ENABLE_GOLDSTAR_CELL == 1
   ; Latch the selected weapon only at launch. Ancilla draw/collision and

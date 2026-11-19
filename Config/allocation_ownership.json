@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "de041b9fd6da3b5bada06777a197a616ec16f72910b913a262f2703d8f1108bc"
+      "sha256": "dc4d1d2b07c64ec00907dbd63af361d4cbc6cc9849cf89513e3359566680b842"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -295,7 +295,7 @@
     "shared:Items/switch_hook.asm": {
       "source_set": "shared",
       "path": "Items/switch_hook.asm",
-      "sha256": "563ad92beee9ceb663353d95d3449c44893e80279ef4f6806a7c2088a2cf4e03"
+      "sha256": "71e05ae057caa47d63a504a1ded5bdd39f3cf4df95befa5dcc842950374d856c"
     },
     "shared:Items/sky_watch_log.asm": {
       "source_set": "shared",
@@ -375,7 +375,7 @@
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "85242e4eabc89df6a17d15c53fefd49f9254f9c27e5daeddce0f741f577077bc"
+      "sha256": "958bc60d419a1a4f52533e594a61ab3447d852175c16203bcff40a19600e1623"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
@@ -466,6 +466,16 @@
       "source_set": "shared",
       "path": "Overworld/special_overworld_transitions.asm",
       "sha256": "64ca3bf22fe113f32d774066d41090f0f702d2347e09d663eb88c35140293507"
+    },
+    "shared:Items/gust_jar.asm": {
+      "source_set": "shared",
+      "path": "Items/gust_jar.asm",
+      "sha256": "fd93742fbcd89f663917cbc8f13e6ccaf82427843f7c53d54a10d62b17760823"
+    },
+    "shared:Masks/garo_mask.asm": {
+      "source_set": "shared",
+      "path": "Masks/garo_mask.asm",
+      "sha256": "c7f18275cdc53ea6d5ac2df0b4e78b96f0a629d78d9805b13de45c6840aa99b1" 
     }
   },
   "claims": [
@@ -2859,7 +2869,9 @@
       "provenance": [
         "shared:Core/sram.asm"
       ],
-      "aliases": [],
+      "aliases": [
+        "GustJarOwned"
+      ],
       "anchors": [],
       "binding": {
         "source": "shared:Core/sram.asm",
@@ -3659,6 +3671,75 @@
         "SpecialOverworld_MapSavedPos",
         "SpecialOverworld_MapSavedFlag"
       ]
+    },
+    {
+      "id": "garo_glide_runtime",
+      "owner": "Garo Mask Roc's Cape Glide volatile timer and flutter cadence",
+      "space": "wram",
+      "base": 8258161,
+      "size": 2,
+      "status": "shared",
+      "condition": {
+        "DISABLE_MASKS": 0
+      },
+      "lifetime": "Volatile glide countdown ($0271) and flutter tick ($0272) during active Garo airborne hop ($5D=2, $4D=2). Zero SRAM.",
+      "reset": "StartupMasks clears $0271-$027F on boot; GaroMask_GlideTick clears on landing, cancel, unmasking, or non-gameplay.",
+      "save": "Not persisted.",
+      "provenance": [
+        "shared:Masks/garo_mask.asm",
+        "shared:Masks/mask_routines.asm"
+      ],
+      "anchors": [
+        "GaroGlideTimer = $0271",
+        "GaroGlideTick  = $0272"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "gust_jar_runtime",
+      "owner": "Gust Jar inhale/capture/blast volatile runtime state",
+      "space": "wram",
+      "base": 8258163,
+      "size": 13,
+      "status": "shared",
+      "condition": {
+        "DISABLE_ITEMS": 0
+      },
+      "lifetime": "Volatile state, latched Y/X button, charge/tier, facing, captured slot/kind, blast wave position/timer, and wind signal flags ($0273-$027F). Zero SRAM.",
+      "reset": "StartupMasks clears $0271-$027F on boot; GustJar_Abort clears immediately on transition, damage, swim, doorway, menu, or form change.",
+      "save": "Not persisted.",
+      "provenance": [
+        "shared:Items/gust_jar.asm",
+        "shared:Masks/mask_routines.asm"
+      ],
+      "anchors": [
+        "!GustJarState     = $0273",
+        "!GustJarFlags     = $027F"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "gust_jar_code",
+      "owner": "Gust Jar item code relocated to unused Bank $39 tail",
+      "space": "snes_rom",
+      "base": 3796992,
+      "size": 4096,
+      "status": "shared",
+      "condition": {
+        "DISABLE_ITEMS": 0
+      },
+      "lifetime": "Static item code following Minish Link 4bpp sheet ($398000-$39EFFF).",
+      "reset": "ROM-only code; bounded by assert pc() <= $3A0000.",
+      "save": "Not persisted.",
+      "provenance": [
+        "shared:Items/gust_jar.asm",
+        "shared:Items/all_items.asm"
+      ],
+      "anchors": [
+        "org $39F000",
+        "assert pc() <= $3A0000"
+      ],
+      "aliases": []
     }
   ],
   "lifetime_aliases": [],
