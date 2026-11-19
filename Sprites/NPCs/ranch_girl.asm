@@ -67,10 +67,7 @@ RanchGirl_Message:
   ; Saves that got the Ocarina before Epona's Song existed learn it here.
   LDA.l SideQuestProg2 : AND.b #!SideQuest2_EponaSong : BNE .knows_epona
     LDA.l SideQuestProg2 : ORA.b #!SideQuest2_EponaSong : STA.l SideQuestProg2
-    LDA.b #$13 : STA.w $0CF8
-    JSL $0DBB67 ; Link_CalculateSFXPan
-    ORA.w $0CF8
-    STA.w $012E ; song learned sound
+    LDA.b #$1B : STA.w $012D ; SFX1.$1B Epona's Song learned (SFX1 has no pan bits)
   .knows_epona
 if !ENABLE_RANCH_MILK == 1
   ; Later visits: Toto Ranch milk for 30 Rupees (BottleMan offer $187,

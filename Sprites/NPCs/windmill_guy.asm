@@ -181,10 +181,10 @@ Sprite_WindmillGuy_Main:
 
   %ShowSolicitedMessage($1D7) : BCC .done
     LDA.b #$03 : STA.l $7EF34C
-    LDA.b #$13 : STA.w $0CF8
+    LDA.b #$2F : STA.w $0CF8
     JSL $0DBB67 ; Link_CalculateSFXPan
     ORA.w $0CF8
-    STA $012E ; Play the song learned sound
+    STA $012E ; SFX2.$2F Song of Storms learned sound
     RTS
 
   .no_ocarina

@@ -260,7 +260,7 @@ Goriya_HandleTileCollision:
 
 Goriya_BoomerangAttack:
 {
-  LDA.b #$09 : STA.w $012F            ; SFX2.09 Boomerang fwish
+  LDA.b #$09 : STA.w $012E            ; SFX2.09 Boomerang fwish (not SFX3.09 Enemy Death!)
   LDA.b #Sprite_Goriya
   JSL Sprite_SpawnDynamically : BMI .no_slot
     LDA.b #$01 : STA.w SprSubtype, Y

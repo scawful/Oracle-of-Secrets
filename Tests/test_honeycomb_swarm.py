@@ -14,7 +14,7 @@ Verifies:
 3. Supply_ProcessPendingExitAction:
    - Clears PendingSupplyAction.
    - Refuses if Honeycomb count is 0, active bee present, or free slots < 3.
-   - On success: sets Good Bee flag ($0EB0=1) for all 3 bees, spends exactly 1 Honeycomb ($7EF393), plays $2F.
+   - On success: sets Good Bee flag ($0EB0=1) for all 3 bees, spends exactly 1 Honeycomb ($7EF393), plays $2C (Bees).
    - Preserves bottle contents and ordinary bottle bees.
 """
 from pathlib import Path
@@ -67,8 +67,8 @@ class HoneycombSwarmContractTest(unittest.TestCase):
         self.assertIn("LDA.l Honeycomb : DEC A : STA.l Honeycomb", items_text)
         # Verify error sound on abort
         self.assertIn("LDA.b #$3C : STA.w $012E", items_text)
-        # Verify success sound on deployment
-        self.assertIn("LDA.b #$2F : STA.w $012F", items_text)
+        # Verify success sound on deployment (SFX3.$2C Bees)
+        self.assertIn("LDA.b #$2C : STA.w $012F", items_text)
 
     def test_windmill_guy_dispatch_multiplexing(self):
         wmg_asm = (ROOT / "Sprites" / "NPCs" / "windmill_guy.asm").read_text(encoding="utf-8")

@@ -432,6 +432,17 @@ HUD_DrawItem:
   RTS
 .not_ocarina
 if !ENABLE_GOLDSTAR_CELL == 1
+  ; Switch Hook ($7EF342 == 2) shares slot $03 (A == 0; Goldstar uses A == 1).
+  CPX.w #$0003 : BNE .not_switch_hook
+  TAY : BNE .not_switch_hook
+    LDA.l $7EF342 : AND.w #$00FF : CMP.w #$0002 : BNE .hookshot_regular
+      LDA.w #$24F5 : STA.l $7EC776 : STA.l $7EC7B8
+      LDA.w #$34F6 : STA.l $7EC778
+      LDA.w #$24C0 : STA.l $7EC7B6
+      RTS
+    .hookshot_regular
+    TYA ; restore A = $0000 for regular Hookshot table lookup
+.not_switch_hook
   ; Logical prototype items are beyond vanilla's 24-entry pointer table.
   CPX.w #$001B : BCC .ordinary
   CPX.w #$001F : BCS .ordinary
@@ -471,19 +482,6 @@ HUD_OcarinaIconIndex:
   JSL Ocarina_ValidSong_Long
   REP #$20
   AND.w #$00FF
-  RTS
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_song
-  CMP.w #$0008 : BCC .count_ok
-  LDA.w #$0007
-.count_ok
-  DEC : STA.b $02
-  LDA.w CurrentSong : AND.w #$00FF : BEQ .first
-  CMP.b $02 : BCC .done : BEQ .done
-.first
-  LDA.w #$0001 : RTS
-.no_song
-  LDA.w #$0000
-.done
   RTS
 }
 

@@ -508,7 +508,7 @@ GustJar_TryCaptureOrPullSprite:
   .capture
   LDA.b #$01 : STA.w !GustJarCapKind
   TYA : STA.w !GustJarCapSlot
-  LDA.b #$13 : STA.w $012E ; crisp capture pop cue
+  LDA.b #$13 : STA.w $012F ; SFX3.$13 crisp capture pop cue (not SFX2.$13 Healing!)
   JSR GustJar_HoldCaptured
   RTS
   .pull_only
@@ -649,7 +649,7 @@ GustJar_InhaleAncillae:
   LDA.b $04 : CMP.b #$15 : BCS .pull_ancilla
     LDA.b #$02 : STA.w !GustJarCapKind
     TXA : STA.w !GustJarCapSlot
-    LDA.b #$13 : STA.w $012E ; capture pop cue
+    LDA.b #$13 : STA.w $012F ; SFX3.$13 capture pop cue
     JSR GustJar_HoldCaptured
     BRA .next
 
@@ -861,7 +861,7 @@ GustJar_TickLaunched:
     ; Warp bomb cleanly to counterpart portal exit!
     LDA.b $04 : STA.w $0C04, X : LDA.b $05 : STA.w $0C18, X
     LDA.b $06 : STA.w $0BFA, X : LDA.b $07 : STA.w $0C0E, X
-    LDA.b #$2B : STA.w $012E
+    LDA.b #$30 : STA.w $012F ; SFX3.$30 portal warp zap
     BRA .clear
 
   .sprite
@@ -876,7 +876,7 @@ GustJar_TickLaunched:
   JSR GustJar_FindPortalExit : BCC .chk_hit
     LDA.b $04 : STA.w SprX, Y : LDA.b $05 : STA.w SprXH, Y
     LDA.b $06 : STA.w SprY, Y : LDA.b $07 : STA.w SprYH, Y
-    LDA.b #$2B : STA.w $012E
+    LDA.b #$30 : STA.w $012F ; SFX3.$30 portal warp zap
     JMP .clear
 
   .chk_hit
@@ -1075,7 +1075,7 @@ GustJar_WaveAncillae:
   JSR GustJar_FindPortalExit : BCC .next
     LDA.b $04 : STA.w $0C04, X : LDA.b $05 : STA.w $0C18, X
     LDA.b $06 : STA.w $0BFA, X : LDA.b $07 : STA.w $0C0E, X
-    LDA.b #$2B : STA.w $012E
+    LDA.b #$30 : STA.w $012F ; SFX3.$30 portal warp zap
     BRA .next
 
   .next16

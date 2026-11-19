@@ -233,8 +233,8 @@ Supply_ProcessPendingExitAction:
   ; Swarm successfully deployed! Spend exactly one Honeycomb
   LDA.l Honeycomb : DEC A : STA.l Honeycomb
 
-  ; Play bee release sound
-  LDA.b #$2F : STA.w $012F
+  ; Play bee release sound (SFX3.$2C Bees, not SFX3.$2F Key Jingle)
+  LDA.b #$2C : STA.w $012F
   BRA .done
 
 .abort_error

@@ -99,14 +99,14 @@ DekuStick_CheckYPress:
   ; 14-frame swipe (4 startup, 4 active, 6 recovery) with bit 7 set (lit)
   LDA.b #$8E : STA.l DekuStick_SwipeTimer
   LDA.b #$03 : STA.l DekuStick_State
-  LDA.b #$0A : STA.w $012E ; Swipe SFX
+  LDA.b #$01 : STA.w $012E ; SFX2.$01 Slash / wooden swipe
   BRA .done
 
 .start_unlit
   ; 14-frame swipe (unlit)
   LDA.b #$0E : STA.l DekuStick_SwipeTimer
   LDA.b #$03 : STA.l DekuStick_State
-  LDA.b #$0A : STA.w $012E ; Swipe SFX
+  LDA.b #$01 : STA.w $012E ; SFX2.$01 Slash / wooden swipe
 
 .done
   PLY : PLX : PLA
@@ -243,7 +243,7 @@ DekuStick_Main:
 
   ; Burn timer reached 0: stick burned out!
   JSL DekuStick_Drop
-  LDA.b #$3C : STA.w $012E ; Extinguish sound
+  LDA.b #$07 : STA.w $012E ; SFX2.$07 Fwoosh extinguish sound
   PLP : RTL
 
 .draw_and_exit
@@ -304,7 +304,7 @@ DekuStick_CheckTorch:
 
   ; Swipe was unlit -> ignite it!
   ORA.b #$80 : STA.l DekuStick_SwipeTimer
-  LDA.b #$2D : STA.w $012F ; Ignition SFX
+  LDA.b #$2A : STA.w $012E ; SFX2.$2A Flame ignition SFX
   BRA .done
 
 .do_ignite_stick
@@ -392,7 +392,7 @@ DekuStick_CheckSingleSprite:
   ; Enemy hit! Apply brief nonlethal stun without HP damage or stick breakage
   SEP #$20
   LDA.b #$20 : STA.w $0EA0, X ; Stun timer = 32 frames
-  LDA.b #$20 : STA.w $012E ; Stun hit SFX
+  LDA.b #$08 : STA.w $012F ; SFX3.$08 Enemy stun hit impact
 
   ; Latch enemy hit bit 6 in swipe timer so max 1 enemy is hit per swipe
   LDA.l DekuStick_SwipeTimer : ORA.b #$40 : STA.l DekuStick_SwipeTimer
@@ -415,8 +415,8 @@ DekuStick_CheckWallContact:
   JSL Entity_GetTileAttr ; $06E87B
   CMP.b #$00 : BEQ .no_wall
   CMP.b #$C0 : BCS .no_wall ; torches are handled separately
-  ; Wall contact: play tink SFX
-  LDA.b #$09 : STA.w $012E
+  ; Wall contact: play tink SFX (SFX2.$05 Clink)
+  LDA.b #$05 : STA.w $012E
   ; Latch bit 6 so tink plays once per swipe
   LDA.l DekuStick_SwipeTimer : ORA.b #$40 : STA.l DekuStick_SwipeTimer
 .no_wall
@@ -603,8 +603,8 @@ DekuStick_Ignite:
   LDA.l DekuStick_State : CMP.b #$01 : BNE .exit
     LDA.b #$02 : STA.l DekuStick_State
     ; Preserves active BurnTimer! (Relighting preserves remaining wear budget)
-    ; Play flame ignition sound
-    LDA.b #$2D : STA.w $012F
+    ; Play flame ignition sound (SFX2.$2A Fire splash / ignition)
+    LDA.b #$2A : STA.w $012E
   .exit
   RTL
 }

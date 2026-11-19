@@ -170,7 +170,7 @@ Sprite_Kydrog_Main:
   Kydrog_AttractPlayer:
   {
     LDA.w SprTimerA, X : BNE +
-      LDA.b #$0C : STA $012D
+      LDA.b #$28 : STA.w $012F ; SFX3.$28 Agahnim/Ganon dramatic warp reveal (not looping SFX1.$0C Flute Boy!)
       LDA #$00 : STA $7EF303
       %ShowUnconditionalMessage($21)
       %GotoAction(2)

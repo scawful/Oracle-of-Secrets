@@ -414,8 +414,7 @@ DungeonWeb_CheckFireSources:
 .ignite_web
   LDA.b #$01 : STA.w SprAction, X
   LDA.b #$14 : STA.w SprTimerA, X ; 20-frame flame burn (~0.33s)
-  LDA.b #$2A : STA.w $012E        ; Vanilla flame SFX
-  LDA.b #$2D : STA.w $012F        ; Fire ignition crackle SFX
+  LDA.b #$2A : STA.w $012E        ; SFX2.$2A Vanilla flame SFX
   JSR DungeonWeb_MarkBurned
   RTS
 }

@@ -250,7 +250,7 @@ D4Water_ToggleAndReload:
   .store_water
   STA.l WaterGateStates
   LDA.b #$25 : STA.w $012F
-  LDA.b #$2F : STA.w $012E ; SFX2.2F water rush/drain (paired $2F->$38)
+  LDA.b #$38 : STA.w $012E ; SFX2.38 Water Rush (standalone; $2F is Song of Storms)
   ; Reproduce Underworld_SaveRoomData before the same-room fade reload.
   ; D4Water_WarpFadeOut/In suppress Module07_15's warp-pad mosaic for $25->$25.
   ; Keep collected chests/keys and open doors; no room flag or inventory reset.
