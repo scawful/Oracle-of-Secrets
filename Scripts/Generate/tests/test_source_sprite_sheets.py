@@ -40,6 +40,15 @@ def png(indices, filter_kind=0, mode=3):
             chunk(b'PLTE',bytes(24))+chunk(b'IDAT',zlib.compress(b''.join(rows)))+chunk(b'IEND',b''))
 
 
+def _spec_globals(spec):
+    globals_ = []
+    for entry in spec['sheets']:
+        value = sheets.number(entry['global_sheet']) if 'global_sheet' in entry else sheets.number(entry['sprite_sheet']) + 0x73
+        if value not in globals_:
+            globals_.append(value)
+    return globals_
+
+
 class SourceSheets(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
@@ -205,15 +214,23 @@ class SourceSheets(unittest.TestCase):
 
     def test_manifest_reserves_global_not_sprite_id(self):
         metadata=sheets.source_metadata(ROOT)
-        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47','0x0F','0x38','0x70','0x71','0x72','0x73','0x75','0x76','0x77','0x78','0x79','0x7A','0x7B','0x7C','0x7D','0x7E','0x7F','0x82','0x83','0x84','0x85','0x86','0x6C','0x6D','0x6E','0x6F','0x74'])
-        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA','0x82','0xAB','0xE3','0xE4','0xE5','0xE6','0xE8','0xE9','0xEA','0xEB','0xEC','0xED','0xEE','0xEF','0xF0','0xF1','0xF2','0xF5','0xF6','0xF7','0xF8','0xF9','0xDF','0xE0','0xE1','0xE2','0xE7'])
+        globals_=_spec_globals(sheets.read_spec(ROOT/metadata['spec']))
+        self.assertEqual(metadata['sprite_sheet_ids'],[f'0x{g-0x73:02X}' for g in globals_])
+        self.assertEqual(metadata['global_sheet_ids'],[f'0x{g:02X}' for g in globals_])
+        self.assertEqual([sheets.number(s)+0x73 for s in metadata['sprite_sheet_ids']],
+                         [sheets.number(g) for g in metadata['global_sheet_ids']])
         self.assertEqual(metadata['owned_region']['pc_end'],'0x208000')
+        self.assertEqual(metadata['global_region']['pc_end'],'0x240000')
 
     def test_d4_manifest_tracks_selected_art_and_preserves_standard_entries(self):
         import asm_source
         with mock.patch.object(asm_source, '_load_global_defines', return_value={'ENABLE_D4_ZORA_REDESIGN':1}):
             metadata=sheets.source_metadata(ROOT)
-        self.assertEqual(metadata['global_sheet_ids'][-5:],['0xDF','0xE0','0xE1','0xE2','0xE7'])
+        standard_globals=_spec_globals(sheets.read_spec(ROOT/sheets.SPEC))
+        d4_globals=_spec_globals(sheets.read_spec(ROOT/sheets.D4_SPEC))
+        self.assertEqual(metadata['global_sheet_ids'],[f'0x{g:02X}' for g in d4_globals])
+        self.assertGreater(len(d4_globals), len(standard_globals))
+        self.assertEqual(d4_globals[:len(standard_globals)], standard_globals)
         self.assertEqual(metadata['generated_include'],'Core/Generated/d4_zora_sprite_sheets/sheet_overrides.asm')
         standard=sheets.read_spec(ROOT/sheets.SPEC)
         changed=sheets.read_spec(ROOT/sheets.D4_SPEC)

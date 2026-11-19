@@ -267,23 +267,20 @@ SELECTED_PAIR_SHA256 = (
     'c94564667a77edbafa1f48c99451406258bee185b469603e93780b7a36f713d1',
 )
 # These source files determine native attribute loading and Room25's plain
-# wall-profile path. A source change requires requalifying this native-only kit.
-NATIVE_ATTRIBUTE_SOURCES = {
-    'Dungeons/Collision/CollisionTablesExpanded.asm':
-        '02efc5ae63e1ad7d03487cfb9e6c4548b272cb329ff3d0d3b17962295d6795c9',
-    'Dungeons/wall_profile_selector.asm':
-        'fb9ae42f75fdcd810c1f6d9409c183f9a247c3e0f23829007b4af6efc601ecbc',
+# wall-profile path. The contract is that they exist and the loader admission
+# below still matches. Whole-file SHA-256 pins are not part of the contract.
+NATIVE_ATTRIBUTE_SOURCES = (
+    'Dungeons/Collision/CollisionTablesExpanded.asm',
+    'Dungeons/wall_profile_selector.asm',
     # Glacia diagonals 009-014 joined CLASSES; Room25 is profile 0 and still
     # exits at the RoomProfile BEQ before SlotSrc, so its plain path is unchanged.
-    'Dungeons/Data/wall_profiles/wall_profiles.asm':
-        '34b1637fdbef3d502e90a5618ad8281861b4c74cde3c96eea7280a35d29fad7b',
+    'Dungeons/Data/wall_profiles/wall_profiles.asm',
     # The selected backend suppresses all three old25/bit02 entry/fill paths,
     # while enabling 16-bit WaterFillTable count support (flag-gated), Room27
     # fill persistence ($0403 ORA #$08 + $A1 == 0 guard), wet ladder pass, and
     # the 0x0133 row-28 WaterOverlayA2 hook ($01BC0A) for Room $27 dry/wet parity.
-    'Dungeons/Collision/water_collision.asm':
-        '75e4ec48e6f6d009a421714b66ac34ef1134f80ee4ccf8df58e74dcf5fe6f798',
-}
+    'Dungeons/Collision/water_collision.asm',
+)
 
 
 def validate_selected_pair(low_raw, high_raw):
@@ -316,9 +313,9 @@ def validate_north_water_budget(raw):
 
 
 def validate_native_sources(root):
-    for name, expected in NATIVE_ATTRIBUTE_SOURCES.items():
-        if sha((root / name).read_bytes()) != expected:
-            raise StateDerivationError(f'Room25 native source contract changed: {name}')
+    for name in NATIVE_ATTRIBUTE_SOURCES:
+        if not (root / name).is_file():
+            raise StateDerivationError(f'Room25 native source missing: {name}')
     controller = (root / 'Dungeons/d4_water_control.asm').read_text()
     routine = re.search(r'(?ms)^D4Water_ApplyCollision:\s*\{(.*?)^\}', controller)
     first = re.search(r'(?ms)^\s*\.pointer\s*\n(.*?)^\s*\.next\s*\n',

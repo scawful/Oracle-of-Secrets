@@ -7,7 +7,9 @@ org $06FA34 ; @hook module=Sprites
 org $098BC1
   AncillaAdd_FallingPrize:
 
-pullpc
+; Same cursor dungeons.asm saved before its vanilla orgs. Explicit org, not
+; a pullpc of that other file. Requires the dungeon module (!DISABLE_DUNGEON = 0).
+org DungeonBank2C_CodeResume ; @manifest-org-bank=$2C
 
 Ancilla_SpawnFallingPrize:
   PHX

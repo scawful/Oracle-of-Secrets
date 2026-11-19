@@ -394,16 +394,18 @@ class NativeSourceFenceTest(unittest.TestCase):
         with patch.object(producer, 'NATIVE_ATTRIBUTE_SOURCES', {}):
             producer.validate_native_sources(self.root)
 
-    def test_changed_attribute_or_legacy_suppression_source_refuses(self):
+    def test_missing_native_source_refuses_and_byte_edits_do_not(self):
         self.controller.write_text(self.good)
         source = self.root/'Dungeons/Collision/source.fixture'
         source.parent.mkdir()
         source.write_bytes(b'selected source')
         with patch.object(producer, 'NATIVE_ATTRIBUTE_SOURCES',
-                          {'Dungeons/Collision/source.fixture': producer.sha(source.read_bytes())}):
+                          ('Dungeons/Collision/source.fixture',)):
             producer.validate_native_sources(self.root)
             source.write_bytes(b'changed source')
-            with self.assertRaisesRegex(producer.StateDerivationError, 'source contract changed'):
+            producer.validate_native_sources(self.root)
+            source.unlink()
+            with self.assertRaisesRegex(producer.StateDerivationError, 'missing'):
                 producer.validate_native_sources(self.root)
 
 

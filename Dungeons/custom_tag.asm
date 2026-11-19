@@ -51,7 +51,7 @@ org $09AC81 ; @hook module=Dungeons name=SomariaSocket_InternalLanding kind=jml 
   NOP
 assert pc() == $09AC86
 
-pullpc
+org TogetherWarp_CodeResume ; @manifest-org-bank=$2C
 CustomTag:
 {
   PHX
@@ -515,4 +515,5 @@ SomariaSocket_CulledBlock:
 assert pc() <= $2CFE00 ; do not overlap CustomRoomCollision
 pullpc
 
-pushpc
+; floor_puzzle.asm continues the bank $2C cursor from here.
+CustomTag_CodeResume = pc()

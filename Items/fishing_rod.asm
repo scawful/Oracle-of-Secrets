@@ -15,6 +15,9 @@
 
 ; Sprite_2D_NecklessMan_bounce (active only when Horse Form is disabled; when enabled,
 ; Sprites/NPCs/horse.asm owns $06:92DD and dispatches SprMiscA==$F1 to FloaterBoySpriteCheck).
+; Save the items freespace cursor, patch the vanilla dispatcher, then pullpc
+; below. This used to be a pushpc left open at the end of portal_rod.asm.
+pushpc
 if !ENABLE_HORSE_FORM == 0
 org $06C0B2 ; @hook module=Items
 {

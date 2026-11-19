@@ -12,7 +12,7 @@ org $01CC1C : JML WarpTag ; @hook module=Dungeons name=WarpTag kind=jml target=W
 
 WarpTag_Return = $01CC5A
 
-pullpc ; Bank 0x2C
+org ObjectHandler_CodeResume ; @manifest-org-bank=$2C
 WarpTag:
 {
   PHX
@@ -32,5 +32,6 @@ WarpTag:
   JML WarpTag_Return
 }
 print  "End of together_warp_tag.asm      ", pc
-pushpc
+; custom_tag.asm continues the bank $2C cursor from here.
+TogetherWarp_CodeResume = pc()
 

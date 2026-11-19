@@ -222,6 +222,12 @@ AUDITED_UNRESOLVED_ORG_CONTRACTS = {
         "NewSprPrepRoutinesLong+(!SPRID*3)",
         0x30,
     ),
+    # Bank $2C freespace resumes. These replace cross-file pushpc/pullpc pairs
+    # and stay in the custom dungeon bank, outside editor-managed room data.
+    ("Dungeons/together_warp_tag.asm", "ObjectHandler_CodeResume", 0x2C),
+    ("Dungeons/custom_tag.asm", "TogetherWarp_CodeResume", 0x2C),
+    ("Dungeons/floor_puzzle.asm", "CustomTag_CodeResume", 0x2C),
+    ("Sprites/Bosses/lanmola_expanded.asm", "DungeonBank2C_CodeResume", 0x2C),
 }
 
 

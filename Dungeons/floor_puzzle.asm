@@ -6,7 +6,7 @@ org $01CC00 ; Holes0 / tag $21 ; @hook module=Dungeons name=StarFloorPuzzle
 JSL NewTagRoutine
 RTS
 
-pullpc
+org CustomTag_CodeResume ; @manifest-org-bank=$2C
 NewTagRoutine:
 {
   ; check under link feet what tile he is standing on

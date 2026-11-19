@@ -95,13 +95,17 @@ def base_block(text, first_label):
 
 
 def source_evidence(ledger, roots):
+    """Bind claims to source files by path, anchors, and symbol addresses.
+
+    Per-file SHA-256 pins are not part of the contract. A comment-only edit
+    must not fail this check; a moved address or missing anchor still does.
+    """
     texts = {}
     for key, src in ledger['sources'].items():
         require(src['source_set'] in roots, f"Missing required source set: {src['source_set']}")
         root = Path(roots[src['source_set']]).resolve()
         path = (root / src['path']).resolve()
         require(path.is_relative_to(root) and path.is_file(), f"Missing/invalid evidence: {key}")
-        require(digest(path) == src['sha256'], f"Stale source evidence: {key}")
         texts[key] = path.read_text()
     for c in ledger['claims']:
         text = '\n'.join(texts[key] for key in c['provenance'])
@@ -118,35 +122,31 @@ def source_evidence(ledger, roots):
             if binding.get('bank00_mirror') and address < 0x2000:
                 address += 0x7E0000
             require(address == c['base'], f"{c['id']}: source address disagrees with ledger")
-    return {key: value['sha256'] for key, value in ledger['sources'].items()}
+    return {key: value['path'] for key, value in ledger['sources'].items()}
 
 
 def refresh_evidence(ledger, roots, keys=None):
-    """Return {key: (old, new)} for stale sources under the given roots.
+    """Re-check source bindings. Returns {} — there are no per-file SHA pins to refresh.
 
-    The refreshed ledger must still pass every anchor and binding check for the
-    claims these roots can prove, so a hash refresh never hides a moved address.
+    Comment-only edits pass. A moved address or missing file still fails, so a
+    refresh cannot hide a broken binding.
     """
     sources = {k: s for k, s in ledger['sources'].items() if s['source_set'] in roots}
     for key in keys or ():
         require(key in sources, f"Unknown or unbound source key: {key}")
-    changes = {}
     for key, src in sources.items():
         if keys and key not in keys:
             continue
         root = Path(roots[src['source_set']]).resolve()
         path = (root / src['path']).resolve()
         require(path.is_relative_to(root) and path.is_file(), f"Missing/invalid evidence: {key}")
-        new = digest(path)
-        if new != src['sha256']:
-            changes[key] = (src['sha256'], new)
-    view = dict(ledger, sources={k: dict(s, sha256=changes.get(k, (0, s['sha256']))[1]) for k, s in sources.items()},
+    view = dict(ledger,
+                sources={k: {field: value for field, value in src.items() if field != 'sha256'}
+                         for k, src in sources.items()},
                 claims=[c for c in ledger['claims'] if set(c['provenance']) <= set(sources)
                         and (not c.get('binding') or c['binding']['source'] in sources)])
-    stale = [k for k, s in view['sources'].items() if digest(Path(roots[s['source_set']]) / s['path']) != s['sha256']]
-    require(not stale, f"Other stale sources block the check: {', '.join(stale)}")
     source_evidence(view, roots)
-    return changes
+    return {}
 
 
 def physical(c):

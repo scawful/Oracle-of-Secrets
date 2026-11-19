@@ -200,7 +200,9 @@ incsrc "Dungeons/abyss_gbc_interiors.asm"
 assert pc() <= $2CF700 ; Somaria internal-landing helper owns the fixed tail
 print "End of dungeons.asm               ", pc
 
-pushpc
+; Bank $2C tail cursor. Sprites/Bosses/lanmola_expanded.asm orgs here after
+; its vanilla hooks so this file does not leave a pushpc open.
+DungeonBank2C_CodeResume = pc()
 
 ; Transfer Dungeon Map Graphics
 ; Module0E_03_01_00_PrepMapGraphics

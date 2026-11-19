@@ -310,7 +310,8 @@ CustomObjectHandler2:
       incbin Data/timber_kettle.bin
 }
 
-pushpc
+; Bank $2C cursor after the object handler. together_warp_tag.asm orgs here.
+ObjectHandler_CodeResume = pc()
 
 ; Item ID 22B
 org $00A9AC

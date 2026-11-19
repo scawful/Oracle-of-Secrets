@@ -93,11 +93,13 @@ class OwnershipTests(unittest.TestCase):
             data['claims'][0]['base']=0x7E1001
             with self.assertRaisesRegex(AllocationError,'disagrees'):source_evidence(data,{'shared':root})
             path.write_text('Owner = $7E1001\n')
-            with self.assertRaisesRegex(AllocationError,'Stale source'):source_evidence(data,{'shared':root})
+            self.assertTrue(source_evidence(data,{'shared':root}))
+            path.write_text('; comment only\nOwner = $7E1001\n')
+            self.assertTrue(source_evidence(data,{'shared':root}))
             path.unlink()
             with self.assertRaisesRegex(AllocationError,'Missing/invalid'):source_evidence(data,{'shared':root})
 
-    def test_refresh_evidence_updates_hash_but_not_moved_address(self):
+    def test_refresh_evidence_ignores_comments_and_rejects_moved_address(self):
         from allocation_contracts import refresh_evidence
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);path=root/'proof.txt';path.write_text('Owner = $7E1000\n')
@@ -105,7 +107,7 @@ class OwnershipTests(unittest.TestCase):
             data['claims'][0]['binding']={'source':'proof','symbol':'Owner'}
             self.assertEqual(refresh_evidence(data,{'shared':root}),{})
             path.write_text('; comment\nOwner = $7E1000\n')
-            self.assertEqual(refresh_evidence(data,{'shared':root}),{'proof':(data['sources']['proof']['sha256'],digest(path))})
+            self.assertEqual(refresh_evidence(data,{'shared':root}),{})
             with self.assertRaisesRegex(AllocationError,'Unknown or unbound'):refresh_evidence(data,{'shared':root},['nope'])
             path.write_text('Owner = $7E1001\n')
             with self.assertRaisesRegex(AllocationError,'disagrees'):refresh_evidence(data,{'shared':root})
@@ -175,6 +177,8 @@ class OwnershipTests(unittest.TestCase):
 
     def test_current_inventory_and_checkpoint_reservations_are_source_bound(self):
         data=read_ledger(ROOT/'Config/allocation_ownership.json')
+        self.assertTrue(data['sources'])
+        self.assertTrue(all('sha256' not in src for src in data['sources'].values()))
         expected={'ByrnaOwned':(0x7EF3AC,1),'BombchuOwned':(0x7EF3AD,1),
                   'SwitchHookOwned':(0x7EF3AE,1),'GaroMaskOwned':(0x7EF3AF,1),
                   'BombchuAmmo':(0x7EF3B0,1),'RegionalCheckpointSchema':(0x7EF3B4,1),

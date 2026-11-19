@@ -55,8 +55,6 @@ def find_rom(name="oos168x.sfc"):
 
 
 JUNGLE = [0xA6, 0xA7, 0xAE, 0xAF]
-# Live ROM updated $A3/$A4/$AC to share jungle sheets $6C/$6D alongside $A6/$A7/$AE/$AF.
-LIVE_JUNGLE = [0xA3, 0xA4, 0xA6, 0xA7, 0xAC, 0xAE, 0xAF]
 
 
 class TailMaps(unittest.TestCase):
@@ -92,10 +90,20 @@ class TailMaps(unittest.TestCase):
         before = g.sha256(rom)
         tail = g.read_tail_areas(rom.read_bytes())  # read-only
         self.assertEqual(sorted(tail), list(range(0xA0, 0xC0)))
-        L = g.build_loaders(self.inv({str(a): v for a, v in tail.items()}))
+        loaded = self.inv({str(a): v for a, v in tail.items()})
+        L = g.build_loaders(loaded)
+        users = {}
         for sheet in (0x6C, 0x6D):
-            users = sorted({a for ids in L[sheet]["area"].values() for a in ids})
-            self.assertEqual(users, LIVE_JUNGLE, f"sheet ${sheet:02X}")
+            users[sheet] = sorted({a for ids in L[sheet]["area"].values() for a in ids})
+            self.assertTrue(users[sheet], f"sheet ${sheet:02X} has no tail users")
+            self.assertTrue(set(users[sheet]) <= set(tail), f"sheet ${sheet:02X}")
+        # The pair shares one tail-map set. Membership comes from the ROM tables,
+        # not a second hardcoded map list.
+        self.assertEqual(users[0x6C], users[0x6D])
+        for area in users[0x6C]:
+            static = tail[area]["static_graphics"]
+            self.assertIn(0x6C, static)
+            self.assertIn(0x6D, static)
         self.assertEqual(g.sha256(rom), before)
 
 

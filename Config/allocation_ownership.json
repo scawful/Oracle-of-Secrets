@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "Bounded ownership evidence, not a free-space allocator. Half-open extents; save_buffer is physically WRAM.",
+  "description": "Bounded ownership evidence, not a free-space allocator. Half-open extents; save_buffer is physically WRAM. Source entries name a path; anchors and symbol addresses are the contract, not per-file SHA-256 pins.",
   "source_sets": {
     "shared": "Isolated weekend RC integration: Origins 47-feature continuation plus Minish/cart, music cache, HeavyPot/palette repairs. This source-set name does not refer to the shared checkout.",
     "pending_rc": "Separate origins continuation source; bind explicitly",
@@ -9,473 +9,379 @@
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
       "source_set": "shared",
-      "path": "Sprites/Objects/minecart.asm",
-      "sha256": "157176a6ed28efffcfdb8450aaa739cbbd9548ada7cf06286be606b65b66a2cc"
+      "path": "Sprites/Objects/minecart.asm"
     },
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
-      "path": "Masks/all_masks.asm",
-      "sha256": "3197714c986740aa97647030edd5f40d3e9f416f135fc023ae95c460714b1d58"
+      "path": "Masks/all_masks.asm"
     },
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
-      "path": "Masks/mask_routines.asm",
-      "sha256": "eb985d202761ef0e2cdb517381fb56c96f0de148f8d4697aaba1b3b6d50afe95"
+      "path": "Masks/mask_routines.asm"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
-      "path": "bank_02.asm",
-      "sha256": "b97f64236cc51c5c1c977ae39cbfdeb4be578d5a28b5eafd4203c3be81436b9c"
+      "path": "bank_02.asm"
     },
     "shared:Items/fishing_rod.asm": {
       "source_set": "shared",
-      "path": "Items/fishing_rod.asm",
-      "sha256": "f94102dcd9dc4b87ec36b02efd9c1ef4ccf4c002915a5303326e2e998c276e91"
+      "path": "Items/fishing_rod.asm"
     },
     "shared:Core/ram.asm": {
       "source_set": "shared",
-      "path": "Core/ram.asm",
-      "sha256": "6c28f2b751ff5b89d469c47d76818e4f84a831285d205a8ffaaa074cc5b0bc8a"
+      "path": "Core/ram.asm"
     },
     "shared:Overworld/overlays.asm": {
       "source_set": "shared",
-      "path": "Overworld/overlays.asm",
-      "sha256": "6b9e9310ee4d9139c31af0c94ee0ae827d20dd937499422a96fc9b9b82171c69"
+      "path": "Overworld/overlays.asm"
     },
     "shared:Core/sram.asm": {
       "source_set": "shared",
-      "path": "Core/sram.asm",
-      "sha256": "54d203717343012501ac520f6f20f98070a153e1b8a7e0bbd5448fc74f75de8f"
+      "path": "Core/sram.asm"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
-      "path": "Items/magic_rings.asm",
-      "sha256": "6b6c64f5252dfe4d32844bf15b7c1e3517a29066625ebefd3dd8a6122eb984cb"
+      "path": "Items/magic_rings.asm"
     },
     "pending_rc:Core/sram.asm": {
       "source_set": "pending_rc",
-      "path": "Core/sram.asm",
-      "sha256": "4e9d336eadace6bf56fd3ec84d036e932d4aaf65823a207cea1927fcab9a03e1"
+      "path": "Core/sram.asm"
     },
     "pending_rc:Masks/mask_binding.asm": {
       "source_set": "pending_rc",
-      "path": "Masks/mask_binding.asm",
-      "sha256": "ff6cd79e3a1174c19320cb84dd50d6862c8242aada4d28aa07e169e4770cbfaa"
+      "path": "Masks/mask_binding.asm"
     },
     "pending_rc:Items/goldstar.asm": {
       "source_set": "pending_rc",
-      "path": "Items/goldstar.asm",
-      "sha256": "199aa00c758b1616cd07984ce02e79443441294aa17d6828b0b3bfaa4dd219f0"
+      "path": "Items/goldstar.asm"
     },
     "pending_rc:Items/ocarina.asm": {
       "source_set": "pending_rc",
-      "path": "Items/ocarina.asm",
-      "sha256": "4e2bbf60ae767a4c2a363cf450be53e34658e2433a2bf9a87a71d767d2cb1cab"
+      "path": "Items/ocarina.asm"
     },
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
-      "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "50299465b7575f13e1f285cffa384293635e73afd29c62c66c9ee697ba4a341f"
+      "path": "Overworld/ZSCustomOverworld.asm"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
-      "path": "Sprites/Objects/data/minecart_tracks.asm",
-      "sha256": "e6bfbbadd40cbe7d25692fa054524c4dab135076fae07b167b57d6248c20ffd4"
+      "path": "Sprites/Objects/data/minecart_tracks.asm"
     },
     "shared:Util/macros.asm": {
       "source_set": "shared",
-      "path": "Util/macros.asm",
-      "sha256": "c21e90c2a328128c789319e8a40d57a0fafbaf7b5bbbae62ebd9dd27ad5773d4"
+      "path": "Util/macros.asm"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
-      "path": "Config/feature_flags.asm",
-      "sha256": "a98cf6204c8d0003713e90c9785dbec280ec5953be192e893104199f4a14e488"
+      "path": "Config/feature_flags.asm"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
-      "path": "Config/module_flags.asm",
-      "sha256": "0dfc5ada77bbf92e30b8f7bf30b034ced9ef3d1dd03591fc1f00a835a747586a"
+      "path": "Config/module_flags.asm"
     },
     "pending_rc:Util/macros.asm": {
       "source_set": "pending_rc",
-      "path": "Util/macros.asm",
-      "sha256": "18dc5895f8d970af82adfa5bff074d9ad9200fa469d42689e939a3518377cb97"
+      "path": "Util/macros.asm"
     },
     "pending_rc:Config/feature_flags.asm": {
       "source_set": "pending_rc",
-      "path": "Config/feature_flags.asm",
-      "sha256": "b8d00e97a5f2b9bc53fa317ccf6a077c93aabc0e0be02c78bfe09f47d5c7c772"
+      "path": "Config/feature_flags.asm"
     },
     "pending_rc:Config/module_flags.asm": {
       "source_set": "pending_rc",
-      "path": "Config/module_flags.asm",
-      "sha256": "0dfc5ada77bbf92e30b8f7bf30b034ced9ef3d1dd03591fc1f00a835a747586a"
+      "path": "Config/module_flags.asm"
     },
     "shared:Overworld/music_cache.asm": {
       "source_set": "shared",
-      "path": "Overworld/music_cache.asm",
-      "sha256": "ce5c71c082f0765a3ea439cb20dbb0a9ffc36f10e9128477aeb04d1c126a4dd7"
+      "path": "Overworld/music_cache.asm"
     },
     "shared:Overworld/storm.asm": {
       "source_set": "shared",
-      "path": "Overworld/storm.asm",
-      "sha256": "717b0efc91f74456525b9c4bc983ae84c0f8109d9d0dc1fb9bc075e420cb9343"
+      "path": "Overworld/storm.asm"
     },
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
-      "path": "Overworld/overworld.asm",
-      "sha256": "124da830bc465a180e12d629713e8abed5b1f74bef5d08f535949d19dbe98bb6"
+      "path": "Overworld/overworld.asm"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
-      "path": "Menu/menu_hud.asm",
-      "sha256": "a9a6b5b994165553e68923d7baadd7fbe3901cd0218242576d31efd0539b7307"
+      "path": "Menu/menu_hud.asm"
     },
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
-      "path": "Menu/menu_map_travel.asm",
-      "sha256": "13cfe0d5fdfcd6472b0c5d39ee7913f42cfdb4051d0cb5e8d3c69187e30289e0"
+      "path": "Menu/menu_map_travel.asm"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
-      "path": "Core/Cutscene/experiment.asm",
-      "sha256": "a288a2222a5241479def8eff4d69f927ff6a6a7d74fc29d84b78bc66fe7d004a"
+      "path": "Core/Cutscene/experiment.asm"
     },
     "shared:Sprites/Players/player2.asm": {
       "source_set": "shared",
-      "path": "Sprites/Players/player2.asm",
-      "sha256": "b871805858a405ff5d132403bc494487963617dee82dd33ea5c2467050478ec4"
+      "path": "Sprites/Players/player2.asm"
     },
     "shared:Items/ice_rod.asm": {
       "source_set": "shared",
-      "path": "Items/ice_rod.asm",
-      "sha256": "33561173009ff193ab76f49d7fa46b517d205dbd4113119ef5fef8ab72826751"
+      "path": "Items/ice_rod.asm"
     },
     "vanilla:bank_00.asm": {
       "source_set": "vanilla",
-      "path": "bank_00.asm",
-      "sha256": "64f3c51fdef1363288570173921e8c3b5187564d6291718914a68fee740e9386"
+      "path": "bank_00.asm"
     },
     "vanilla:bank_01.asm": {
       "source_set": "vanilla",
-      "path": "bank_01.asm",
-      "sha256": "18fdd57a300718819b3ec613b1782ad113921999c5e353aef629afaa897c98f8"
+      "path": "bank_01.asm"
     },
     "vanilla:bank_0C.asm": {
       "source_set": "vanilla",
-      "path": "bank_0C.asm",
-      "sha256": "79c87d4ceba2be3613c790c984f21fa4adbacf89f32712c330315f030e0fdd54"
+      "path": "bank_0C.asm"
     },
     "shared:Core/symbols.asm": {
       "source_set": "shared",
-      "path": "Core/symbols.asm",
-      "sha256": "175082962618e13784cee534b4a9352b4275bfd7897924f18fa536312336cd3f"
+      "path": "Core/symbols.asm"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
-      "path": "Masks/wolf_mask.asm",
-      "sha256": "992207e009813ced9f03954bfe9ea6af454b08046e6254387c76f6ccef7fb372"
+      "path": "Masks/wolf_mask.asm"
     },
     "shared:Overworld/lyra_native_loaders.asm": {
       "source_set": "shared",
-      "path": "Overworld/lyra_native_loaders.asm",
-      "sha256": "4bf19d129fdf8dd9029dda514b5ba95e04660dde5ccaf32c1ef30ebc5bb584d1"
+      "path": "Overworld/lyra_native_loaders.asm"
     },
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
-      "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "9cecb973f5b46534e9f43165cfc0b2c7bdb4c59567f41d69b80451506a40fa16"
+      "path": "Scripts/Build/lyra_native_loaders.py"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
-      "path": "Scripts/Generate/sheet_overrides.py",
-      "sha256": "63d2bfb478b7476d9c344ca7fe3719e38b0d43236f065787d5c1200e3f4954be"
+      "path": "Scripts/Generate/sheet_overrides.py"
     },
     "shared:Scripts/Build/native_overworld_authoring_metadata.py": {
       "source_set": "shared",
-      "path": "Scripts/Build/native_overworld_authoring_metadata.py",
-      "sha256": "129dd566e82479618a1740a103686434ea80bc0d704e3c92893f9ab5f59698bd"
+      "path": "Scripts/Build/native_overworld_authoring_metadata.py"
     },
     "shared:Overworld/special_overworld_resident.asm": {
       "source_set": "shared",
-      "path": "Overworld/special_overworld_resident.asm",
-      "sha256": "92b575e02c4aae947fba9a55fb0c66137386fd2e974a36d00d9d795b604f77ca"
+      "path": "Overworld/special_overworld_resident.asm"
     },
     "shared:Overworld/custom_gfx.asm": {
       "source_set": "shared",
-      "path": "Overworld/custom_gfx.asm",
-      "sha256": "c518e294587370f2950b19b28710ac7f99139a892825a8e6f8ac1d7200e8b3b1"
+      "path": "Overworld/custom_gfx.asm"
     },
     "shared:Overworld/special_overworld_graphics.asm": {
       "source_set": "shared",
-      "path": "Overworld/special_overworld_graphics.asm",
-      "sha256": "edb06a5103ef4812d7a5113f669cec5d1605d34713f9526e6453252c6b03d00e"
+      "path": "Overworld/special_overworld_graphics.asm"
     },
     "shared:Oracle_main.asm": {
       "source_set": "shared",
-      "path": "Oracle_main.asm",
-      "sha256": "5d866bb30c7569d89e34d3cd156227238ffb6e59da2fef9c5200718a3fb479c1"
+      "path": "Oracle_main.asm"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
-      "path": "Scripts/Build/special_overworld_resident_abi.py",
-      "sha256": "45d94e517fa76d338c85b0159116faaa2ae2f8dac2c36a75f3b96fb1de95622a"
+      "path": "Scripts/Build/special_overworld_resident_abi.py"
     },
     "shared:Overworld/special_overworld_palette.asm": {
       "source_set": "shared",
-      "path": "Overworld/special_overworld_palette.asm",
-      "sha256": "f18c07971952e568f8ab841806c9e1140e55e1335aab0cf9123ce10066048c62"
+      "path": "Overworld/special_overworld_palette.asm"
     },
     "shared:Overworld/time_system.asm": {
       "source_set": "shared",
-      "path": "Overworld/time_system.asm",
-      "sha256": "d97a3b754052f5f660138915463468e8beb4eb498a66b1c5c097b7e7b989cae8"
+      "path": "Overworld/time_system.asm"
     },
     "shared:Overworld/aux_palette_extension.asm": {
       "source_set": "shared",
-      "path": "Overworld/aux_palette_extension.asm",
-      "sha256": "a78e5eca3f06f81d16ead1d9f7e730d67ed9245118fbe610b52a14076d0c1891"
+      "path": "Overworld/aux_palette_extension.asm"
     },
     "shared:Overworld/docks_profile.asm": {
       "source_set": "shared",
-      "path": "Overworld/docks_profile.asm",
-      "sha256": "d8fb2882d99ba8d23894b8812e6d994144ec9b1c3db689020291c68f8d28afe8"
+      "path": "Overworld/docks_profile.asm"
     },
     "shared:Sprites/Bosses/d8_boss.asm": {
       "source_set": "shared",
-      "path": "Sprites/Bosses/d8_boss.asm",
-      "sha256": "30774e838baa8c77be46b368698aab94414c8d34c7bb24c4f2a1c38c276d50ad"
+      "path": "Sprites/Bosses/d8_boss.asm"
     },
     "shared:Dungeons/wall_profile_selector.asm": {
       "source_set": "shared",
-      "path": "Dungeons/wall_profile_selector.asm",
-      "sha256": "fb9ae42f75fdcd810c1f6d9409c183f9a247c3e0f23829007b4af6efc601ecbc"
+      "path": "Dungeons/wall_profile_selector.asm"
     },
     "shared:Dungeons/wall_profile_gfx.asm": {
       "source_set": "shared",
-      "path": "Dungeons/wall_profile_gfx.asm",
-      "sha256": "f39f14a7836d599de948363e8982e7bfc8249fbdea75a915c7b6fdc4e40be1a2"
+      "path": "Dungeons/wall_profile_gfx.asm"
     },
     "shared:Dungeons/Data/kits/kits.asm": {
       "source_set": "shared",
-      "path": "Dungeons/Data/kits/kits.asm",
-      "sha256": "808cb30e2e8f6a272937d090761a36ad382e8cef7e01d4f97697bff4c692b45f"
+      "path": "Dungeons/Data/kits/kits.asm"
     },
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
-      "path": "Sprites/all_sprites.asm",
-      "sha256": "460f9082227b220db5005799e8834abaa5c33037506e956c8e7457c209da09d4"
+      "path": "Sprites/all_sprites.asm"
     },
     "shared:Sprites/NPCs/eon_owl.asm": {
       "source_set": "shared",
-      "path": "Sprites/NPCs/eon_owl.asm",
-      "sha256": "2433fc6e000b7efe8b434eca9543d84245fd595606cb6ddf0a417257168a48ef"
+      "path": "Sprites/NPCs/eon_owl.asm"
     },
     "shared:Sprites/NPCs/tingle.asm": {
       "source_set": "shared",
-      "path": "Sprites/NPCs/tingle.asm",
-      "sha256": "7dd4bc06ec1b223c1117dcf1697fda234cb95744aa087e5ed7995963c49103b7"
+      "path": "Sprites/NPCs/tingle.asm"
     },
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
-      "path": "Sprites/Objects/ice_block.asm",
-      "sha256": "b16795fe4950a5f908256d31c24858155b86926c1bd70e0a2384d09644e3a000"
+      "path": "Sprites/Objects/ice_block.asm"
     },
     "shared:Dungeons/d4_water_control.asm": {
       "source_set": "shared",
-      "path": "Dungeons/d4_water_control.asm",
-      "sha256": "e42ea5f65a8629517f59992dc9c5e302d1ded8578fcda7b64ccfbb4575c88943"
+      "path": "Dungeons/d4_water_control.asm"
     },
     "shared:Items/special_soaring.asm": {
       "source_set": "shared",
-      "path": "Items/special_soaring.asm",
-      "sha256": "4ca90c12bb58b0e8c84abf14b082fed8248a97a60dca345ba5eb26eb65d6c61e"
+      "path": "Items/special_soaring.asm"
     },
     "shared:Items/switch_hook.asm": {
       "source_set": "shared",
-      "path": "Items/switch_hook.asm",
-      "sha256": "71e05ae057caa47d63a504a1ded5bdd39f3cf4df95befa5dcc842950374d856c"
+      "path": "Items/switch_hook.asm"
     },
     "shared:Items/sky_watch_log.asm": {
       "source_set": "shared",
-      "path": "Items/sky_watch_log.asm",
-      "sha256": "8e03ea2fcecf01408e834bfc3c3971fae4697cba18889f69a8d259f244ebb62e"
+      "path": "Items/sky_watch_log.asm"
     },
     "shared:Dungeons/d6_chu_gate_97.asm": {
       "source_set": "shared",
-      "path": "Dungeons/d6_chu_gate_97.asm",
-      "sha256": "fbc7b57efd540595b5fc5486978172197f028fdb1c644183ab0febcd9016911f"
+      "path": "Dungeons/d6_chu_gate_97.asm"
     },
     "shared:Overworld/kalyxo_boat.asm": {
       "source_set": "shared",
-      "path": "Overworld/kalyxo_boat.asm",
-      "sha256": "4dcacb673c1d93ea37232955bbaa931cfa272f0b3a6342f6bf41cca5cd34eb95"
+      "path": "Overworld/kalyxo_boat.asm"
     },
     "shared:Data/overworld/kalyxo_boat_placements.asm": {
       "source_set": "shared",
-      "path": "Data/overworld/kalyxo_boat_placements.asm",
-      "sha256": "5b1a1ab2426b213166427c9e8a3b5e28427ddf069cc7806ffd50cde9c06ed3d3"
+      "path": "Data/overworld/kalyxo_boat_placements.asm"
     },
     "shared:Core/Cutscene/opening.asm": {
       "source_set": "shared",
-      "path": "Core/Cutscene/opening.asm",
-      "sha256": "f588ffcf98cfb74062b24dd3fccd2e887716766d1fba2f3e645c241c4d0e3192"
+      "path": "Core/Cutscene/opening.asm"
     },
     "shared:Overworld/goron_checkpoint.asm": {
       "source_set": "shared",
-      "path": "Overworld/goron_checkpoint.asm",
-      "sha256": "fba430e4f556ed40dfa9f679d53436e9030b4ed0d42da77f367c80d87bca6be8"
+      "path": "Overworld/goron_checkpoint.asm"
     },
     "shared:Overworld/special_overworld_semantic.asm": {
       "source_set": "shared",
-      "path": "Overworld/special_overworld_semantic.asm",
-      "sha256": "5c60191c9da8aeda6282a09556cfc02443e46850e82b20113f44110f6599c457"
+      "path": "Overworld/special_overworld_semantic.asm"
     },
     "shared:Sprites/NPCs/farore_d8_graphics.asm": {
       "source_set": "shared",
-      "path": "Sprites/NPCs/farore_d8_graphics.asm",
-      "sha256": "561fb4748234ab3cb8768972c71d1d0bfc0e75fd11b3583aa879b915d58f3e1d"
+      "path": "Sprites/NPCs/farore_d8_graphics.asm"
     },
     "shared:Sprites/NPCs/farore_d8_companion.asm": {
       "source_set": "shared",
-      "path": "Sprites/NPCs/farore_d8_companion.asm",
-      "sha256": "bc2392da0a2106a0bfd876bdfd848f82d37f85e3be05cb0358cd675c796921c8"
+      "path": "Sprites/NPCs/farore_d8_companion.asm"
     },
     "shared:Masks/horse_form.asm": {
       "source_set": "shared",
-      "path": "Masks/horse_form.asm",
-      "sha256": "3a7ad6a72c513fb203534f7c63408fdd5fbe025e41a850b4351f3b58f86fe9ca"
+      "path": "Masks/horse_form.asm"
     },
     "shared:Sprites/NPCs/horse.asm": {
       "source_set": "shared",
-      "path": "Sprites/NPCs/horse.asm",
-      "sha256": "a61c28dbef596c5b948ffda84c68d7dbe4f8bb5744ff49d127fe6dd70fd31449"
+      "path": "Sprites/NPCs/horse.asm"
     },
     "shared:Masks/horse_sparse_runtime.asm": {
       "source_set": "shared",
-      "path": "Masks/horse_sparse_runtime.asm",
-      "sha256": "2e265cf76eb1ad066a8713e06e8b8d0b858e57fcebb7330eb196a4d12bc250ee"
+      "path": "Masks/horse_sparse_runtime.asm"
     },
     "shared:Masks/mask_binding.asm": {
       "source_set": "shared",
-      "path": "Masks/mask_binding.asm",
-      "sha256": "ef847bb3f21ec82d1746cf5ceff2102cf64c09be5f76e25bb20e3a8bb85d943e"
+      "path": "Masks/mask_binding.asm"
     },
     "shared:Overworld/entrances.asm": {
       "source_set": "shared",
-      "path": "Overworld/entrances.asm",
-      "sha256": "b4e0cead8084a6a3c49d4b6daf03c00255979c6b3b233175f1c6f1352c1d93a3"
+      "path": "Overworld/entrances.asm"
     },
     "shared:Masks/horse_ground_clearance.asm": {
       "source_set": "shared",
-      "path": "Masks/horse_ground_clearance.asm",
-      "sha256": "42b69b651bbf8997b92ad38905afca697579f4fc5a729470e71cbf244d320bef"
+      "path": "Masks/horse_ground_clearance.asm"
     },
     "shared:Items/all_items.asm": {
       "source_set": "shared",
-      "path": "Items/all_items.asm",
-      "sha256": "f8c8d56ca8e537462f418c78a3a816bc4cad0e2cb8f0c8f95b38c2c37ed35335"
+      "path": "Items/all_items.asm"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
-      "path": "Masks/horse_park_anywhere.asm",
-      "sha256": "8a125fb41fafc055ef302d459a677767b48162458c0c133246c1ec6de65da1e8"
+      "path": "Masks/horse_park_anywhere.asm"
     },
     "shared:Menu/menu_hud_codex.asm": {
       "source_set": "shared",
-      "path": "Menu/menu_hud_codex.asm",
-      "sha256": "df1aa12fb5b779b8958af56da4ba5ae260fe6a5af83e03d478f808e8c5fed0e7"
+      "path": "Menu/menu_hud_codex.asm"
     },
     "shared:Overworld/travel_destinations.asm": {
       "source_set": "shared",
-      "path": "Overworld/travel_destinations.asm",
-      "sha256": "380d274c53ce7177f18167a7229fab399cadffb6dcd17f999666ce1c1ef993ab"
+      "path": "Overworld/travel_destinations.asm"
     },
     "shared:Dungeons/room_state.asm": {
       "source_set": "shared",
-      "path": "Dungeons/room_state.asm",
-      "sha256": "7db3254f110aec3df5c4a61837224cd7d8da5ec0d68da4fee6d640b63a75f5ef"
+      "path": "Dungeons/room_state.asm"
     },
     "shared:Data/room_state.json": {
       "source_set": "shared",
-      "path": "Data/room_state.json",
-      "sha256": "16a8ad8fe66ba879e1e579d9b064894d1026abb72fbaa59d81a1d17ed8116d2f"
+      "path": "Data/room_state.json"
     },
     "shared:Dungeons/generated/room_state_table.asm": {
       "source_set": "shared",
-      "path": "Dungeons/generated/room_state_table.asm",
-      "sha256": "47b045a4762066f45d61ef6a8c5c089d0d8c87a12fc2c7e510d61a945214c8e7"
+      "path": "Dungeons/generated/room_state_table.asm"
     },
     "shared:Sprites/Objects/dungeon_web.asm": {
       "source_set": "shared",
-      "path": "Sprites/Objects/dungeon_web.asm",
-      "sha256": "d2c55a77a6eaebb9afd4c1b56eb23a60dddf4d8e2083c6db89b939792889999d"
+      "path": "Sprites/Objects/dungeon_web.asm"
     },
     "shared:Items/fire_burn_bushes.asm": {
       "source_set": "shared",
-      "path": "Items/fire_burn_bushes.asm",
-      "sha256": "21d690a917bb66bcdd29aac3d7e63dde47860146dd9de16f90f5ef11be70719e"
+      "path": "Items/fire_burn_bushes.asm"
     },
     "shared:Sprites/Bosses/manhandla.asm": {
       "source_set": "shared",
-      "path": "Sprites/Bosses/manhandla.asm",
-      "sha256": "bc4caa766381e85182c0fde1954ffdec4800b5686827249eb1e5ae1fec08da9a"
+      "path": "Sprites/Bosses/manhandla.asm"
     },
     "shared:Sprites/Bosses/dark_link.asm": {
       "source_set": "shared",
-      "path": "Sprites/Bosses/dark_link.asm",
-      "sha256": "8a13c2693375f8254fa4db8f04b96813fb8868f3d8eaad65ea9478bc4f13a34a"
+      "path": "Sprites/Bosses/dark_link.asm"
     },
     "shared:Sprites/Bosses/twinrova.asm": {
       "source_set": "shared",
-      "path": "Sprites/Bosses/twinrova.asm",
-      "sha256": "dcbdbc42bd0c653680fa23debcd1e5cbe2d28968781903e7d24d6feeea911013"
+      "path": "Sprites/Bosses/twinrova.asm"
     },
     "shared:Sprites/Bosses/kydreeok.asm": {
       "source_set": "shared",
-      "path": "Sprites/Bosses/kydreeok.asm",
-      "sha256": "ed5123df2afa07ab5f3a6850148ecd41b34247059593f156fa655e1b86f035c3"
+      "path": "Sprites/Bosses/kydreeok.asm"
     },
     "shared:Overworld/credits_scenes.asm": {
       "source_set": "shared",
-      "path": "Overworld/credits_scenes.asm",
-      "sha256": "8ff5810cc808ba2209b149f06cf37eeb2e5ede5b91b984560bbb98e37474bada"
+      "path": "Overworld/credits_scenes.asm"
     },
     "shared:Overworld/richard_quest.asm": {
       "source_set": "shared",
-      "path": "Overworld/richard_quest.asm",
-      "sha256": "b75966ce72d6c199e7e906c2a98ad494c844fa15581dc130d2c3caad85f0e2f9"
+      "path": "Overworld/richard_quest.asm"
     },
     "shared:Overworld/lyra_edge_guard.asm": {
       "source_set": "shared",
-      "path": "Overworld/lyra_edge_guard.asm",
-      "sha256": "f420f9b22f402113f3599b0d4623fcc7defb7d91d8ac6f98b8314ffd4d3333b8"
+      "path": "Overworld/lyra_edge_guard.asm"
     },
     "shared:Overworld/village_bar_exit.asm": {
       "source_set": "shared",
-      "path": "Overworld/village_bar_exit.asm",
-      "sha256": "6873393af2e641bfb36354e921d117d290355baa1361bf00adecae1b7e0a7866"
+      "path": "Overworld/village_bar_exit.asm"
     },
     "shared:Overworld/world_map.asm": {
       "source_set": "shared",
-      "path": "Overworld/world_map.asm",
-      "sha256": "56c074ee48818903c924615af6eddc0f6183effaaa87fc504ce2fb2473c97d20"
+      "path": "Overworld/world_map.asm"
     },
     "shared:Overworld/special_overworld_transitions.asm": {
       "source_set": "shared",
-      "path": "Overworld/special_overworld_transitions.asm",
-      "sha256": "959817cadcfa696c43146f8490599f4b7f73e6740bd1de2291478f57d46f6409"
+      "path": "Overworld/special_overworld_transitions.asm"
     },
     "shared:Items/gust_jar.asm": {
       "source_set": "shared",
-      "path": "Items/gust_jar.asm",
-      "sha256": "8805a72d0d3eb08854999b7ee2ecd3c82dc30d4eae0c9fce837a7b9078ccb32e"
+      "path": "Items/gust_jar.asm"
     },
     "shared:Masks/garo_mask.asm": {
       "source_set": "shared",
-      "path": "Masks/garo_mask.asm",
-      "sha256": "c7f18275cdc53ea6d5ac2df0b4e78b96f0a629d78d9805b13de45c6840aa99b1"
+      "path": "Masks/garo_mask.asm"
     }
   },
   "claims": [
