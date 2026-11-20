@@ -515,10 +515,10 @@ SpecialSoaring_PinYHi:
 ;   3 (Pin 4): Twin Brothers    ($56) -> X=$0CE0, Y=$0560
 ;   4 (Pin 5): Shrine Courage   ($50) -> X=$0160, Y=$0540
 ;   5 (Pin 6): Lupo Temple      ($5E) -> X=$0E50, Y=$08A0
-;   6 (Pin 7): Forest of Dreams ($58) -> X=$01F0, Y=$08F0
+;   6 (Pin 7): Forest of Dreams ($58) -> X=$01B0, Y=$08F0
 ;   7 (Pin 8): Abyss Beach      ($76) -> X=$0E40, Y=$0EA0
 AbyssSoaring_PinXLo:
-  db $40, $E0, $90, $E0, $60, $50, $F0, $40
+  db $40, $E0, $90, $E0, $60, $50, $B0, $40
 AbyssSoaring_PinXHi:
   db $02, $08, $08, $0C, $01, $0E, $01, $0E
 AbyssSoaring_PinYLo:
@@ -591,9 +591,9 @@ AbyssSoaring_Caches:
   dw $005E,$0016,$0850,$0DD8,$08A0,$0E50,$005E,$02BA
   dw $08BF,$0E57,$0600,$091E,$0C00,$0F00,$0520,$0A00,$0B00,$1000
   dw $2100,$2000,$0000,$0000,$0000,$0000,$0000
-  ; 6 (Pin 7): Forest of Dreams ($58, Large): origin ($0000,$0600), cache (31,47) -> 5x5 walkable pad.
-  dw $0058,$0016,$08A0,$0178,$08F0,$01F0,$0058,$052E
-  dw $090F,$01F7,$0600,$091E,$0000,$0300,$0520,$0A00,$FF00,$0400
+  ; 6 (Pin 7): Forest of Dreams ($58, Large): origin ($0000,$0600), cache (27,47) -> foot (27,48) 6x4 walkable meadow west of lake.
+  dw $0058,$0016,$08A0,$0138,$08F0,$01B0,$0058,$0526
+  dw $090F,$01B7,$0600,$091E,$0000,$0300,$0520,$0A00,$FF00,$0400
   dw $2100,$2000,$0000,$0000,$0000,$0000,$0000
   ; 7 (Pin 8): Abyss Beach ($76, Large): origin ($0C00,$0C00), cache (36,42) -> 5x5 walkable pad.
   dw $0076,$0016,$0E50,$0DC8,$0EA0,$0E40,$0076,$02B8

@@ -257,8 +257,11 @@ class KorokPolishTests(unittest.TestCase):
     def test_legacy_main_has_no_asm_callers(self):
         hits = []
         for path in ROOT.rglob("*.asm"):
+            rel = path.relative_to(ROOT)
+            if any(part.startswith(".") for part in rel.parts):
+                continue
             if "Sprite_Korok_Main" in path.read_text(encoding="utf-8", errors="ignore"):
-                hits.append(str(path.relative_to(ROOT)))
+                hits.append(str(rel))
         self.assertEqual(hits, [])
 
     def test_offscreen_carry_skips_oam(self):

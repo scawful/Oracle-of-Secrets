@@ -4344,13 +4344,13 @@
         },
         {
           "id": "0x9A",
-          "name": "Shrine of Wisdom — Room $09A",
+          "name": "Shrine of Wisdom — Keeper Chamber ($09A)",
           "grid_row": 9,
           "grid_col": 10,
-          "type": "entrance",
+          "type": "normal",
           "palette": 13,
           "blockset": 8,
-          "spriteset": 44,
+          "spriteset": 50,
           "tag1": 10,
           "tag2": 0
         },
@@ -4379,23 +4379,11 @@
           "tag2": 0
         },
         {
-          "id": "0xC9",
-          "name": "Shrine of Wisdom — Entrance",
-          "grid_row": 12,
-          "grid_col": 9,
-          "type": "entrance",
-          "palette": 13,
-          "blockset": 8,
-          "spriteset": 44,
-          "tag1": 23,
-          "tag2": 0
-        },
-        {
           "id": "0xCA",
-          "name": "Shrine of Wisdom — Room $0CA",
+          "name": "Shrine of Wisdom — Entrance ($0CA)",
           "grid_row": 12,
           "grid_col": 10,
-          "type": "normal",
+          "type": "entrance",
           "palette": 13,
           "blockset": 8,
           "spriteset": 44,
@@ -4403,8 +4391,24 @@
           "tag2": 50
         }
       ],
-      "stairs": [],
-      "holewarps": [],
+      "stairs": [
+        {
+          "from": "0xAA",
+          "to": "0x8A",
+          "direction": "up"
+        },
+        {
+          "from": "0x8A",
+          "to": "0xAA",
+          "direction": "down"
+        }
+      ],
+      "holewarps": [
+        {
+          "from": "0x7A",
+          "to": "0xCA"
+        }
+      ],
       "doors": [
         {
           "from": "0x7A",
@@ -4417,11 +4421,6 @@
           "direction": "south"
         },
         {
-          "from": "0x9A",
-          "to": "0xAA",
-          "direction": "south"
-        },
-        {
           "from": "0xAA",
           "to": "0xBA",
           "direction": "south"
@@ -4430,19 +4429,14 @@
           "from": "0xBA",
           "to": "0xCA",
           "direction": "south"
-        },
-        {
-          "from": "0xC9",
-          "to": "0xCA",
-          "direction": "east"
         }
       ],
       "features": {},
       "overworld_entrances": [
         {
-          "entrance_id": "0x79",
-          "room_id": "0x7A",
-          "overworld_area": "Shrine of Wisdom"
+          "entrance_id": "0x81",
+          "room_id": "0xCA",
+          "overworld_area": "Shrine of Wisdom (OW $91)"
         }
       ]
     }
