@@ -1737,8 +1737,10 @@ MinishPortal_Maintain:
 
 MinishPortal_GetTileType = $00882E
 
-; Carry set when all four quadrants of the probed 16x16 are $65, or indoors.
-; Carry clear on a mixed tile so the $65 corner cannot open under one probe.
+; Carry set when every quadrant of the probed 16x16 is Minish-walkable ($65,
+; walkable diggable bridge-approach $48, or plain ground $00), or indoors.
+; Rejects solid/water/pit-mixed tiles such as Abyss $330 (three $02 + one $65)
+; while allowing Toadstool Woods Minish bridge endpoints ($041F / $0113 = 2x$65 + 2x$48).
 ; JSL from LinkState_CheckMinishTile. Entry/exit M=16 X=16. Restores $00-$07.
 MinishTile_AllQuadrants:
 {
@@ -1756,7 +1758,10 @@ MinishTile_AllQuadrants:
   LDX.w #$0003
   .next
     JSR MinishPortal_ReadQuadrant
-    CMP.w #$0065 : BNE .no
+    CMP.w #$0065 : BEQ .quad_ok
+    CMP.w #$0048 : BEQ .quad_ok
+    CMP.w #$0000 : BNE .no
+  .quad_ok
     DEX : BPL .next
   PLX
   PLA : STA.b $06
