@@ -12,8 +12,11 @@
 ;     ($0E/$0F), Follower/P2 ($20-$25), Boomerang ($26), Shadow/Heart ($28-$29),
 ;     and Bombchu ($2E-$2F).
 ;   - Boat-only controls (no Y-item use aboard, avoiding item-VRAM contention).
-;   - Wind Waker Sail Boost on A/B hold (~2.91 px/f cardinal, fastest ocean
-;     travel, faster than Zora Link and Epona) vs 2.00 px/f normal cruise.
+;   - Always-hoisted Wind Waker Sail while riding: calm-breeze sail on Cruise
+;     (2.00 px/f, frames 0..5) vs full wind-filled billowing sail + crisp bow
+;     wave/wake foam on A/B Sail Boost (~2.91 px/f cardinal, frames 6..11).
+;     Empty moored boat (KORL_Mounted == 0) renders hull-only frames 0..5 with
+;     sail stowed cleanly at the water's edge.
 ;   - Clean shore docking & manual R mount/dismount with parked anchor.
 ;   - Menu-safe $0E overlay hold/restore via shared Horse_IsSafeOverlay.
 ;   - Day/night-aware SP-3[9..15] refresh across Light/Dark/Special/Lyra Sea.
@@ -620,7 +623,8 @@ KORL_SelectFrame:
   LDA.b $2F : AND.b #$06 : LSR A : TAX
   LDA.l KORL_DirBase, X
   STA.b $00
-  ; Bob / billow bit: 8f cadence when sail raised, 16f cadence when cruising
+  ; Bob / sail flutter cadence: 8f lively gale billow in Boost (6..11),
+  ; 16f calm-breeze flutter in Cruise (0..5; sail stays hoisted!).
   LDA.l KORL_SailActive : BEQ .cruise_bob
     LDA.b $00 : CLC : ADC.b #$06 : STA.b $00
     LDA.l KORL_AnimTimer : LSR #3 : AND.b #$01
@@ -1119,7 +1123,7 @@ KORL_NmiUpload:
   LDA.l KORL_Frame_HasSail, X : BNE +
     BRL .after_sail
   +
-  ; Check if old resident frame ALREADY had this exact Sail0 pointer!
+  ; Check if old resident frame ALREADY had this exact Sail (Sail0, Sail1, SailNarrow)!
   REP #$20
   LDA 1, S : BMI .dma_sail
   SEP #$20
@@ -1130,7 +1134,20 @@ KORL_NmiUpload:
   LDA.l KORL_Frame_GroupPointers+4, X : PHA
   LDX.b $04
   LDA.l KORL_Frame_GroupPointers+4, X
+  CMP 1, S : BNE .sail_diff_pop
+  PLA
+  LDA 1, S : TAX
+  LDA.l KORL_Frame_GroupPointers+6, X : PHA
+  LDX.b $04
+  LDA.l KORL_Frame_GroupPointers+6, X
+  CMP 1, S : BNE .sail_diff_pop
+  PLA
+  LDA 1, S : TAX
+  LDA.l KORL_Frame_GroupPointers+8, X : PHA
+  LDX.b $04
+  LDA.l KORL_Frame_GroupPointers+8, X
   CMP 1, S : BEQ .skip_sail_pop
+  .sail_diff_pop
   PLA
   BRA .dma_sail
   .skip_sail_pop
@@ -1251,23 +1268,37 @@ KORL_DrawPlayerOam_Long:
   LDA.b $02 : CLC : ADC.w #24 : SEC : SBC.b $08 : STA.b $06
   LDY.w $0352
 
-  ; 1. Frontmost: Wind Waker Sail (if HasSail != 0 -> 4 OAM slots: $2A, $2C, $0A, $1A)
+  ; OAM layering (lower OAM slot draws IN FRONT):
+  ;   - Side ($2F == $04/$06): Hull -> Sail -> Rider (near gunwale wraps mast base & Link's waist!)
+  ;   - Down ($2F == $02):     Sail -> Rider -> Hull (forward sail in front, Link seated atop deck!)
+  ;   - Up   ($2F == $00):     Rider -> Sail -> Hull (aft Link closest to camera, forward sail ahead!)
   SEP #$20
-  LDA.l KORL_Frame_HasSail, X : BEQ .no_sail
-    JSR KORL_EmitSail
-  .no_sail
-
-  ; 2. Hull + Seated Link Rider ordering (lower OAM slot draws IN FRONT!):
-  ;    - Side ($2F == $04/$06): Hull FIRST (white gunwale overlaps Link's waist!), then Rider.
-  ;    - Up/Down ($2F == $00/$02): Rider FIRST (Link sits atop open interior deck), then Hull.
-  SEP #$20
-  LDA.b $2F : AND.b #$04 : BEQ .vertical_order
-    JSR KORL_EmitHull
+  LDA.b $2F : AND.b #$04 : BNE .side_order
+  LDA.b $2F : BEQ .up_order
+    ; Down: Sail -> Rider -> Hull
+    LDA.l KORL_Frame_HasSail, X : BEQ +
+      JSR KORL_EmitSail
+    +
     JSR KORL_EmitRider
+    JSR KORL_EmitHull
     BRA .clear_unused
-  .vertical_order
+  .up_order
+    ; Up: Rider -> Sail -> Hull
     JSR KORL_EmitRider
+    REP #$30 : LDA.b $0D : AND.w #$00FF : TAX : SEP #$20
+    LDA.l KORL_Frame_HasSail, X : BEQ +
+      JSR KORL_EmitSail
+    +
     JSR KORL_EmitHull
+    BRA .clear_unused
+  .side_order
+    ; Side: Hull -> Sail -> Rider
+    JSR KORL_EmitHull
+    REP #$30 : LDA.b $0D : AND.w #$00FF : TAX : SEP #$20
+    LDA.l KORL_Frame_HasSail, X : BEQ +
+      JSR KORL_EmitSail
+    +
+    JSR KORL_EmitRider
 
   .clear_unused
   ; Clear remaining player OAM slots up to 12 entries (48 bytes).

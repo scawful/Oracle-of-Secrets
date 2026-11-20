@@ -455,7 +455,12 @@ class TestKorlMount(unittest.TestCase):
         self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
         self.assertEqual(len(self.pal_bin), 14)
         self.assertEqual(len(self.frame_ptrs), 12)
-        self.assertEqual(self.frame_has_sail, [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+        # V3: Sail is ALWAYS hoisted on all 12 mounted frames (0..5 Cruise, 6..11 Boost)!
+        self.assertEqual(self.frame_has_sail, [1] * 12)
+        # Cruise (0..5) and Boost (6..11) must have distinct sail & hull art (billow + bow wave)
+        for i in range(6):
+            self.assertNotEqual(self.frame_ptrs[i][2:5], self.frame_ptrs[i + 6][2:5])
+            self.assertNotEqual(self.frame_ptrs[i][0], self.frame_ptrs[i + 6][0])
 
     # ------------------------------------------------------------------
     # 2. All 12 Frames Bit-Exact VRAM, Per-Group Dedup & <= 960 B VBlank Budget
@@ -531,20 +536,20 @@ class TestKorlMount(unittest.TestCase):
             fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)
             return sum(sz for s, _, _, _, sz in fx.dma_writes if s != 0x3800)
 
-        # Cold mount Side Cruise A (frame 4): Hull 512 + Rider 128 = 640 B
-        self.assertEqual(nmi_step(4), 640)
+        # Cold mount Side Cruise A (frame 4): Hull 512 + Rider 128 + Cruise Sail 320 = 960 B (<= 960 B!)
+        self.assertEqual(nmi_step(4), 960)
         # Steady unchanged frame 4: 0 B KORL DMA (only 1KB anim tile $3800 runs)
         self.assertEqual(nmi_step(4), 0)
         self.assertEqual([(s, sz) for s, _, _, _, sz in fx.dma_writes], [(0x3800, 0x0400)])
-        # Cruise bob 4 -> 5 (same Rider): 512 B (Rider deduplicated!)
-        self.assertEqual(nmi_step(5), 512)
-        # Raise Wind Waker Sail 5 -> 11 (same Hull + same Rider!): ONLY 320 B Sail!
-        self.assertEqual(nmi_step(11), 320)
+        # Cruise bob + calm flutter 4 -> 5 (same Rider!): 512 + 320 = 832 B (Rider deduplicated!)
+        self.assertEqual(nmi_step(5), 832)
+        # Engage Sail Boost 5 -> 11 (same Rider!): Hull bow-wave 512 + full-billow Sail 320 = 832 B!
+        self.assertEqual(nmi_step(11), 832)
         # Sail Boost billow+bob 11 -> 10 (same Rider!): 512 + 320 = 832 B (<= 960 B!)
         self.assertEqual(nmi_step(10), 832)
-        # Lower Sail 10 -> 4 (same Hull + same Rider!): 0 B!
-        self.assertEqual(nmi_step(4), 0)
-        # Worst-case cold 90-degree turn with Sail raised (4 -> 6 Down Sail A): 512 + 128 + 320 = 960 B!
+        # Release Boost to Cruise 10 -> 4 (same Rider!): 512 + 320 = 832 B (<= 960 B!)
+        self.assertEqual(nmi_step(4), 832)
+        # Worst-case 90-degree turn (4 -> 6 Down Boost A): 512 + 128 + 320 = 960 B!
         self.assertEqual(nmi_step(6), 960)
 
         # Dismount restore (bit 7 clear -> restores 256 B $42A0/$43A0 native arrow cells, skips anim tiles!)
@@ -827,7 +832,7 @@ class TestKorlMount(unittest.TestCase):
         fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)  # Upload ($A2)
         self.assertEqual(fx.get(KORL_DOCK_STATE), 0xA2)
 
-        # Now mount KORL! NMI 1 uploads mounted (640 B <= 960 B), NMI 2 restores $5C00/$5D00 (512 B <= 960 B)!
+        # Now mount KORL! NMI 1 uploads mounted (960 B <= 960 B), NMI 2 restores $5C00/$5D00 (512 B <= 960 B)!
         fx.put(KORL_MOUNTED, 1)
         fx.put(KORL_FRAME, 4)
         fx.put(KORL_UPLOADED_FRAME, 0xFF)
@@ -835,7 +840,7 @@ class TestKorlMount(unittest.TestCase):
         fx.run_jml("Horse_LinkDmaPrefix", mf=True, xf=False)
         fx.dma_writes.clear()
         fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)
-        self.assertEqual(sum(sz for *_, sz in fx.dma_writes), 640)
+        self.assertEqual(sum(sz for *_, sz in fx.dma_writes), 960)
         self.assertEqual(fx.get(KORL_DOCK_STATE), 0xA2, "Deferred restore waits for steady NMI!")
 
         fx.run_jml("Horse_LinkDmaPrefix", mf=True, xf=False)
@@ -892,21 +897,37 @@ class TestKorlMount(unittest.TestCase):
             self.assertEqual(fx.cpu.y & 0xFF, 0x00)
             self.assertEqual(fx.cpu.a & 0xFF, sub)
 
-        # Verify OAM layering: Side Sail (Left H-flip) emits Sail ($2A,$2C,$0A,$1A) -> Hull ($00..$06) -> Rider ($08)
-        fx = self.make_fx()
-        fx.init_korl_mounted(frame=10, facing=4, sail=1)  # Left + Wind Waker Sail!
-        fx.run_jsl("KORL_DrawPlayerOam_Long", mf=True, xf=True)
+        # Verify V3 3D OAM layering across ALL directions & Cruise/Boost (always-hoisted sail!):
+        #   - Side (Left H-flip): Hull ($00..$06) -> Sail ($2A,$2C,$0A,$1A) -> Rider ($08)
         oam_base = 0x0800 + 0x00C0
-        chrs = [fx.get(oam_base + i * 4 + 2) for i in range(9)]
-        attrs = [fx.get(oam_base + i * 4 + 3) for i in range(9)]
-        self.assertEqual(chrs, [0x2A, 0x2C, 0x0A, 0x1A, 0x00, 0x02, 0x04, 0x06, 0x08])
-        # All Left-facing pieces must carry H-flip ($40) + SP-3 ($06) for boat/sail, SP-7 ($0E) for Link!
-        for i in range(8):
-            self.assertEqual(attrs[i] & 0x4E, 0x46)
-        self.assertEqual(attrs[8] & 0x4E, 0x4E)
-        # Unused slots 9..11 cleared offscreen ($F0)
-        for i in range(9, 12):
-            self.assertEqual(fx.get(oam_base + i * 4 + 1), 0xF0)
+        for frame, facing, sail_flag, exp_chrs, exp_boat_attr, exp_rider_attr in [
+            (10, 4, 1, [0x00, 0x02, 0x04, 0x06, 0x2A, 0x2C, 0x0A, 0x1A, 0x08], 0x46, 0x4E),  # Left Boost
+            (4,  6, 0, [0x00, 0x02, 0x04, 0x06, 0x2A, 0x2C, 0x0A, 0x1A, 0x08], 0x06, 0x0E),  # Right Cruise (Sail hoisted!)
+            (0,  2, 0, [0x2A, 0x2C, 0x0A, 0x1A, 0x08, 0x00, 0x02, 0x04, 0x06], 0x06, 0x0E),  # Down Cruise: Sail -> Rider -> Hull
+            (2,  0, 0, [0x08, 0x2A, 0x2C, 0x0A, 0x1A, 0x00, 0x02, 0x04, 0x06], 0x06, 0x0E),  # Up Cruise: Rider -> Sail -> Hull
+        ]:
+            with self.subTest(frame=frame, facing=facing):
+                fx = self.make_fx()
+                fx.init_korl_mounted(frame=frame, facing=facing, sail=sail_flag)
+                fx.run_jsl("KORL_DrawPlayerOam_Long", mf=True, xf=True)
+                chrs = [fx.get(oam_base + i * 4 + 2) for i in range(9)]
+                attrs = [fx.get(oam_base + i * 4 + 3) for i in range(9)]
+                self.assertEqual(chrs, exp_chrs)
+                for i, c in enumerate(chrs):
+                    exp_a = exp_rider_attr if c == 0x08 else exp_boat_attr
+                    self.assertEqual(attrs[i] & 0x4E, exp_a, f"CHR ${c:02X} attr mismatch")
+                # Unused slots 9..11 cleared offscreen ($F0)
+                for i in range(9, 12):
+                    self.assertEqual(fx.get(oam_base + i * 4 + 1), 0xF0)
+                # Left H-flip Side Sail: narrow 8x16 ($0A/$1A) sits flush left of main 16x16 ($2A/$2C)
+                if facing == 4:
+                    x_s0 = fx.get(oam_base + 4 * 4 + 0)
+                    x_s1 = fx.get(oam_base + 5 * 4 + 0)
+                    x_sn0 = fx.get(oam_base + 6 * 4 + 0)
+                    x_sn1 = fx.get(oam_base + 7 * 4 + 0)
+                    self.assertEqual(x_s0, x_s1)
+                    self.assertEqual(x_sn0, x_sn1)
+                    self.assertEqual((x_sn0 + 8) & 0xFF, x_s0, "H-flipped narrow sail must meet main sail flush!")
 
     # ------------------------------------------------------------------
     # 6. Cross-World Day/Night SP-3 Palette Refresh (Lyra Sea / Goron $B0)
