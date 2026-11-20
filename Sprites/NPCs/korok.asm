@@ -16,13 +16,12 @@
 ;   0x01: Hollo - Uses Sprite_Korok_DrawHollo
 ;   0x02: Rown - Uses Sprite_Korok_DrawRown
 ;
-; STATES:
-;   0: Idle - Standing, show dialogue on interaction
-;   1: WalkingDown - Random wander south
-;   2: WalkingUp - Random wander north
-;   3: WalkingLeft - Random wander west
-;   4: WalkingRight - Random wander east
-;   5: Liftable - Can be picked up by Link
+; STATES (Sprite_Korok_PolishMain):
+;   0: Idle - face front, variant bob/hop/glance, talk turns toward Link
+;   1: StrollLeft
+;   2: StrollRight
+;   3: StrollUp
+;   4: StrollDown
 ;
 ; MESSAGES:
 ;   0x1D - Generic Korok greeting
@@ -32,9 +31,8 @@
 ;   Flag $0AA5 tracks if sheets are loaded
 ;
 ; MOVEMENT:
-;   KorokWalkSpeed = 2
-;   Random direction changes via GetRandomInt
-;   SprTimerB controls direction duration
+;   KorokPolishWalkSpeed = 4, leash 16px from the home stashed in Prep
+;   SprTimerA is the idle/stroll duration; SprTimerB is the step animation
 ;
 ; RELATED:
 ;   - East Kalyxo region (planned Korok minigame)
@@ -141,17 +139,21 @@ Sprite_Korok_EnsureSheets:
 KorokPolishWalkSpeed = $04
 KorokPolishLeash     = $10 ; px from home before the next stroll turns back
 
-; Friendly-spirit loop: stand facing front, stroll a few pixels in one of the
-; four directions on a timer, stay near home, stop at walls, talk from any
-; state. SprTimerA = time left in the current state (idle or stroll).
+; Friendly-spirit loop: idle in place, stroll a few pixels on a timer, stay
+; near home, stop at walls. Talking faces Link and holds that pose until the
+; text box closes, then idle resumes. SprTimerA = time left in this state.
+; SprMiscC = 1 while the talk pose is latched. $10 = $0E while text is up.
 Sprite_Korok_PolishMain:
 {
   %ShowSolicitedMessage($001D) : BCC .no_talk
     STZ.w SprAction, X
-    STZ.w SprFrame, X
     STZ.w SprXSpeed, X
     STZ.w SprYSpeed, X
+    LDA.b #$01 : STA.w SprMiscC, X
+    LDA.b #$10 : STA.w SprTimerD, X
     LDA.b #$80 : STA.w SprTimerA, X
+    JSL Sprite_DirectionToFacePlayer
+    LDA.w Sprite_Korok_FaceFrame, Y : STA.w SprFrame, X
     RTS
   .no_talk
   JSL Sprite_PlayerCantPassThrough
@@ -165,10 +167,29 @@ Sprite_Korok_PolishMain:
   dw Sprite_Korok_PolishStrollUp
   dw Sprite_Korok_PolishStrollDown
 
+  ; DirectionToFacePlayer Y: 0 right, 1 left, 2 down, 3 up.
+  ; Still frame is the first pose of that walk cycle.
+  Sprite_Korok_FaceFrame:
+    db $09, $06, $00, $03
+
   Sprite_Korok_PolishIdle:
   {
-    STZ.w SprFrame, X
-    LDA.w SprTimerA, X : BNE .wait
+    LDA.w SprMiscC, X : BEQ .free
+      LDA.b $10 : CMP.b #$0E : BEQ .hold
+      LDA.w SprTimerD, X : BNE .hold
+        STZ.w SprMiscC, X
+        STZ.w SprFrame, X
+        LDA.w SprTimerA, X : BNE .flavor
+          LDA.b #$18 : STA.w SprTimerA, X
+        BRA .flavor
+      .hold
+      RTS
+    .free
+    LDA.w SprTimerA, X : BEQ .choose
+    .flavor
+    JSR Sprite_Korok_PolishIdleFlavor
+    RTS
+    .choose
     STZ.w SprXSpeed, X
     STZ.w SprYSpeed, X
     JSL GetRandomInt : AND.b #$01 : BNE .vertical
@@ -188,6 +209,7 @@ Sprite_Korok_PolishMain:
       LDA.w SprY, X : SEC : SBC.w SprMiscB, X
       JSR Sprite_Korok_PolishPickDir : BCS .go_up
         LDA.b #$04 : STA.w SprAction, X
+        STZ.w SprFrame, X
         LDA.b #KorokPolishWalkSpeed : STA.w SprYSpeed, X
         BRA .start_stroll
       .go_up
@@ -197,7 +219,6 @@ Sprite_Korok_PolishMain:
     .start_stroll
     LDA.b #$0A : STA.w SprTimerB, X
     JSL GetRandomInt : AND.b #$1F : ORA.b #$18 : STA.w SprTimerA, X
-    .wait
     RTS
   }
 
@@ -257,93 +278,50 @@ Sprite_Korok_PolishPickDir:
   RTS
 }
 
-KorokWalkSpeed = $02
-
-Sprite_Korok_Main:
+; Idle poses while SprTimerA is running. One branch on subtype, no tile loop.
+; Makar rocks the two front frames. Hollo lifts the crest for a short hop.
+; Rown glances to his left, then back to the front.
+Sprite_Korok_PolishIdleFlavor:
 {
-  LDA.w SprAction, X
-  JSL JumpTableLocal
-
-  dw Sprite_Korok_Idle
-  dw Sprite_Korok_WalkingDown
-  dw Sprite_Korok_WalkingUp
-  dw Sprite_Korok_WalkingLeft
-  dw Sprite_Korok_WalkingRight
-  dw Sprite_Korok_Liftable
-
-  Sprite_Korok_Idle:
-  {
-    %PlayAnimation(0, 0, 10)
-
-    LDA $0AA5 : BNE +
-      PHX
-      JSL ApplyKorokSpriteSheets
-      PLX
-      LDA.b #$01 : STA.w $0AA5
-    +
-
-    %ShowSolicitedMessage($001D) : BCC .no_talk
-      JSL GetRandomInt : AND.b #$03
-      STA.w SprAction, X
+  LDA.w SprSubtype, X : BEQ .makar
+  CMP.b #$01 : BEQ .hollo
+    LDA.b $1A : LSR #5 : AND.b #$01 : BEQ .front
+      LDA.b #$06 : STA.w SprFrame, X
       RTS
-    .no_talk
-    JSL Sprite_PlayerCantPassThrough
+  .hollo
+    LDA.b $1A : AND.b #$3F : CMP.b #$08 : BCC .hop
+  .front
+    STZ.w SprFrame, X
     RTS
-  }
-
-  Sprite_Korok_WalkingDown:
-  {
-    %PlayAnimation(0, 2, 10)
-    LDA.b #KorokWalkSpeed : STA.w SprYSpeed, X
-    JSL Sprite_Move
-    LDA.w SprTimerB, X : BNE +
-      JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
-    +
+  .hop
+    LDA.b #$01 : STA.w SprFrame, X
     RTS
-  }
-
-  Sprite_Korok_WalkingUp:
-  {
-    %PlayAnimation(3, 5, 10)
-    LDA.b #-KorokWalkSpeed : STA.w SprYSpeed, X
-    JSL Sprite_Move
-    LDA.w SprTimerB, X : BNE +
-      JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
-    +
+  .makar
+    LDA.b $1A : LSR #4 : AND.b #$01 : STA.w SprFrame, X
     RTS
-  }
+}
 
-  Sprite_Korok_WalkingLeft:
-  {
-    %PlayAnimation(6, 8, 10)
-    LDA.b #KorokWalkSpeed : STA.w SprXSpeed, X
-    JSL Sprite_Move
-    LDA.w SprTimerB, X : BNE +
-      JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
-    +
-    RTS
-  }
-
-  Sprite_Korok_WalkingRight:
-  {
-    %PlayAnimation(9, 11, 10)
-    LDA.b #-KorokWalkSpeed : STA.w SprXSpeed, X
-    JSL Sprite_Move
-
-    LDA.w SprTimerB, X : BNE +
-      JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
-    +
-    RTS
-  }
-
-  Sprite_Korok_Liftable:
-  {
-    JSL Sprite_Move
-    JSL Sprite_CheckIfLifted
-    JSL ThrownSprite_TileAndSpriteInteraction_long
-    RTS
-  }
-
+; In: $02 = 16-bit screen Y from Sprite_PrepOamCoord, M/X 8-bit, X = slot.
+; A 1px bob (Makar) or 2px hop (Hollo) while idling. Rown only glances.
+; Skipped during stroll and while the talk pose is latched. Preserves X.
+Sprite_Korok_ApplyIdleBob:
+{
+  LDA.w SprAction, X : BNE .done
+  LDA.w SprMiscC, X : BNE .done
+  LDA.w SprSubtype, X : BEQ .makar
+  CMP.b #$01 : BNE .done
+    LDA.b $1A : AND.b #$3F : CMP.b #$08 : BCS .done
+      REP #$20
+      LDA.b $02 : SEC : SBC.w #$0002 : STA.b $02
+      SEP #$20
+      RTS
+  .makar
+    LDA.b $1A : AND.b #$10 : BEQ .done
+      REP #$20
+      LDA.b $02 : DEC : STA.b $02
+      SEP #$20
+  .done
+  RTS
 }
 
 ; =========================================================
@@ -354,9 +332,38 @@ Sprite_Korok_Main:
 ; 6-8 : Walking Left
 ; 9-11 : Walking Right
 
+; In: 16-bit A = screen X, Y = OAM cursor, M=16.
+; Visible span for a 16px tile is [-16, 256). Farther than that, the 9-bit
+; OAM X would wrap the tile onto the opposite edge of the screen.
+; Out: Y points at the Y byte. C set and M=8 when the tile was hidden.
+;      C clear and M=16 when X was stored ($0F = bit 8).
+macro Korok_StoreScreenX()
+  PHA
+  CLC : ADC.w #$0010 : CMP.w #$0110 : BCC ?visible
+    PLA
+    SEP #$20
+    LDA.b #$00 : STA ($90), Y
+    INY
+    LDA.b #$F0 : STA ($90), Y
+    STZ.b $0E
+    STZ.b $0F
+    SEC
+    BRA ?done
+  ?visible
+    PLA
+    STA ($90), Y
+    AND.w #$0100 : STA.b $0E
+    INY
+    CLC
+  ?done
+endmacro
+
 Sprite_Korok_DrawMakar:
 {
-  JSL Sprite_PrepOamCoord
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    RTS
+  .on_screen
+  JSR Sprite_Korok_ApplyIdleBob
   JSL Sprite_OAM_AllocateDeferToPlayer
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
@@ -377,27 +384,24 @@ Sprite_Korok_DrawMakar:
 
   REP #$20
 
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E
-  INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC : ADC #$0010 : CMP.w #$0100
-  SEP #$20
-  BCC .on_screen_y
-
-  LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA $0E
-  .on_screen_y
+  LDA $00 : CLC : ADC .x_offsets, X
+  %Korok_StoreScreenX() : BCS .x_hidden
+    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+    CLC : ADC.w #$0010 : CMP.w #$0100
+    SEP #$20
+    BCC .tile_chr
+      LDA.b #$F0 : STA ($90), Y
+      STA.b $0E
+    BRA .tile_chr
+  .x_hidden
+  .tile_chr
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X
-    ; OBJ palette 3 holds the Korok colors in Korok Cove (same as Rown);
-    ; the table's palette 5 draws Makar teal and green.
-    AND.b #$F1 : ORA.b #$06
-  STA ($90), Y
+  ; $27/$67 = priority 2, OBJ palette 3, nametable 1. Same row Hollo and Rown use.
+  LDA .properties, X : STA ($90), Y
 
   PHY
 
@@ -421,7 +425,8 @@ Sprite_Korok_DrawMakar:
   .x_offsets
   dw 0, 0
   dw 0, 0
-  dw 0, 8, 0
+  ; Walk-down frame 2: body, then feet $20/$21 left to right (unflipped).
+  dw 0, 0, 8
   ; Walk up: back view from the unused set ($44/$46/$48 + crest).
   dw 0, 0, 8
   dw 0, 0, 8
@@ -458,19 +463,20 @@ Sprite_Korok_DrawMakar:
   db $22, $28, $29
   db $24, $28, $29
   db $26, $28, $29
+  ; OBJ palette 3 ($27/$67), the Korok Cove row. Palette 5 ($2B) draws teal.
   .properties
-  db $2B, $2B
-  db $2B, $2B
-  db $2B, $6B, $6B
-  db $2B, $2B, $2B
-  db $2B, $2B, $2B
-  db $2B, $2B, $2B
-  db $2B, $2B, $2B
-  db $2B, $2B, $2B
-  db $2B, $2B, $2B
-  db $6B, $6B, $6B
-  db $6B, $6B, $6B
-  db $6B, $6B, $6B
+  db $27, $27
+  db $27, $27
+  db $27, $27, $27
+  db $27, $27, $27
+  db $27, $27, $27
+  db $27, $27, $27
+  db $27, $27, $27
+  db $27, $27, $27
+  db $27, $27, $27
+  db $67, $67, $67
+  db $67, $67, $67
+  db $67, $67, $67
   .sizes
   db $02, $02
   db $02, $02
@@ -488,7 +494,10 @@ Sprite_Korok_DrawMakar:
 
 Sprite_Korok_DrawHollo:
 {
-  JSL Sprite_PrepOamCoord
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    RTS
+  .on_screen
+  JSR Sprite_Korok_ApplyIdleBob
   JSL Sprite_OAM_AllocateDeferToPlayer
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
@@ -509,17 +518,17 @@ Sprite_Korok_DrawHollo:
 
   REP #$20
 
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E
-  INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC : ADC #$0010 : CMP.w #$0100
-  SEP #$20
-  BCC .on_screen_y
-
-  LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA $0E
-  .on_screen_y
+  LDA $00 : CLC : ADC .x_offsets, X
+  %Korok_StoreScreenX() : BCS .x_hidden
+    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+    CLC : ADC.w #$0010 : CMP.w #$0100
+    SEP #$20
+    BCC .tile_chr
+      LDA.b #$F0 : STA ($90), Y
+      STA.b $0E
+    BRA .tile_chr
+  .x_hidden
+  .tile_chr
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
@@ -617,7 +626,10 @@ Sprite_Korok_DrawHollo:
 
 Sprite_Korok_DrawRown:
 {
-  JSL Sprite_PrepOamCoord
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    RTS
+  .on_screen
+  JSR Sprite_Korok_ApplyIdleBob
   JSL Sprite_OAM_AllocateDeferToPlayer
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
@@ -638,17 +650,17 @@ Sprite_Korok_DrawRown:
 
   REP #$20
 
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E
-  INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC : ADC #$0010 : CMP.w #$0100
-  SEP #$20
-  BCC .on_screen_y
-
-  LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA $0E
-  .on_screen_y
+  LDA $00 : CLC : ADC .x_offsets, X
+  %Korok_StoreScreenX() : BCS .x_hidden
+    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+    CLC : ADC.w #$0010 : CMP.w #$0100
+    SEP #$20
+    BCC .tile_chr
+      LDA.b #$F0 : STA ($90), Y
+      STA.b $0E
+    BRA .tile_chr
+  .x_hidden
+  .tile_chr
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
