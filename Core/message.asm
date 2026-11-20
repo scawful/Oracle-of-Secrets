@@ -88,6 +88,3 @@ print "End of expanded dialogue          ", pc
 ; Keep message source-sync inside its fixed allocation. Core/progression.asm
 ; owns the reserved tail beginning at $2FFE00.
 assert pc() <= $2FFE00, "Expanded messages crossed fixed allocation end $2FFDFF"
-
-; Translucent dark band behind the text window.
-incsrc "Core/text_shade.asm"
