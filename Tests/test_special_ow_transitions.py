@@ -95,6 +95,11 @@ def build_test_harness(directory: Path) -> tuple[bytes, dict[str, int]]:
     dw_pal = b"".join(((0x2000 + i) & 0x7FFF).to_bytes(2, "little") for i in range(128))
     put_bytes(0x0ADB27, lw_pal)
     put_bytes(0x0ADC27, dw_pal)
+    # Pool_DefaultGFXGroups sheet 7: LW $5B, DW $59, SW $5B. ReadAnimatedTable
+    # maps Animated $00 and $FF onto these bytes ($288987 + world*8).
+    put_bytes(0x288987, bytes([0x5B]))
+    put_bytes(0x28898F, bytes([0x59]))
+    put_bytes(0x288997, bytes([0x5B]))
     rom_path.write_bytes(buf)
 
     # Build a self-contained test harness including special_overworld_transitions.asm
@@ -169,6 +174,9 @@ Lyra_ReadGfx2:
   RTL
 Lyra_ReadGfx7:
   LDA.l $7F0607, X
+  RTL
+Lyra_ReadAnimated:
+  LDA.l $7F1300, X
   RTL
 Lyra_ReadByScreen:
   LDA.w #$BEEF
@@ -334,6 +342,7 @@ class SpecialOverworldTransitionsTests(unittest.TestCase):
             f.word(0x7F0E00 + m * 2, c * 0x200)
             for k, b in enumerate((0x3A, 0x3B, 0x3C, 0x3D, 0x47, 0x48, 0x3E, 0x5B)):
                 f.put(0x7F0600 + m * 8 + k, b)
+            f.put(0x7F1300 + m, 0x00)
         # Configure the real Special Overworld & seam LW multi-area structures
         multi_areas = [
             # LW Col 7 seam parents
@@ -583,34 +592,80 @@ class SpecialOverworldTransitionsTests(unittest.TestCase):
             f.put(0x7F0600 + 0x8F * 8, 0xEB)
             f.put(0x7F0600 + 0x87 * 8 + 1, 0xF2)
             f.put(0x7F0600 + 0x8F * 8 + 1, 0xF5)
+            # $03<->$0B: main palette only. $05<->$0D: unsafe sky backdrop $95 vs $FF.
+            # $05 animated $00 and $06 animated $FF both resolve to LW sheet 7 $5B.
+            f.put(0x7F0300 + 0x0B, 0x04)
+            f.word(0x7F0400 + 0x0D * 2, 0x0095)
+            f.put(0x7F1300 + 0x06, 0xFF)
+            # Docks canopy/rain: $9E and $9F are the smooth-hide overlays, not
+            # the unsafe backdrop set. $28/$29 <-> $30 and $30 <-> $32 stay smooth.
+            f.word(0x7F0400 + 0x28 * 2, 0x009E)
+            f.word(0x7F0400 + 0x29 * 2, 0x009E)
+            f.word(0x7F0400 + 0x32 * 2, 0x009F)
+            # Pyramid $96 cannot rebuild on $11=$01-$08.
+            f.word(0x7F0400 + 0x2A * 2, 0x0096)
+            # DW: $50 main sheet 0, $43 explicit animated, $5E main sheet 7.
+            f.put(0x7F0600 + 0x50 * 8, 0x42)
+            f.put(0x7F1300 + 0x43, 0x11)
+            f.put(0x7F0600 + 0x5E * 8 + 7, 0x59)
+            # Aux sheet 3 (Gfx3) differs on a compatible sea pair and must not mosaic.
+            f.put(0x7F0600 + 0xA3 * 8 + 3, 0x99)
 
             # (old_parent, new_parent, dir_bit, dir_idx_0418, expect_mosaic)
             # $0418: 0=Up($08), 1=Down($04), 2=Left($02), 3=Right($01)
             cases = [
-                # Symmetric LW & DW MosaicTable fix
+                # LW MosaicTable, palette, unsafe overlay. $05<->$06 stays smooth.
                 (0x02, 0x03, 0x01, 3, True),
                 (0x03, 0x02, 0x02, 2, True),
+                (0x03, 0x0B, 0x04, 1, True),
+                (0x0B, 0x03, 0x08, 0, True),
+                (0x05, 0x0D, 0x04, 1, True),
+                (0x0D, 0x05, 0x08, 0, True),
+                (0x05, 0x06, 0x01, 3, False),
+                (0x06, 0x05, 0x02, 2, False),
+                # Docks $9E/$9F smooth fade, both directions.
+                (0x28, 0x30, 0x04, 1, False),
+                (0x30, 0x28, 0x08, 0, False),
+                (0x29, 0x30, 0x04, 1, False),
+                (0x30, 0x29, 0x08, 0, False),
+                (0x30, 0x32, 0x01, 3, False),
+                (0x32, 0x30, 0x02, 2, False),
+                # Pyramid backdrop still mosaics.
+                (0x2A, 0x2B, 0x01, 3, True),
+                (0x2B, 0x2A, 0x02, 2, True),
+                # DW/Eon Abyss: mosaic bit, main sheet, animated, sheet 7.
                 (0x40, 0x42, 0x01, 3, True),
                 (0x42, 0x40, 0x02, 2, True),
-                (0x05, 0x06, 0x01, 3, False),
-                # Symmetric SW MosaicTable ($81 <-> $83)
+                (0x40, 0x50, 0x04, 1, True),
+                (0x50, 0x40, 0x08, 0, True),
+                (0x42, 0x43, 0x01, 3, True),
+                (0x43, 0x42, 0x02, 2, True),
+                (0x56, 0x5E, 0x04, 1, True),
+                (0x5E, 0x56, 0x08, 0, True),
+                # SW MosaicTable, fog overlay, palette, sky gfx.
                 (0x81, 0x83, 0x01, 3, True),
                 (0x83, 0x81, 0x02, 2, True),
-                # Overlay mismatch ($81 <-> $92)
                 (0x81, 0x92, 0x04, 1, True),
                 (0x92, 0x81, 0x08, 0, True),
+                (0x86, 0x87, 0x01, 3, True),
+                (0x87, 0x86, 0x02, 2, True),
+                (0x87, 0x8F, 0x04, 1, True),
+                (0x8F, 0x87, 0x08, 0, True),
                 # Main palette & main BG sheet mismatch ($A5 <-> $A6, $90 <-> $A0)
                 (0xA5, 0xA6, 0x01, 3, True),
                 (0xA6, 0xA5, 0x02, 2, True),
                 (0x90, 0xA0, 0x04, 1, True),
                 (0xA0, 0x90, 0x08, 0, True),
-                # Compatible Lyra Sea & Zora Coast & Deku/Goron -> smooth normal scroll!
+                # Cross-world LW <-> SW: $90 gfx0=$5E, $1E gfx0=$3A.
+                (0x1E, 0x90, 0x01, 3, True),
+                (0x90, 0x1E, 0x02, 2, True),
+                # Compatible sea / sky-isle / aux-only Gfx3. Must not mosaic.
                 (0xA2, 0xA3, 0x01, 3, False),
+                (0xA3, 0xA2, 0x02, 2, False),
                 (0xA0, 0xA2, 0x01, 3, False),
                 (0xA8, 0xB0, 0x04, 1, False),
-                # Native Sky route: matching $8C<->$8D smooth-scrolls, differing $8F<->$87 mosaics
                 (0x8C, 0x8D, 0x01, 3, False),
-                (0x8F, 0x87, 0x08, 0, True),
+                (0x8D, 0x8C, 0x02, 2, False),
             ]
             for old_p, new_p, dbit, didx, expect in cases:
                 with self.subTest(old=f"${old_p:02X}", new=f"${new_p:02X}", dbit=dbit):
@@ -618,7 +673,11 @@ class SpecialOverworldTransitionsTests(unittest.TestCase):
                     f.put(0x0416, dbit)
                     f.put(0x0418, didx)
                     _run_jsl(f, self.labels["SpecialOverworld_ShouldMosaic"], x=old_p, y=0x77)
-                    self.assertEqual(bool(f.cpu.a & 0xFF), expect)
+                    self.assertEqual(
+                        bool(f.cpu.a & 0xFF),
+                        expect,
+                        f"${old_p:02X}->${new_p:02X} dir ${dbit:02X}",
+                    )
                     self.assertEqual(f.cpu.x & 0xFF, old_p)
                     self.assertEqual(f.cpu.y & 0xFF, 0x77)
         finally:

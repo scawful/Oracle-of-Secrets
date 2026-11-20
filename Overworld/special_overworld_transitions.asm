@@ -9,8 +9,9 @@
 ;   2. Unified Module $09 ($10 = $09) on Special Overworld ($80-$BF)
 ;   3. Dynamic exact mixed-size ByScreen1..4 calculation for all 64 Special
 ;      Overworld maps ($80-$BF), across Small/Large/Wide/Tall combinations
-;   4. Two-sided symmetric Mosaic decision (all worlds $00-$BF) plus
-;      Special Overworld overlay / main-palette / main-BG-sheet compatibility
+;   4. Two-sided symmetric Mosaic decision (all 192 maps $00-$BF, including
+;      LW <-> SW) for MosaicTable, main palette, main BG/animated sheets,
+;      unsafe overlays, and Special Overworld resident pointers
 ;   5. Special Overworld Mode 7 World Map palette, Link dot save/restore,
 ;      and landmark icon helpers
 ;
@@ -574,103 +575,95 @@ SpecialOverworld_ReadByScreen:
 }
 
 ; ---------------------------------------------------------
-; Two-Sided Mosaic Decision (All Worlds + Special OW Compatibility)
+; Two-Sided Mosaic Decision (All 192 maps)
 ; ---------------------------------------------------------
 ; Called from OverworldHandleTransitions (ZSCustomOverworld.asm) with:
 ;   M=8, X=8, X = old_parent, $8A = new_parent,
 ;   $0416 = outgoing dir bit ($01/$02/$04/$08), $0418 = dir index (0=U,1=D,2=L,3=R).
 ; Exit: M=8, X=8, A = $01 (Z=0) if Mosaic needed, A = $00 (Z=1) for smooth scroll.
-;       X, Y, DBR preserved.
+;       X, Y, DBR preserved. Does not write $8A, $040A, or $0418.
+;
+; Hardware (why a mismatch cannot ride $11=$01-$08):
+;   Smooth scroll never calls Overworld_ReloadSubscreenOverlay. That reload is
+;   the mosaic path ($11=$0D start, $0E silence, $0F Module09_LoadAuxGFX) and
+;   the mirror path ($11=$23). Until then BG1, $1C/$1D, and COLDATA stay on
+;   the outgoing picture.
+;   Unsafe backdrops (either side, LW and DW): $93 curtain, $94 bridge/sky,
+;   $95 sky, $96 pyramid, $97 fog, $9C lava, $9D fog. CGADSUB for these is
+;   selected only inside the reload ($72 for $93/$94/$97/$9D, $20 for
+;   $95/$96/$9C, $60 for the sky-cloud profile of $94).
+;   $9E tree canopy and $9F rain are NOT unsafe. Both use CGADSUB $72, and
+;   Docks_ShouldHideSubscreen returns SEC on parent $30-$32 when Song of
+;   Storms ($7EE00E) is clear and the Part 0 storm is off. $0BFEB6 then
+;   clears $1D and keeps $8C, which is the smooth canopy/rain fade on
+;   $28/$29 <-> $30 <-> $32. The north return ($28/$29, both < $30) keeps
+;   BG1. Mosaic on $9E/$9F would blank that crossing.
+;   Any overlay mismatch mosaics when either parent is SW ($80-$BF), including
+;   cross-world LW <-> SW. SW has no docks hide predicate.
+;   Main palette: the smooth branch calls Palette_OverworldBgMain2 (live
+;   CGRAM). The mosaic branch calls Palette_OverworldBgMain (buffer only)
+;   and PaletteFilter fades it in. A mismatch mosaics on every world.
+;   Main BG sheets are Gfx0/1/2/7 (LoadTransMainGFX). Gfx3 is aux sheet 3
+;   ("variable 0") with Gfx4/5/6 inside NewLoadTransAuxGFX; those four are
+;   double-buffered and must keep scrolling. Gfx7's animated half is separate
+;   from the Animated table below.
+;   Animated: ReadAnimatedTable turns $00 and $FF into Pool_DefaultGFXGroups
+;   sheet 7 for that world (LW $5B at $288987, DW $59 at $28898F, SW $5B at
+;   $288997). A resolved mismatch mosaics because the non-mosaic branch of
+;   CheckForChangeGraphicsTransitionLoad decompresses the new set into the
+;   live window while the old screen is still showing.
+;   Resident Transfer / packed palette pointers are $80-$BF only. Sky hosts
+;   $87 and $8C-$8F still smooth-scroll a resident-pointer change when the
+;   sky overlay profile is on (sky_overlay_transition.asm rebuilds BG1 at
+;   stage $08). Main palette, main sheets, and animated still mosaic there.
 SpecialOverworld_ShouldMosaic:
 {
   PHX : PHY
-  ; 1. Source map requests mosaic in outgoing direction (all worlds $00-$BF)
+  ; 1. Source map requests mosaic in the outgoing direction (all worlds).
   JSL Lyra_ReadMosaic
   AND.w $0416 : BEQ .check_dest_mosaic
     JMP .yes
   .check_dest_mosaic
 
-  ; 2. Destination map requests mosaic in opposite direction (all worlds $00-$BF)
+  ; 2. Destination map requests mosaic in the opposite direction.
   LDX.b $8A
   JSL Lyra_ReadMosaic
   LDX.w $0418
-  AND.l .OppDirBit, X : BEQ .check_special
+  AND.l .OppDirBit, X : BEQ .check_same_parent
     JMP .yes
-  .check_special
 
-  ; 2b. Light/Dark World ($00-$7F) Snowpeak overlay-mismatch guard:
-  ; Smooth scroll ($11=$01-$08) never calls Overworld_ReloadSubscreenOverlay,
-  ; so crossing into/out of Tree-Snow ($0095) or Falling Snow ($009D) must
-  ; mosaic even when Pool_MosaicTable omits the edge bit (without disturbing
-  ; Docks $28/$29<->$30<->$32 or other non-Snowpeak smooth scrolls).
-  ; Stack top: 1,S = saved Y, 2,S = saved X (old_parent).
-  LDA $02,S                           ; old_parent
-  CMP.b #$80 : BCS .check_sw_bounds
-  LDA.b $8A
-  CMP.b #$80 : BCS .ret_no
-  CMP $02,S : BEQ .ret_no             ; same parent: always smooth scroll
+  .check_same_parent
+  ; Same parent is one camera area. Always a smooth scroll.
+  LDA $02,S
+  CMP.b $8A : BNE .diff_parent
+    JMP .no
+  .diff_parent
+
+  ; 3. Overlay. Stack: 1,S = saved Y, 2,S = saved X (old parent).
   REP #$30
   LDA $02,S : AND.w #$00FF : ASL : TAX
   JSL Lyra_ReadOverlay
-  PHA                                 ; 1,S = old_ov
+  PHA                                 ; 1,S = old overlay word
   LDA.b $8A : AND.w #$00FF : ASL : TAX
-  JSL Lyra_ReadOverlay                ; A = new_ov
-  CMP $01,S : BEQ .lw_same_ov
-    CMP.w #$0095 : BEQ .lw_force_mosaic
-    CMP.w #$009D : BEQ .lw_force_mosaic
-    LDA $01,S
-    CMP.w #$0095 : BEQ .lw_force_mosaic
-    CMP.w #$009D : BEQ .lw_force_mosaic
-  .lw_same_ov
+  JSL Lyra_ReadOverlay                ; A = new overlay word
+  CMP $01,S : BEQ .overlay_done
+    JSR .is_unsafe : BCS .overlay_yes
+    LDA $01,S : JSR .is_unsafe : BCS .overlay_yes
+    LDA $04,S : AND.w #$00FF
+    CMP.w #$0080 : BCS .overlay_yes   ; old parent is SW
+    LDA.b $8A : AND.w #$00FF
+    CMP.w #$0080 : BCS .overlay_yes   ; new parent is SW (includes LW <-> SW)
+  .overlay_done
   PLA
   SEP #$30
-  JMP .no
-  .lw_force_mosaic
+  BRA .check_palette
+  .overlay_yes
   PLA
   SEP #$30
   JMP .yes
 
-  .check_sw_bounds
-  ; 3. Special Overworld ($80-$BF) graphic/overlay compatibility check
-  ; Stack top: 1,S = saved Y, 2,S = saved X (old_parent)
-  LDA $02,S                           ; old_parent
-  CMP.b #$80 : BCC .ret_no
-  CMP.b #$C0 : BCS .ret_no
-  LDA.b $8A
-  CMP.b #$80 : BCC .ret_no
-  CMP.b #$C0 : BCS .ret_no
-
-  ; Same parent area? Always smooth scroll
-  CMP $02,S : BNE .diff_parent
-  .ret_no
-    JMP .no
-  .diff_parent
-
-  ; Check Overlay word mismatch (normal scroll cannot load/unload BG1 overlays)
-  REP #$30
-  LDA $02,S : AND.w #$00FF : ASL : TAX
-  JSL Lyra_ReadOverlay
-  PHA                                 ; old overlay
-  LDA.b $8A : AND.w #$00FF : ASL : TAX
-  JSL Lyra_ReadOverlay
-  CMP $01,S : BEQ .same_overlay
-    PLA
-    SEP #$30
-    JMP .yes
-  .same_overlay
-  PLA
-  SEP #$30
-
-if defined("SPECIAL_OVERWORLD_SKY_OVERLAY_RESIDENT_COUNT")
-if !SPECIAL_OVERWORLD_SKY_OVERLAY_RESIDENT_COUNT > 0
-  ; Legacy resident Sky-to-Sky chain ($87, $8C-$8F): keep smooth scroll (handled by sky_overlay_transition.asm)
-  LDA $02,S : JSR .is_sky : BCC .not_both_sky
-  LDA.b $8A : JSR .is_sky : BCS .ret_no
-endif
-endif
-
-  .not_both_sky
-  ; Check Main Palette mismatch
+  .check_palette
+  ; 4. Main palette, every world, both directions.
   LDA $02,S : TAX
   JSL Lyra_ReadMainPalette
   PHA
@@ -682,35 +675,60 @@ endif
   .same_main_pal
   PLA
 
-  ; Check Main BG GFX sheets 0, 1, 2, 7 (slots 3..6 are Aux, swapped cleanly by normal scroll)
+  ; 5. Main BG sheets 0, 1, 2, 7. Slots 3-6 stay on NewLoadTransAuxGFX.
   REP #$30
-  LDA $02,S : AND.w #$00FF : ASL #3 : TAX   ; X = old_parent * 8
-  LDA.b $8A : AND.w #$00FF : ASL #3 : TAY   ; Y = new_parent * 8
+  LDA $02,S : AND.w #$00FF : ASL #3 : TAX
+  LDA.b $8A : AND.w #$00FF : ASL #3 : TAY
 
   SEP #$20
   JSL Lyra_ReadGfx0 : PHA
-  TYX : JSL Lyra_ReadGfx0 : CMP $01,S : BNE .gfx_diff
+  TYX : JSL Lyra_ReadGfx0 : CMP $01,S : BEQ +
+    JMP .gfx_diff
+  +
   PLA
 
   REP #$20
   LDA $02,S : AND.w #$00FF : ASL #3 : TAX
   SEP #$20
   JSL Lyra_ReadGfx1 : PHA
-  TYX : JSL Lyra_ReadGfx1 : CMP $01,S : BNE .gfx_diff
+  TYX : JSL Lyra_ReadGfx1 : CMP $01,S : BEQ +
+    JMP .gfx_diff
+  +
   PLA
 
   REP #$20
   LDA $02,S : AND.w #$00FF : ASL #3 : TAX
   SEP #$20
   JSL Lyra_ReadGfx2 : PHA
-  TYX : JSL Lyra_ReadGfx2 : CMP $01,S : BNE .gfx_diff
+  TYX : JSL Lyra_ReadGfx2 : CMP $01,S : BEQ +
+    JMP .gfx_diff
+  +
   PLA
 
   REP #$20
   LDA $02,S : AND.w #$00FF : ASL #3 : TAX
   SEP #$20
   JSL Lyra_ReadGfx7 : PHA
-  TYX : JSL Lyra_ReadGfx7 : CMP $01,S : BNE .gfx_diff
+  TYX : JSL Lyra_ReadGfx7 : CMP $01,S : BEQ +
+    JMP .gfx_diff
+  +
+  PLA
+
+  ; 6. Animated sheet. $00 and $FF resolve like ReadAnimatedTable.
+  REP #$30
+  LDA $02,S : AND.w #$00FF : TAX
+  SEP #$20
+  JSL Lyra_ReadAnimated
+  JSR .resolve_anim
+  PHA
+  REP #$20
+  LDA.b $8A : AND.w #$00FF : TAX
+  SEP #$20
+  JSL Lyra_ReadAnimated
+  JSR .resolve_anim
+  CMP $01,S : BEQ +
+    JMP .gfx_diff
+  +
   PLA
   SEP #$30
   BRA .check_resident
@@ -721,11 +739,36 @@ endif
   JMP .yes
 
   .check_resident
+if defined("SPECIAL_OVERWORLD_SKY_OVERLAY_RESIDENT_COUNT")
+if !SPECIAL_OVERWORLD_SKY_OVERLAY_RESIDENT_COUNT > 0
+  ; Sky-to-sky may differ in resident pointers. Palette and sheets already
+  ; returned above when those bytes differ.
+  LDA $02,S : JSR .is_sky : BCC .not_both_sky
+  LDA.b $8A : JSR .is_sky : BCC .not_both_sky
+    JMP .no
+  .not_both_sky
+endif
+endif
+
+  ; Resident directories are indexed only for $80-$BF.
+  ; JMP, not BCC/BCS: the resident blocks below sit past a short branch.
+  LDA $02,S : CMP.b #$80 : BCS +
+    JMP .no
+  +
+  CMP.b #$C0 : BCC +
+    JMP .no
+  +
+  LDA.b $8A : CMP.b #$80 : BCS +
+    JMP .no
+  +
+  CMP.b #$C0 : BCC +
+    JMP .no
+  +
+
 if defined("SPECIAL_OVERWORLD_RESOURCES_ENABLED")
 if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
-  ; Resident Main-VRAM tile atlases pack each map's unique tiles from $2000+,
-  ; so smooth-scrolling across two different resident Transfer pointers would
-  ; overwrite the outgoing screen's live tiles mid-scroll -> force clean Mosaic.
+  ; Different resident Transfer pointers overwrite the outgoing screen's
+  ; live tiles from $2000+ during a smooth scroll.
   REP #$30
   LDA $02,S : AND.w #$00FF : ASL : TAX
   LDA.l !SPECIAL_OVERWORLD_TRANSFER_DIRECTORY, X : PHA
@@ -743,8 +786,7 @@ endif
 
 if defined("SPECIAL_OVERWORLD_PALETTE_ENABLED")
 if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
-  ; Resident packed 256B palettes differ across biomes (Deku/Goron/Sea/Snow),
-  ; so smooth-scrolling across different palette pointers flashes wrong BG colors.
+  ; Different packed 256B palette pointers flash the wrong BG colors.
   REP #$30
   LDA $02,S : AND.w #$00FF : SEC : SBC.w #$0080 : PHA
   ASL : CLC : ADC $01,S : TAX : PLA
@@ -775,6 +817,35 @@ endif
   PLY : PLX
   LDA.b #$01
   RTL
+
+  ; M=16. A = overlay word. C set when smooth scroll cannot rebuild it.
+  ; $9E canopy and $9F rain return C clear (docks hide path, see header).
+  .is_unsafe
+  CMP.w #$0093 : BEQ .unsafe_yes
+  CMP.w #$0094 : BEQ .unsafe_yes
+  CMP.w #$0095 : BEQ .unsafe_yes
+  CMP.w #$0096 : BEQ .unsafe_yes
+  CMP.w #$0097 : BEQ .unsafe_yes
+  CMP.w #$009C : BEQ .unsafe_yes
+  CMP.w #$009D : BEQ .unsafe_yes
+  CLC : RTS
+  .unsafe_yes
+  SEC : RTS
+
+  ; M=8, X=16 parent. A = raw Animated byte in, resolved sheet out. X kept.
+  ; $00 and $FF match ReadAnimatedTable: world sheet 7 at $288987 + (world<<3).
+  .resolve_anim
+  CMP.b #$00 : BEQ .anim_default
+  CMP.b #$FF : BNE .anim_keep
+  .anim_default
+  PHX
+  REP #$20
+  TXA : AND.w #$00C0 : LSR #3 : TAX
+  SEP #$20
+  LDA.l $288987, X
+  PLX
+  .anim_keep
+  RTS
 
 if defined("SPECIAL_OVERWORLD_SKY_OVERLAY_RESIDENT_COUNT")
 if !SPECIAL_OVERWORLD_SKY_OVERLAY_RESIDENT_COUNT > 0

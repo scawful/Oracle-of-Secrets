@@ -211,6 +211,8 @@ Lyra_ReadGfx2:
   LDA.l $7F0602, X : RTL
 Lyra_ReadGfx7:
   LDA.l $7F0607, X : RTL
+Lyra_ReadAnimated:
+  LDA.l $7F1300, X : RTL
 Lyra_ReadByScreen:
   LDA.w #$0000 : RTL
 Lyra_ReadSpriteGfxByArea:
@@ -412,6 +414,7 @@ class SpecialOverworldQualityTests(unittest.TestCase):
             f.word(0x7F0400 + m * 2, 0x00FF)
             for k, b in enumerate((0x3A, 0x3B, 0x3C, 0x3D, 0x47, 0x48, 0x3E, 0x5B)):
                 f.put(0x7F0600 + m * 8 + k, b)
+            f.put(0x7F1300 + m, 0x00)
             f.word(0x7F3000 + m * 2, 0x0000)
         for idx in range(0x40):
             base = 0x7F3400 + idx * 3
