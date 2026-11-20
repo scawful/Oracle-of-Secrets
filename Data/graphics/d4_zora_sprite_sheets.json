@@ -106,9 +106,9 @@
     {
       "global_sheet": "0xEB",
       "source": "sky_overworld/gEB.txt",
-      "decoded_sha256": "4b2030fd2de682aeada4a8c334b39064b721858654dd94a00bf21985f3525613",
+      "decoded_sha256": "ccaf1dc93e2443dcecd28d9393ab843bdf864f9f3a91699193580883c19a4ab6",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
-      "why": "Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition."
+      "why": "Sky shared slot 0 (HIGH): preserves all 41 used Sky chars + $1D; packs 22 Wind Tribe Ramp B chars (Wind Crest, Steps, Threshold, Bridges, Pylon) in free locals."
     },
     {
       "global_sheet": "0xEC",
@@ -120,9 +120,9 @@
     {
       "global_sheet": "0xED",
       "source": "sky_overworld/gED.txt",
-      "decoded_sha256": "54af01ae50ea2e95a34b4061396f39495dab21108c563215ab33102eb02e4003",
+      "decoded_sha256": "42c209e2348a768fb8962b4497ddc491996933b7aee1807dd69c04c8314c4569",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
-      "why": "Sky port slot 3 (be8a E1): pass 2 cloud kit chars A/B copied 1:1 from be8a; proposal only."
+      "why": "Sky shared slot 3 (HIGH): preserves all 44 $87/$8C-$8F chars + 11 $3D $84-$86 chars; packs 9 Wind Tribe Ramp B solid chars (Swirl Column, Plinth, Arch) in free locals."
     },
     {
       "global_sheet": "0xEE",
@@ -134,23 +134,23 @@
     {
       "global_sheet": "0xEF",
       "source": "sky_overworld/gEF.txt",
-      "decoded_sha256": "7c5a2500bdc84154cf236b76df49238f3c97ace6115d63e15e4b78a994fe6aa2",
+      "decoded_sha256": "5013a7d5e8f6a8f9d9494bb3c78dfc0caccf77583f2d1dfbd95d61d4c6363e60",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
-      "why": "Sky port slot 5 (be8a E3): pack86 rim art; proposal only."
+      "why": "Sky slot 5 (HIGH): preserves all 41 used Sky chars; packs 23 Wind Tribe Ramp B chars (5<->6 swapped for $87 Row 7 HI) in free locals."
     },
     {
       "global_sheet": "0xF0",
       "source": "sky_overworld/gF0.txt",
-      "decoded_sha256": "a4cab62705fa5edeac37ae986561324dde902df1c9e30db9ea532574db3f0dde",
+      "decoded_sha256": "0835270c7877737dce35071a871fcd090416da4e5832ae6979f36d48f626525c",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
-      "why": "Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition."
+      "why": "Sky shared static slot 6 (LOW): preserves all 18 $87 $F0 chars + 14 $3E Sky chars; adds 9 static $0094 Wind Tribe Blue-Sky Cloud Bank chars + void."
     },
     {
       "global_sheet": "0xF1",
       "source": "sky_overworld/gF1.txt",
-      "decoded_sha256": "49f2e66174cc7cadd740eec585dac043dcb79910ab4a20c78728d2e6cca148e4",
+      "decoded_sha256": "96ea13cdee59ebf98aed65eebc04f2089708101b202562a3d6e6f53555266b12",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
-      "why": "Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition."
+      "why": "Sky shared slot 7 (LOW): preserves 18 used $59 top locals + $23 void + 7 $F1 cliff corners; packs 24 static Wind Tribe Ramp A chars (terraces, collars, bollards, Soaring pad, Wind-Birds)."
     },
     {
       "global_sheet": "0xF2",

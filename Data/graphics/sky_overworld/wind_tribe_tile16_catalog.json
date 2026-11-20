@@ -1,0 +1,2689 @@
+{
+  "schema_version": 3,
+  "kit_name": "Wind Tribe Clouds Sky Kit",
+  "source_art": [
+    "The Minish Cap: Home of the Wind Tribe.png",
+    "The Minish Cap: MCGFX/Clouds2.png"
+  ],
+  "sheets": {
+    "0xEB": {
+      "source": "sky_overworld/gEB.txt",
+      "decoded_sha256": "ccaf1dc93e2443dcecd28d9393ab843bdf864f9f3a91699193580883c19a4ab6",
+      "vram_slot": 0,
+      "palette_half": "HIGH"
+    },
+    "0xED": {
+      "source": "sky_overworld/gED.txt",
+      "decoded_sha256": "42c209e2348a768fb8962b4497ddc491996933b7aee1807dd69c04c8314c4569",
+      "vram_slot": 3,
+      "palette_half": "HIGH"
+    },
+    "0xEF": {
+      "source": "sky_overworld/gEF.txt",
+      "decoded_sha256": "5013a7d5e8f6a8f9d9494bb3c78dfc0caccf77583f2d1dfbd95d61d4c6363e60",
+      "vram_slot": 5,
+      "palette_half": "HIGH"
+    },
+    "0xF0": {
+      "source": "sky_overworld/gF0.txt",
+      "decoded_sha256": "0835270c7877737dce35071a871fcd090416da4e5832ae6979f36d48f626525c",
+      "vram_slot": 6,
+      "palette_half": "LOW"
+    },
+    "0xF1": {
+      "source": "sky_overworld/gF1.txt",
+      "decoded_sha256": "96ea13cdee59ebf98aed65eebc04f2089708101b202562a3d6e6f53555266b12",
+      "vram_slot": 7,
+      "palette_half": "LOW"
+    }
+  },
+  "palettes": {
+    "main_07_r6lo_fix": {
+      "pc": "0x22F480",
+      "words": 2,
+      "values": [
+        "0x7ECF",
+        "0x7F75"
+      ],
+      "why": "Upgrades exclusive $87/$94 Main $07 Row 6 LO idx 2-3 (fixes $87 dark royal-blue corner clouds)"
+    },
+    "aux1_1C": {
+      "pc": "0x22FA50",
+      "clone_from_pc": "0x22F9D2",
+      "words": 21,
+      "patch_slice": {
+        "start": 0,
+        "values": [
+          "0x1463",
+          "0x75E9",
+          "0x7ECF",
+          "0x7F75",
+          "0x7F75",
+          "0x7FDB",
+          "0x7FFF"
+        ]
+      },
+      "why": "Clones Aux1 $19 with Ramp A in Row 2 HI for $87 corner clouds"
+    },
+    "aux2_1D": {
+      "pc": "0x22FA7A",
+      "clone_from_pc": "0x0DE968",
+      "words": 21,
+      "patch_slice": {
+        "start": 0,
+        "values": [
+          "0x1464",
+          "0x254E",
+          "0x29F6",
+          "0x32BC",
+          "0x479F",
+          "0x7F11",
+          "0x7FFF"
+        ]
+      },
+      "why": "Clones vanilla Aux $06 with Ramp B in 0-use Row 5 HI for $84-$86 ($85 Row 6 HI warp untouched)"
+    },
+    "aux2_1E": {
+      "pc": "0x22FAA4",
+      "clone_from_pc": "0x22F9A8",
+      "words": 21,
+      "patch_slice": {
+        "start": 7,
+        "values": [
+          "0x1464",
+          "0x254E",
+          "0x29F6",
+          "0x32BC",
+          "0x479F",
+          "0x7F11",
+          "0x7FFF"
+        ]
+      },
+      "why": "Clones Aux2 $18 with Ramp B in 0-use Row 6 HI for $8C-$8F"
+    },
+    "aux2_1F": {
+      "pc": "0x22FACE",
+      "clone_from_pc": "0x22F9FC",
+      "words": 21,
+      "patch_words": {
+        "19": "0x479F"
+      },
+      "why": "Clones Aux2 $1A with unused Row 7 HI idx 6 -> #FFE78C gold for $87"
+    },
+    "anim_09": {
+      "pc": "0x0DE682",
+      "words": 7,
+      "values": [
+        "0x14A5",
+        "0x10E7",
+        "0x75E9",
+        "0x7ECF",
+        "0x7F75",
+        "0x7FDB",
+        "0x7FFF"
+      ],
+      "why": "Unused vanilla Anim $09 ($8C-$8F Row 7 LO): preserves cliff outline idx 1-2; Ramp A clouds in 3-7"
+    },
+    "anim_0A": {
+      "pc": "0x0DE690",
+      "words": 7,
+      "values": [
+        "0x1463",
+        "0x44E5",
+        "0x75E9",
+        "0x7ECF",
+        "0x7F75",
+        "0x7FDB",
+        "0x7FFF"
+      ],
+      "why": "Unused vanilla Anim $0A ($84-$87,$94 Row 7 LO): preserves star trim idx 1-2; Ramp A clouds in 3-7"
+    }
+  },
+  "palette_sets": {
+    "0x0D": {
+      "aux1": "0x07",
+      "aux2": "0x1D",
+      "anim": "0x0A",
+      "maps": [
+        "0x84",
+        "0x85"
+      ]
+    },
+    "0x15": {
+      "aux1": "0x10",
+      "aux2": "0x1D",
+      "anim": "0x0A",
+      "maps": [
+        "0x86"
+      ]
+    },
+    "0x0E": {
+      "aux1": "0x17",
+      "aux2": "0x1E",
+      "anim": "0x09",
+      "maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ]
+    },
+    "0x0F": {
+      "aux1": "0x1C",
+      "aux2": "0x1F",
+      "anim": "0x0A",
+      "maps": [
+        "0x87",
+        "0x94"
+      ]
+    }
+  },
+  "map_bindings": {
+    "0x84": {
+      "palette_set": "0x0D",
+      "gfx_slots": {
+        "0": "0xEB",
+        "3": "0xED",
+        "6": "0xF0",
+        "7": "0xF1"
+      }
+    },
+    "0x85": {
+      "palette_set": "0x0D",
+      "gfx_slots": {
+        "0": "0xEB",
+        "3": "0xED",
+        "6": "0xF0",
+        "7": "0xF1"
+      }
+    },
+    "0x86": {
+      "palette_set": "0x15",
+      "gfx_slots": {
+        "0": "0xEB",
+        "3": "0xED",
+        "6": "0xF0",
+        "7": "0xF1"
+      }
+    },
+    "0x87": {
+      "palette_set": "0x0F",
+      "gfx_slots": {}
+    },
+    "0x8C": {
+      "palette_set": "0x0E",
+      "gfx_slots": {
+        "6": "0xF0"
+      }
+    },
+    "0x8D": {
+      "palette_set": "0x0E",
+      "gfx_slots": {
+        "6": "0xF0"
+      }
+    },
+    "0x8E": {
+      "palette_set": "0x0E",
+      "gfx_slots": {
+        "6": "0xF0"
+      }
+    },
+    "0x8F": {
+      "palette_set": "0x0E",
+      "gfx_slots": {
+        "6": "0xF0"
+      }
+    },
+    "0x94": {
+      "palette_set": "0x0F",
+      "gfx_slots": {
+        "6": "0xF0"
+      }
+    }
+  },
+  "tile16_groups": {
+    "shared_sky_bank_94": "0xD28-0xD33 (12 tiles, all 9 Sky maps, Slot 6 $F0)",
+    "shared_ramp_a_fg": "0xEBD-0xED9 (29 tiles, all 9 Sky maps, Slot 7 $F1)",
+    "sanctuary_84_86_b": "0xEDD-0xEEB + 0xD34-0xD3C (24 tiles, $84-$86, Slot 0/3 $EB/$ED p=5)",
+    "isles_8c_8f_b": "0xDA7-0xDBD + 0xD3F (24 tiles, $8C-$8F, Slot 0/3 $EB/$ED p=6)",
+    "tower_87_b": "0xEA8-0xEB0 + 0xCE6-0xCEB (15 tiles, $87, Slot 5 $EF p=7)"
+  },
+  "tile16_ranges": [
+    "0xCE6-0xCEB",
+    "0xD28-0xD3C",
+    "0xD3F",
+    "0xDA7-0xDBD",
+    "0xEA8-0xEB0",
+    "0xEBD-0xED9",
+    "0xEDD-0xEEB"
+  ],
+  "tile16_count": 104,
+  "char_allocations": {
+    "gF1_walk": {
+      "snow": "0x27",
+      "wind_streak": "0x28",
+      "soar_corner": "0x29",
+      "soar_edge_h": "0x2A",
+      "soar_edge_v": "0x2D",
+      "soar_in_c": "0x2F",
+      "soar_in_fill": "0x32",
+      "soar_ctr": "0x37"
+    },
+    "gF1_solid": {
+      "rim_n": "0x20",
+      "rim_nw_tl": "0x21",
+      "rim_w": "0x22",
+      "rim_sw_bl": "0x24",
+      "cliff_t_a": "0x2C",
+      "cliff_t_b": "0x2E",
+      "cliff_b_a": "0x30",
+      "collar_edge": "0x31",
+      "collar_mid": "0x38",
+      "in_sw_bl": "0x39",
+      "bollard_tl": "0x3A",
+      "bollard_bl": "0x3B",
+      "bird_tl": "0x3C",
+      "bird_tr": "0x3D",
+      "bird_bl": "0x3E",
+      "bird_br": "0x3F"
+    },
+    "gF0_sky": {
+      "sky_tl": "0x05",
+      "sky_top": "0x06",
+      "sky_l": "0x07",
+      "sky_mid_a": "0x08",
+      "sky_mid_b": "0x09",
+      "sky_bl": "0x0A",
+      "sky_bot": "0x0E",
+      "sky_puff_t": "0x0F",
+      "sky_wisp": "0x13",
+      "sky_void": "0x14"
+    },
+    "gEB_walk": {
+      "c00_CREST_TL": "0x00",
+      "c01_CREST_TL": "0x01",
+      "c02_CREST_TL": "0x02",
+      "c03_CREST_TL": "0x0F",
+      "c04_CREST_TR": "0x10",
+      "c05_CREST_TR": "0x11",
+      "c06_CREST_BL": "0x17",
+      "c07_CREST_BL": "0x18",
+      "c08_CREST_BR": "0x19",
+      "c09_CREST_BR": "0x1A",
+      "c10_THRESH_L": "0x1B",
+      "c11_THRESH_L": "0x1F",
+      "c12_THRESH_L": "0x20",
+      "c13_STEP_L": "0x26",
+      "c14_BRIDGE_H_TOP": "0x27",
+      "c15_BRIDGE_H_TOP": "0x28",
+      "c16_BRIDGE_H_BOT": "0x29",
+      "c17_BRIDGE_V_L": "0x2B"
+    },
+    "gEB_solid": {
+      "c18_PYLON_TL": "0x2C",
+      "c19_PYLON_TL": "0x2D",
+      "c20_PYLON_BL": "0x2E",
+      "c21_PYLON_BL": "0x2F"
+    },
+    "gED_solid": {
+      "c22_PILLAR_CAP": "0x08",
+      "c23_PILLAR_CAP": "0x0D",
+      "c24_PILLAR_SHAFT": "0x1A",
+      "c25_PILLAR_BASE_L": "0x22",
+      "c26_PILLAR_BASE_L": "0x25",
+      "c27_STATUE_PLINTH": "0x27",
+      "c28_STATUE_PLINTH": "0x29",
+      "c29_ARCH_WINDOW": "0x30",
+      "c30_ARCH_WINDOW": "0x3C"
+    },
+    "gEF_walk_87": {
+      "c00_CREST_TL": "0x3F",
+      "c01_CREST_TL": "0x0B",
+      "c02_CREST_TL": "0x0C",
+      "c03_CREST_TL": "0x0D",
+      "c04_CREST_TR": "0x0F",
+      "c05_CREST_TR": "0x16",
+      "c06_CREST_BL": "0x23",
+      "c07_CREST_BL": "0x24",
+      "c08_CREST_BR": "0x26",
+      "c09_CREST_BR": "0x27",
+      "c13_STEP_L": "0x28",
+      "c11_THRESH_L": "0x29",
+      "c10_THRESH_L": "0x2A",
+      "c12_THRESH_L": "0x36"
+    },
+    "gEF_solid_87": {
+      "c22_PILLAR_CAP": "0x15",
+      "c23_PILLAR_CAP": "0x25",
+      "c24_PILLAR_SHAFT": "0x3D",
+      "c25_PILLAR_BASE_L": "0x3C",
+      "c26_PILLAR_BASE_L": "0x3B",
+      "c27_STATUE_PLINTH": "0x3A",
+      "c28_STATUE_PLINTH": "0x39",
+      "c29_ARCH_WINDOW": "0x38",
+      "c30_ARCH_WINDOW": "0x37"
+    }
+  },
+  "tiles": [
+    {
+      "id": "0xCE6",
+      "id_int": 3302,
+      "name": "TOWER_ARCH_WINDOW",
+      "category": "tower_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D78",
+        "0x5D78",
+        "0x1D77",
+        "0x5D77"
+      ],
+      "notes": "[$87] Sandstone Temple Arch Window"
+    },
+    {
+      "id": "0xCE7",
+      "id_int": 3303,
+      "name": "TOWER_STEP_L",
+      "category": "tower_architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D68",
+        "0x1D69",
+        "0x1D68",
+        "0x1D69"
+      ],
+      "notes": "[$87] Temple Sandstone Steps Left curb"
+    },
+    {
+      "id": "0xCE8",
+      "id_int": 3304,
+      "name": "TOWER_STEP_M",
+      "category": "tower_architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D69",
+        "0x1D69",
+        "0x1D69",
+        "0x1D69"
+      ],
+      "notes": "[$87] Temple Sandstone Steps Middle"
+    },
+    {
+      "id": "0xCE9",
+      "id_int": 3305,
+      "name": "TOWER_STEP_R",
+      "category": "tower_architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D69",
+        "0x5D68",
+        "0x1D69",
+        "0x5D68"
+      ],
+      "notes": "[$87] Temple Sandstone Steps Right curb"
+    },
+    {
+      "id": "0xCEA",
+      "id_int": 3306,
+      "name": "TOWER_THRESH_L",
+      "category": "tower_architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D6A",
+        "0x1D69",
+        "0x1D76",
+        "0x1D69"
+      ],
+      "notes": "[$87] Temple Doorway Threshold Left"
+    },
+    {
+      "id": "0xCEB",
+      "id_int": 3307,
+      "name": "TOWER_THRESH_R",
+      "category": "tower_architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D69",
+        "0x5D6A",
+        "0x1D69",
+        "0x5D76"
+      ],
+      "notes": "[$87] Temple Doorway Threshold Right"
+    },
+    {
+      "id": "0xD28",
+      "id_int": 3368,
+      "name": "SKY_CLD_TL",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D85",
+        "0x1D86",
+        "0x1D87",
+        "0x1D88"
+      ],
+      "notes": "Top-left cloud bank corner"
+    },
+    {
+      "id": "0xD29",
+      "id_int": 3369,
+      "name": "SKY_CLD_TOP",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D86",
+        "0x5D86",
+        "0x1D88",
+        "0x1D89"
+      ],
+      "notes": "Rolling cloud bank top edge"
+    },
+    {
+      "id": "0xD2A",
+      "id_int": 3370,
+      "name": "SKY_CLD_TR",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x5D86",
+        "0x5D85",
+        "0x1D89",
+        "0x5D87"
+      ],
+      "notes": "Top-right cloud bank corner"
+    },
+    {
+      "id": "0xD2B",
+      "id_int": 3371,
+      "name": "SKY_CLD_L",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D87",
+        "0x1D88",
+        "0x9D87",
+        "0x1D89"
+      ],
+      "notes": "Left cloud bank edge"
+    },
+    {
+      "id": "0xD2C",
+      "id_int": 3372,
+      "name": "SKY_CLD_MID",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D88",
+        "0x1D89",
+        "0x1D89",
+        "0x1D88"
+      ],
+      "notes": "Seamless inner fluffy cloud fill"
+    },
+    {
+      "id": "0xD2D",
+      "id_int": 3373,
+      "name": "SKY_CLD_R",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D89",
+        "0x5D87",
+        "0x1D88",
+        "0xDD87"
+      ],
+      "notes": "Right cloud bank edge"
+    },
+    {
+      "id": "0xD2E",
+      "id_int": 3374,
+      "name": "SKY_CLD_BL",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D87",
+        "0x1D88",
+        "0x1D8A",
+        "0x1D8E"
+      ],
+      "notes": "Bottom-left shaded cloud belly"
+    },
+    {
+      "id": "0xD2F",
+      "id_int": 3375,
+      "name": "SKY_CLD_BOT",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D88",
+        "0x1D89",
+        "0x1D8E",
+        "0x5D8E"
+      ],
+      "notes": "Bottom shaded cloud belly edge"
+    },
+    {
+      "id": "0xD30",
+      "id_int": 3376,
+      "name": "SKY_CLD_BR",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D89",
+        "0x5D87",
+        "0x5D8E",
+        "0x5D8A"
+      ],
+      "notes": "Bottom-right shaded cloud belly"
+    },
+    {
+      "id": "0xD31",
+      "id_int": 3377,
+      "name": "SKY_PUFF_SM",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D8F",
+        "0x5D8F",
+        "0x1D8A",
+        "0x5D8A"
+      ],
+      "notes": "Small drifting sky puff"
+    },
+    {
+      "id": "0xD32",
+      "id_int": 3378,
+      "name": "SKY_WISP",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D93",
+        "0x5D93",
+        "0x1D94",
+        "0x1D94"
+      ],
+      "notes": "Subtle drifting sky wisp"
+    },
+    {
+      "id": "0xD33",
+      "id_int": 3379,
+      "name": "SKY_VOID",
+      "category": "sky_bank_94",
+      "collision": "bg1_backdrop",
+      "vram_slot": "Slot 6 ($F0) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1D94",
+        "0x1D94",
+        "0x1D94",
+        "0x1D94"
+      ],
+      "notes": "Pure sky blue backdrop void"
+    },
+    {
+      "id": "0xD34",
+      "id_int": 3380,
+      "name": "THRESH_R",
+      "category": "architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x141F",
+        "0x541B",
+        "0x141F",
+        "0x5420"
+      ],
+      "notes": "Temple Doorway Threshold Right"
+    },
+    {
+      "id": "0xD35",
+      "id_int": 3381,
+      "name": "STEP_L",
+      "category": "architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x1426",
+        "0x141F",
+        "0x1426",
+        "0x141F"
+      ],
+      "notes": "Temple Sandstone Steps Left curb"
+    },
+    {
+      "id": "0xD36",
+      "id_int": 3382,
+      "name": "STEP_M",
+      "category": "architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x141F",
+        "0x141F",
+        "0x141F",
+        "0x141F"
+      ],
+      "notes": "Temple Sandstone Steps Middle"
+    },
+    {
+      "id": "0xD37",
+      "id_int": 3383,
+      "name": "STEP_R",
+      "category": "architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x141F",
+        "0x5426",
+        "0x141F",
+        "0x5426"
+      ],
+      "notes": "Temple Sandstone Steps Right curb"
+    },
+    {
+      "id": "0xD38",
+      "id_int": 3384,
+      "name": "BRIDGE_H_TOP",
+      "category": "cloud_bridge",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x1427",
+        "0x1427",
+        "0x1428",
+        "0x1428"
+      ],
+      "notes": "Golden Cloud Bridge Horizontal Top"
+    },
+    {
+      "id": "0xD39",
+      "id_int": 3385,
+      "name": "BRIDGE_H_BOT",
+      "category": "cloud_bridge",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x1428",
+        "0x1428",
+        "0x1429",
+        "0x1429"
+      ],
+      "notes": "Golden Cloud Bridge Horizontal Bottom"
+    },
+    {
+      "id": "0xD3A",
+      "id_int": 3386,
+      "name": "BRIDGE_V_L",
+      "category": "cloud_bridge",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x142B",
+        "0x1428",
+        "0x142B",
+        "0x1428"
+      ],
+      "notes": "Golden Cloud Bridge Vertical Left"
+    },
+    {
+      "id": "0xD3B",
+      "id_int": 3387,
+      "name": "BRIDGE_V_R",
+      "category": "cloud_bridge",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x5428",
+        "0x542B",
+        "0x5428",
+        "0x542B"
+      ],
+      "notes": "Golden Cloud Bridge Vertical Right"
+    },
+    {
+      "id": "0xD3C",
+      "id_int": 3388,
+      "name": "BRIDGE_DECK",
+      "category": "cloud_bridge",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x1428",
+        "0x1428",
+        "0x1428",
+        "0x1428"
+      ],
+      "notes": "Golden Cloud Bridge Deck Fill"
+    },
+    {
+      "id": "0xD3F",
+      "id_int": 3391,
+      "name": "ISLE_BRIDGE_DECK",
+      "category": "isle_cloud_bridge",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x1828",
+        "0x1828",
+        "0x1828",
+        "0x1828"
+      ],
+      "notes": "[$8C-$8F] Golden Cloud Bridge Deck Fill"
+    },
+    {
+      "id": "0xDA7",
+      "id_int": 3495,
+      "name": "ISLE_CREST_TL",
+      "category": "isle_wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x1800",
+        "0x1801",
+        "0x1802",
+        "0x180F"
+      ],
+      "notes": "[$8C-$8F] Carved Wind Crest seal 2x2 TL"
+    },
+    {
+      "id": "0xDA8",
+      "id_int": 3496,
+      "name": "ISLE_CREST_TR",
+      "category": "isle_wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x1810",
+        "0x5800",
+        "0x1811",
+        "0x5802"
+      ],
+      "notes": "[$8C-$8F] Carved Wind Crest seal 2x2 TR"
+    },
+    {
+      "id": "0xDA9",
+      "id_int": 3497,
+      "name": "ISLE_CREST_BL",
+      "category": "isle_wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x9802",
+        "0x1817",
+        "0x9800",
+        "0x1818"
+      ],
+      "notes": "[$8C-$8F] Carved Wind Crest seal 2x2 BL"
+    },
+    {
+      "id": "0xDAA",
+      "id_int": 3498,
+      "name": "ISLE_CREST_BR",
+      "category": "isle_wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x1819",
+        "0xD802",
+        "0x181A",
+        "0xD800"
+      ],
+      "notes": "[$8C-$8F] Carved Wind Crest seal 2x2 BR"
+    },
+    {
+      "id": "0xDAB",
+      "id_int": 3499,
+      "name": "ISLE_PYLON_TL",
+      "category": "isle_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x182C",
+        "0x182D",
+        "0x982C",
+        "0x982D"
+      ],
+      "notes": "[$8C-$8F] Spiral Sandstone Pylon 2x2 TL"
+    },
+    {
+      "id": "0xDAC",
+      "id_int": 3500,
+      "name": "ISLE_PYLON_TR",
+      "category": "isle_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x582D",
+        "0x582C",
+        "0xD82D",
+        "0xD82C"
+      ],
+      "notes": "[$8C-$8F] Spiral Sandstone Pylon 2x2 TR"
+    },
+    {
+      "id": "0xDAD",
+      "id_int": 3501,
+      "name": "ISLE_PYLON_BL",
+      "category": "isle_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x982C",
+        "0x982D",
+        "0x182E",
+        "0x182F"
+      ],
+      "notes": "[$8C-$8F] Spiral Sandstone Pylon 2x2 BL"
+    },
+    {
+      "id": "0xDAE",
+      "id_int": 3502,
+      "name": "ISLE_PYLON_BR",
+      "category": "isle_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0xD82D",
+        "0xD82C",
+        "0x582F",
+        "0x582E"
+      ],
+      "notes": "[$8C-$8F] Spiral Sandstone Pylon 2x2 BR"
+    },
+    {
+      "id": "0xDAF",
+      "id_int": 3503,
+      "name": "ISLE_PILLAR_CAP",
+      "category": "isle_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x18C8",
+        "0x58C8",
+        "0x18CD",
+        "0x58CD"
+      ],
+      "notes": "[$8C-$8F] Swirl Sandstone Column Cap"
+    },
+    {
+      "id": "0xDB0",
+      "id_int": 3504,
+      "name": "ISLE_PILLAR_SHAFT",
+      "category": "isle_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x18DA",
+        "0x58DA",
+        "0x18DA",
+        "0x58DA"
+      ],
+      "notes": "[$8C-$8F] Swirl Sandstone Column Shaft"
+    },
+    {
+      "id": "0xDB1",
+      "id_int": 3505,
+      "name": "ISLE_PILLAR_BASE_L",
+      "category": "isle_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x18DA",
+        "0x58DA",
+        "0x18E2",
+        "0x18E5"
+      ],
+      "notes": "[$8C-$8F] Swirl Sandstone Column Base Left"
+    },
+    {
+      "id": "0xDB2",
+      "id_int": 3506,
+      "name": "ISLE_PILLAR_BASE_R",
+      "category": "isle_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x18DA",
+        "0x58DA",
+        "0x58E5",
+        "0x58E2"
+      ],
+      "notes": "[$8C-$8F] Swirl Sandstone Column Base Right"
+    },
+    {
+      "id": "0xDB3",
+      "id_int": 3507,
+      "name": "ISLE_STATUE_PLINTH",
+      "category": "isle_statue",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x18E7",
+        "0x58E7",
+        "0x18E9",
+        "0x58E9"
+      ],
+      "notes": "[$8C-$8F] Sandstone Plinth for Wind-Bird Statue"
+    },
+    {
+      "id": "0xDB4",
+      "id_int": 3508,
+      "name": "ISLE_ARCH_WINDOW",
+      "category": "isle_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x18F0",
+        "0x58F0",
+        "0x18FC",
+        "0x58FC"
+      ],
+      "notes": "[$8C-$8F] Sandstone Temple Arch Window"
+    },
+    {
+      "id": "0xDB5",
+      "id_int": 3509,
+      "name": "ISLE_THRESH_L",
+      "category": "isle_architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x181B",
+        "0x181F",
+        "0x1820",
+        "0x181F"
+      ],
+      "notes": "[$8C-$8F] Temple Doorway Threshold Left"
+    },
+    {
+      "id": "0xDB6",
+      "id_int": 3510,
+      "name": "ISLE_THRESH_R",
+      "category": "isle_architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x181F",
+        "0x581B",
+        "0x181F",
+        "0x5820"
+      ],
+      "notes": "[$8C-$8F] Temple Doorway Threshold Right"
+    },
+    {
+      "id": "0xDB7",
+      "id_int": 3511,
+      "name": "ISLE_STEP_L",
+      "category": "isle_architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x1826",
+        "0x181F",
+        "0x1826",
+        "0x181F"
+      ],
+      "notes": "[$8C-$8F] Temple Sandstone Steps Left curb"
+    },
+    {
+      "id": "0xDB8",
+      "id_int": 3512,
+      "name": "ISLE_STEP_M",
+      "category": "isle_architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x181F",
+        "0x181F",
+        "0x181F",
+        "0x181F"
+      ],
+      "notes": "[$8C-$8F] Temple Sandstone Steps Middle"
+    },
+    {
+      "id": "0xDB9",
+      "id_int": 3513,
+      "name": "ISLE_STEP_R",
+      "category": "isle_architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x181F",
+        "0x5826",
+        "0x181F",
+        "0x5826"
+      ],
+      "notes": "[$8C-$8F] Temple Sandstone Steps Right curb"
+    },
+    {
+      "id": "0xDBA",
+      "id_int": 3514,
+      "name": "ISLE_BRIDGE_H_TOP",
+      "category": "isle_cloud_bridge",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x1827",
+        "0x1827",
+        "0x1828",
+        "0x1828"
+      ],
+      "notes": "[$8C-$8F] Golden Cloud Bridge Horizontal Top"
+    },
+    {
+      "id": "0xDBB",
+      "id_int": 3515,
+      "name": "ISLE_BRIDGE_H_BOT",
+      "category": "isle_cloud_bridge",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x1828",
+        "0x1828",
+        "0x1829",
+        "0x1829"
+      ],
+      "notes": "[$8C-$8F] Golden Cloud Bridge Horizontal Bottom"
+    },
+    {
+      "id": "0xDBC",
+      "id_int": 3516,
+      "name": "ISLE_BRIDGE_V_L",
+      "category": "isle_cloud_bridge",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x182B",
+        "0x1828",
+        "0x182B",
+        "0x1828"
+      ],
+      "notes": "[$8C-$8F] Golden Cloud Bridge Vertical Left"
+    },
+    {
+      "id": "0xDBD",
+      "id_int": 3517,
+      "name": "ISLE_BRIDGE_V_R",
+      "category": "isle_cloud_bridge",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 6 HI (Aux2 $1E)",
+      "target_maps": [
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F"
+      ],
+      "global_words": [
+        "0x5828",
+        "0x582B",
+        "0x5828",
+        "0x582B"
+      ],
+      "notes": "[$8C-$8F] Golden Cloud Bridge Vertical Right"
+    },
+    {
+      "id": "0xEA8",
+      "id_int": 3752,
+      "name": "TOWER_CREST_TL",
+      "category": "tower_wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D7F",
+        "0x1D4B",
+        "0x1D4C",
+        "0x1D4D"
+      ],
+      "notes": "[$87] Carved Wind Crest seal 2x2 TL"
+    },
+    {
+      "id": "0xEA9",
+      "id_int": 3753,
+      "name": "TOWER_CREST_TR",
+      "category": "tower_wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D4F",
+        "0x5D7F",
+        "0x1D56",
+        "0x5D4C"
+      ],
+      "notes": "[$87] Carved Wind Crest seal 2x2 TR"
+    },
+    {
+      "id": "0xEAA",
+      "id_int": 3754,
+      "name": "TOWER_CREST_BL",
+      "category": "tower_wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x9D4C",
+        "0x1D63",
+        "0x9D7F",
+        "0x1D64"
+      ],
+      "notes": "[$87] Carved Wind Crest seal 2x2 BL"
+    },
+    {
+      "id": "0xEAB",
+      "id_int": 3755,
+      "name": "TOWER_CREST_BR",
+      "category": "tower_wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D66",
+        "0xDD4C",
+        "0x1D67",
+        "0xDD7F"
+      ],
+      "notes": "[$87] Carved Wind Crest seal 2x2 BR"
+    },
+    {
+      "id": "0xEAC",
+      "id_int": 3756,
+      "name": "TOWER_PILLAR_CAP",
+      "category": "tower_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D55",
+        "0x5D55",
+        "0x1D65",
+        "0x5D65"
+      ],
+      "notes": "[$87] Swirl Sandstone Column Cap"
+    },
+    {
+      "id": "0xEAD",
+      "id_int": 3757,
+      "name": "TOWER_PILLAR_SHAFT",
+      "category": "tower_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D7D",
+        "0x5D7D",
+        "0x1D7D",
+        "0x5D7D"
+      ],
+      "notes": "[$87] Swirl Sandstone Column Shaft"
+    },
+    {
+      "id": "0xEAE",
+      "id_int": 3758,
+      "name": "TOWER_PILLAR_BASE_L",
+      "category": "tower_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D7D",
+        "0x5D7D",
+        "0x1D7C",
+        "0x1D7B"
+      ],
+      "notes": "[$87] Swirl Sandstone Column Base Left"
+    },
+    {
+      "id": "0xEAF",
+      "id_int": 3759,
+      "name": "TOWER_PILLAR_BASE_R",
+      "category": "tower_architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D7D",
+        "0x5D7D",
+        "0x5D7B",
+        "0x5D7C"
+      ],
+      "notes": "[$87] Swirl Sandstone Column Base Right"
+    },
+    {
+      "id": "0xEB0",
+      "id_int": 3760,
+      "name": "TOWER_STATUE_PLINTH",
+      "category": "tower_statue",
+      "collision": "solid",
+      "vram_slot": "Slot 5 ($EF) HIGH / Row 7 HI (Aux2 $1F)",
+      "target_maps": [
+        "0x87"
+      ],
+      "global_words": [
+        "0x1D7A",
+        "0x5D7A",
+        "0x1D79",
+        "0x5D79"
+      ],
+      "notes": "[$87] Sandstone Plinth for Wind-Bird Statue"
+    },
+    {
+      "id": "0xEBD",
+      "id_int": 3773,
+      "name": "TERRACE_NW",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE1",
+        "0x1DE0",
+        "0x1DE2",
+        "0x1DE7"
+      ],
+      "notes": "NW outer cloud terrace corner"
+    },
+    {
+      "id": "0xEBE",
+      "id_int": 3774,
+      "name": "TERRACE_RIM_N",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE0",
+        "0x5DE0",
+        "0x1DE7",
+        "0x1DE7"
+      ],
+      "notes": "North outer cloud rim"
+    },
+    {
+      "id": "0xEBF",
+      "id_int": 3775,
+      "name": "TERRACE_NE",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x5DE0",
+        "0x5DE1",
+        "0x1DE7",
+        "0x5DE2"
+      ],
+      "notes": "NE outer cloud terrace corner"
+    },
+    {
+      "id": "0xEC0",
+      "id_int": 3776,
+      "name": "TERRACE_RIM_W",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE2",
+        "0x1DE7",
+        "0x1DE2",
+        "0x1DE7"
+      ],
+      "notes": "West outer cloud rim"
+    },
+    {
+      "id": "0xEC1",
+      "id_int": 3777,
+      "name": "TERRACE_SNOW",
+      "category": "cloud_terrace",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE7",
+        "0x1DE7",
+        "0x1DE7",
+        "0x1DE7"
+      ],
+      "notes": "Walkable snowy-white cloud floor"
+    },
+    {
+      "id": "0xEC2",
+      "id_int": 3778,
+      "name": "TERRACE_RIM_E",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE7",
+        "0x5DE2",
+        "0x1DE7",
+        "0x5DE2"
+      ],
+      "notes": "East outer cloud rim"
+    },
+    {
+      "id": "0xEC3",
+      "id_int": 3779,
+      "name": "TERRACE_SW",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE2",
+        "0x1DE7",
+        "0x1DE4",
+        "0x1DEC"
+      ],
+      "notes": "SW outer cloud terrace corner"
+    },
+    {
+      "id": "0xEC4",
+      "id_int": 3780,
+      "name": "TERRACE_CLIFF_T",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE7",
+        "0x1DE7",
+        "0x1DEC",
+        "0x1DEE"
+      ],
+      "notes": "South cloud rim / deep cliff top"
+    },
+    {
+      "id": "0xEC5",
+      "id_int": 3781,
+      "name": "TERRACE_CLIFF_B",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DEC",
+        "0x1DEE",
+        "0x1DF0",
+        "0x5DF0"
+      ],
+      "notes": "Billowing shaded cloud underside"
+    },
+    {
+      "id": "0xEC6",
+      "id_int": 3782,
+      "name": "TERRACE_SE",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE7",
+        "0x5DE2",
+        "0x1DEE",
+        "0x5DE4"
+      ],
+      "notes": "SE outer cloud terrace corner"
+    },
+    {
+      "id": "0xEC7",
+      "id_int": 3783,
+      "name": "TERRACE_IN_SW",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE7",
+        "0x1DE7",
+        "0x1DF9",
+        "0x1DE7"
+      ],
+      "notes": "Inner concave terrace notch SW"
+    },
+    {
+      "id": "0xEC8",
+      "id_int": 3784,
+      "name": "TERRACE_IN_SE",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE7",
+        "0x1DE7",
+        "0x1DE7",
+        "0x5DF9"
+      ],
+      "notes": "Inner concave terrace notch SE"
+    },
+    {
+      "id": "0xEC9",
+      "id_int": 3785,
+      "name": "TERRACE_WIND_A",
+      "category": "cloud_terrace",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE7",
+        "0x1DE8",
+        "0x1DE7",
+        "0x1DE7"
+      ],
+      "notes": "Walkable snow with wind streak A"
+    },
+    {
+      "id": "0xECA",
+      "id_int": 3786,
+      "name": "TERRACE_WIND_B",
+      "category": "cloud_terrace",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE7",
+        "0x1DE7",
+        "0xDDE8",
+        "0x1DE7"
+      ],
+      "notes": "Walkable snow with wind streak B"
+    },
+    {
+      "id": "0xECB",
+      "id_int": 3787,
+      "name": "TERRACE_BOLLARD",
+      "category": "cloud_terrace",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DFA",
+        "0x5DFA",
+        "0x1DFB",
+        "0x5DFB"
+      ],
+      "notes": "Wind Tribe wooden terrace bollard"
+    },
+    {
+      "id": "0xECC",
+      "id_int": 3788,
+      "name": "COLLAR_L",
+      "category": "island_collar",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DF1",
+        "0x1DF8",
+        "0x1DF0",
+        "0x5DF0"
+      ],
+      "notes": "Floating grass island cloud collar left"
+    },
+    {
+      "id": "0xECD",
+      "id_int": 3789,
+      "name": "COLLAR_M",
+      "category": "island_collar",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DF8",
+        "0x5DF8",
+        "0x1DF0",
+        "0x5DF0"
+      ],
+      "notes": "Floating grass island cloud collar mid"
+    },
+    {
+      "id": "0xECE",
+      "id_int": 3790,
+      "name": "COLLAR_R",
+      "category": "island_collar",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x5DF8",
+        "0x5DF1",
+        "0x1DF0",
+        "0x5DF0"
+      ],
+      "notes": "Floating grass island cloud collar right"
+    },
+    {
+      "id": "0xECF",
+      "id_int": 3791,
+      "name": "SOAR_NW",
+      "category": "soaring_pad",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DE9",
+        "0x1DEA",
+        "0x1DED",
+        "0x1DEF"
+      ],
+      "notes": "Soaring Warp Pad 3x3 NW"
+    },
+    {
+      "id": "0xED0",
+      "id_int": 3792,
+      "name": "SOAR_N",
+      "category": "soaring_pad",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DEA",
+        "0x5DEA",
+        "0x1DF2",
+        "0x5DF2"
+      ],
+      "notes": "Soaring Warp Pad 3x3 N"
+    },
+    {
+      "id": "0xED1",
+      "id_int": 3793,
+      "name": "SOAR_NE",
+      "category": "soaring_pad",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x5DEA",
+        "0x5DE9",
+        "0x5DEF",
+        "0x5DED"
+      ],
+      "notes": "Soaring Warp Pad 3x3 NE"
+    },
+    {
+      "id": "0xED2",
+      "id_int": 3794,
+      "name": "SOAR_W",
+      "category": "soaring_pad",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DED",
+        "0x1DF2",
+        "0x9DED",
+        "0x9DF2"
+      ],
+      "notes": "Soaring Warp Pad 3x3 W"
+    },
+    {
+      "id": "0xED3",
+      "id_int": 3795,
+      "name": "SOAR_CTR",
+      "category": "soaring_pad",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DF7",
+        "0x5DF7",
+        "0x9DF7",
+        "0xDDF7"
+      ],
+      "notes": "Soaring Warp Pad 3x3 glowing center"
+    },
+    {
+      "id": "0xED4",
+      "id_int": 3796,
+      "name": "SOAR_E",
+      "category": "soaring_pad",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x5DF2",
+        "0x5DED",
+        "0xDDF2",
+        "0xDDED"
+      ],
+      "notes": "Soaring Warp Pad 3x3 E"
+    },
+    {
+      "id": "0xED5",
+      "id_int": 3797,
+      "name": "SOAR_SW",
+      "category": "soaring_pad",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x9DED",
+        "0x9DEF",
+        "0x9DE9",
+        "0x9DEA"
+      ],
+      "notes": "Soaring Warp Pad 3x3 SW"
+    },
+    {
+      "id": "0xED6",
+      "id_int": 3798,
+      "name": "SOAR_S",
+      "category": "soaring_pad",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x9DF2",
+        "0xDDF2",
+        "0x9DEA",
+        "0xDDEA"
+      ],
+      "notes": "Soaring Warp Pad 3x3 S"
+    },
+    {
+      "id": "0xED7",
+      "id_int": 3799,
+      "name": "SOAR_SE",
+      "category": "soaring_pad",
+      "collision": "walk",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0xDDEF",
+        "0xDDED",
+        "0xDDEA",
+        "0xDDE9"
+      ],
+      "notes": "Soaring Warp Pad 3x3 SE"
+    },
+    {
+      "id": "0xED8",
+      "id_int": 3800,
+      "name": "WINDBIRD_L",
+      "category": "statue",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x1DFC",
+        "0x1DFD",
+        "0x1DFE",
+        "0x1DFF"
+      ],
+      "notes": "Blue Wind-Bird Statue (facing right)"
+    },
+    {
+      "id": "0xED9",
+      "id_int": 3801,
+      "name": "WINDBIRD_R",
+      "category": "statue",
+      "collision": "solid",
+      "vram_slot": "Slot 7 ($F1) LOW / Row 7 LO",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86",
+        "0x87",
+        "0x8C",
+        "0x8D",
+        "0x8E",
+        "0x8F",
+        "0x94"
+      ],
+      "global_words": [
+        "0x5DFD",
+        "0x5DFC",
+        "0x5DFF",
+        "0x5DFE"
+      ],
+      "notes": "Blue Wind-Bird Statue (facing left)"
+    },
+    {
+      "id": "0xEDD",
+      "id_int": 3805,
+      "name": "CREST_TL",
+      "category": "wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x1400",
+        "0x1401",
+        "0x1402",
+        "0x140F"
+      ],
+      "notes": "Carved Wind Crest seal 2x2 TL"
+    },
+    {
+      "id": "0xEDE",
+      "id_int": 3806,
+      "name": "CREST_TR",
+      "category": "wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x1410",
+        "0x5400",
+        "0x1411",
+        "0x5402"
+      ],
+      "notes": "Carved Wind Crest seal 2x2 TR"
+    },
+    {
+      "id": "0xEDF",
+      "id_int": 3807,
+      "name": "CREST_BL",
+      "category": "wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x9402",
+        "0x1417",
+        "0x9400",
+        "0x1418"
+      ],
+      "notes": "Carved Wind Crest seal 2x2 BL"
+    },
+    {
+      "id": "0xEE0",
+      "id_int": 3808,
+      "name": "CREST_BR",
+      "category": "wind_crest",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x1419",
+        "0xD402",
+        "0x141A",
+        "0xD400"
+      ],
+      "notes": "Carved Wind Crest seal 2x2 BR"
+    },
+    {
+      "id": "0xEE1",
+      "id_int": 3809,
+      "name": "PYLON_TL",
+      "category": "architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x142C",
+        "0x142D",
+        "0x942C",
+        "0x942D"
+      ],
+      "notes": "Spiral Sandstone Pylon 2x2 TL"
+    },
+    {
+      "id": "0xEE2",
+      "id_int": 3810,
+      "name": "PYLON_TR",
+      "category": "architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x542D",
+        "0x542C",
+        "0xD42D",
+        "0xD42C"
+      ],
+      "notes": "Spiral Sandstone Pylon 2x2 TR"
+    },
+    {
+      "id": "0xEE3",
+      "id_int": 3811,
+      "name": "PYLON_BL",
+      "category": "architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x942C",
+        "0x942D",
+        "0x142E",
+        "0x142F"
+      ],
+      "notes": "Spiral Sandstone Pylon 2x2 BL"
+    },
+    {
+      "id": "0xEE4",
+      "id_int": 3812,
+      "name": "PYLON_BR",
+      "category": "architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0xD42D",
+        "0xD42C",
+        "0x542F",
+        "0x542E"
+      ],
+      "notes": "Spiral Sandstone Pylon 2x2 BR"
+    },
+    {
+      "id": "0xEE5",
+      "id_int": 3813,
+      "name": "PILLAR_CAP",
+      "category": "architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x14C8",
+        "0x54C8",
+        "0x14CD",
+        "0x54CD"
+      ],
+      "notes": "Swirl Sandstone Column Cap"
+    },
+    {
+      "id": "0xEE6",
+      "id_int": 3814,
+      "name": "PILLAR_SHAFT",
+      "category": "architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x14DA",
+        "0x54DA",
+        "0x14DA",
+        "0x54DA"
+      ],
+      "notes": "Swirl Sandstone Column Shaft"
+    },
+    {
+      "id": "0xEE7",
+      "id_int": 3815,
+      "name": "PILLAR_BASE_L",
+      "category": "architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x14DA",
+        "0x54DA",
+        "0x14E2",
+        "0x14E5"
+      ],
+      "notes": "Swirl Sandstone Column Base Left"
+    },
+    {
+      "id": "0xEE8",
+      "id_int": 3816,
+      "name": "PILLAR_BASE_R",
+      "category": "architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x14DA",
+        "0x54DA",
+        "0x54E5",
+        "0x54E2"
+      ],
+      "notes": "Swirl Sandstone Column Base Right"
+    },
+    {
+      "id": "0xEE9",
+      "id_int": 3817,
+      "name": "STATUE_PLINTH",
+      "category": "statue",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x14E7",
+        "0x54E7",
+        "0x14E9",
+        "0x54E9"
+      ],
+      "notes": "Sandstone Plinth for Wind-Bird Statue"
+    },
+    {
+      "id": "0xEEA",
+      "id_int": 3818,
+      "name": "ARCH_WINDOW",
+      "category": "architecture",
+      "collision": "solid",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x14F0",
+        "0x54F0",
+        "0x14FC",
+        "0x54FC"
+      ],
+      "notes": "Sandstone Temple Arch Window"
+    },
+    {
+      "id": "0xEEB",
+      "id_int": 3819,
+      "name": "THRESH_L",
+      "category": "architecture",
+      "collision": "walk",
+      "vram_slot": "Slot 0/3 ($EB/$ED) HIGH / Row 5 HI (Aux2 $1D)",
+      "target_maps": [
+        "0x84",
+        "0x85",
+        "0x86"
+      ],
+      "global_words": [
+        "0x141B",
+        "0x141F",
+        "0x1420",
+        "0x141F"
+      ],
+      "notes": "Temple Doorway Threshold Left"
+    }
+  ]
+}
