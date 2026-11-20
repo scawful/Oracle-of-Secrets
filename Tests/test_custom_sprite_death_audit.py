@@ -912,6 +912,33 @@ class CustomSpriteDeathCompiledTests(unittest.TestCase):
         self.assertEqual(r.get(0x0D50 + 5), 11)
         self.assertEqual(r.get(0x0D40 + 5), (-11) & 0xFF)
 
+    def test_sea_urchin_prep_populates_dmgtable_and_preserves_x(self) -> None:
+        r = self._new_runner()
+        su_prep = self.pack.labels["Sprite_SeaUrchin_Prep"]
+        expected_dmg_row = bytes([
+            0x03, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x03,
+            0x01, 0x01, 0x02, 0x01, 0x03, 0x03, 0x01, 0x07,
+        ])
+        dmg_offset = 0x16AE0  # $7F6AE0 - $7E0000
+
+        # Light World (WORLDFLAG = 0): populates DMGTABLE[$AE], preserves X, sets SprPrize=1, leaves SprDefl sword-vulnerable
+        r.ram[:] = b"\x00" * len(r.ram)
+        r.put(WORLDFLAG, 0)
+        r.call_jsl(su_prep, x=5)
+        self.assertEqual(r.cpu.x, 5)
+        self.assertEqual(bytes(r.ram[dmg_offset : dmg_offset + 16]), expected_dmg_row)
+        self.assertEqual(r.get(0x0BE0 + 5), 0x01)
+        self.assertEqual(r.get(0x0CAA + 5) & 0x04, 0x00)
+
+        # Dark World (WORLDFLAG != 0): populates DMGTABLE[$AE], sets SprDefl=%10000100 (sword/hammer impervious), SprPrize=7
+        r.ram[:] = b"\x00" * len(r.ram)
+        r.put(WORLDFLAG, 0x40)
+        r.call_jsl(su_prep, x=3)
+        self.assertEqual(r.cpu.x, 3)
+        self.assertEqual(bytes(r.ram[dmg_offset : dmg_offset + 16]), expected_dmg_row)
+        self.assertEqual(r.get(0x0BE0 + 3), 0x07)
+        self.assertEqual(r.get(0x0CAA + 3), 0b10000100)
+
 
 if __name__ == "__main__":
     unittest.main()

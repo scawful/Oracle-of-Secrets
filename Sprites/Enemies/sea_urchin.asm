@@ -3,6 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_SeaUrchin
+!SeaUrchin_DmgTableRow = $7F6AE0 ; DMGTABLE ($7F6000) + ($AE * 16)
 !NbrTiles           = 05  ; 4 death poof + 1 body + 1 shadow (allocates 6 slots)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -57,6 +58,18 @@ Sprite_SeaUrchin_Long:
 Sprite_SeaUrchin_Prep:
 {
   PHB : PHK : PLB
+  ; Populate $7F6AE0..$7F6AEF (vanilla sprite $AE has all-zero DMGTABLE row).
+  ; Subclasses match Crab ($58): L1 sword=2 dmg (2 hits vs 4 HP), L2+ sword/arrow=1 hit,
+  ; bomb=kill, Fire Rod=burn kill ($FA), Ice Rod=8 dmg (1 hit), boomerang/hookshot=stun.
+  ; Eon Sea Urchin ($0FFF != 0) keeps SprDefl bit 2 (impervious to sword/hammer) while
+  ; remaining killable by Fire Rod, Ice Rod, Arrows, Bombs, and thrown objects.
+  PHX
+  LDX.b #$0F
+  .dmg_loop
+    LDA.w .dmg_row, X
+    STA.l !SeaUrchin_DmgTableRow, X
+    DEX : BPL .dmg_loop
+  PLX
   LDA #$01 : STA.w SprPrize, X
   LDA.w WORLDFLAG : BEQ +
     ; Eon Sea Urchin impervious to sword
@@ -65,6 +78,10 @@ Sprite_SeaUrchin_Prep:
   +
   PLB
   RTL
+
+  .dmg_row
+    db $03, $01, $01, $01, $01, $01, $01, $03
+    db $01, $01, $02, $01, $03, $03, $01, $07
 }
 
 Sprite_SeaUrchin_Main:
