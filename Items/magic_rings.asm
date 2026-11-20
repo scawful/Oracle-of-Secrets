@@ -111,7 +111,7 @@ MagicRing_GrantUnfound:
 ; The ring is given once: the ring bit in FOUNDRINGS or MAGICRINGS is the
 ; record. It arrives as a found ring; Vasu's appraisal makes it owned.
 !ArcheryRing_Streak   = $05   ; hits in a row needed (1 to 5)
-!ArcheryRing_PrizeBit = $20   ; PLACEHOLDER reward: Power Ring (..pa hlbs)
+!ArcheryRing_PrizeBit = $20   ; DECIDED reward (decisions.org 2026-11-16): Power Ring (..pa hlbs)
 !ArcheryRing_SFX3     = $0F   ; SFX3.0F item fanfare, played with the grant
 
 ArcheryGame_PrizesM1 = $0583CE ; vanilla ArcheryGame_Prizes-1 (rupees by Y)

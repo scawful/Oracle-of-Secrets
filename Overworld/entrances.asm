@@ -741,7 +741,7 @@ pullpc
 ; 0x64 - OW 22 - Smiths House
 ; 0x65 - OW Fortune Teller
 ; 0x66 - OW Fortune Teller
-; 0x67 - Unassigned (Chest Minigame, freed for Lyra Sea)
+; 0x67 - OW AB - Chest Hut (Lyra Sea, Room $0118)
 ; 0x68 - OW 18 - Bonzai House
 ; 0x69 - OW
 ; 0x6A - OW
