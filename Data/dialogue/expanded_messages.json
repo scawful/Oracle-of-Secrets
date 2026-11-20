@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 157,
+    "expanded": 159,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -789,6 +789,16 @@
       "bank": "expanded",
       "id": 156,
       "text": "Whoa, you know Epona's Song![2]You must have helped my[3]sister![K][V]Bring a Bow and some arrows[V]while riding Epona if you[V]want to try target practice!"
+    },
+    {
+      "bank": "expanded",
+      "id": 157,
+      "text": "Mind the stumps out there,[2]traveler. These woods twist[3]back on folks who rush.[K][V]If you're hunting mushrooms,[V]check the grotto up north-[K][V]and keep an eye on those[V]thieves in the hollow!"
+    },
+    {
+      "bank": "expanded",
+      "id": 158,
+      "text": "Well howdy, traveler![2]You look like a straight[3]shooter[...] Want to try your[K][V]skill in my woodland gallery?[V]Five shots for 20 Rupees-[V]hit all five and you'll[K][V]walk out smiling![V]    > Play[V]       No way[CH2I]"
     }
   ],
   "version": 1

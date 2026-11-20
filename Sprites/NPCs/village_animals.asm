@@ -26,9 +26,9 @@
 ;      - Wolf: zero contact damage, rat freezes in place within 36px,
 ;              solicited talk (!Rat_MsgWolf) + panicked squeak SFX.
 ;   4. Village Cat ($28 Action 3, hooked at $06:8CA1 / $06:AE34 / $06:AF1A):
-;      - Extends Storyteller ($28) prep to Wayward Village OW $23 and houses
-;        ($0102, $0103, $0104, $0106, $0107, $0119, $011F), plus temporary $000F compatibility
-;        until removed from Maple's Hut.
+;      - Extends Storyteller ($28) prep to Wayward Village OW $23, Wayward houses
+;        ($0102, $0103, $0104, $0106, $0107, $0119, $011F), Toadstool Woods
+;        Twin Cottage West ($00F2), and temporary $000F compatibility.
 ;      - Human: native $0149 ("Will you pet the cat?") + happy purr hop.
 ;      - Minish / Wolf: solicited form reactions (!Cat_MsgMinish / !Cat_MsgWolf).
 ;      - Draw selects 0xBC $4E cat in spritesets without 0xC0 in slot 1.
@@ -326,6 +326,7 @@ VillageCat_Prep:
   REP #$20
   LDA.b $A0
   CMP.w #$000F : BEQ .cat_ind
+  CMP.w #$00F2 : BEQ .cat_ind
   CMP.w #$0102 : BEQ .cat_ind
   CMP.w #$0103 : BEQ .cat_ind
   CMP.w #$0104 : BEQ .cat_ind

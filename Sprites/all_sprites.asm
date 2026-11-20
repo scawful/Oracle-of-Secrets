@@ -390,6 +390,10 @@ incsrc "Sprites/NPCs/ranch_girl.asm"
 incsrc "Sprites/NPCs/ranch_milk.asm"
 %log_end("ranch_girl", !LOG_SPRITES)
 
+%log_start("toadstool_inhabitants", !LOG_SPRITES)
+incsrc "Sprites/NPCs/toadstool_inhabitants.asm"
+%log_end("toadstool_inhabitants", !LOG_SPRITES)
+
 ; cloud_bridge moved to the end of bank $30 (2026-11-16): the Kydreeok
 ; chamber plate code filled bank $32. It is bank-neutral (long entries with
 ; PHK/PLB, outward calls are JSL).

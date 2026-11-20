@@ -277,6 +277,14 @@
       "expected_content": "authored",
       "owner": "toto-ranch-minigame",
       "purpose": "Toto Ranch Kid ($3C) post-cure sister + Epona's Song reaction on foot (0x227, replaces 0x148 at $05FF96), mounted target practice Yes/No prompt (0x228), and mounted missing-bow reminder (0x229). Approved by scawful 2026-11-18."
+    },
+    {
+      "start": "0x22A",
+      "end": "0x22B",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "toadstool-woods-inhabitants",
+      "purpose": "Toadstool Woods NE Twin Cottage East ($00F3) Forager Elder (0x22A, replaces hijacked 0x2B..0x2E chain on Sprite $78 at $05F48A) and relocated SW Log Cabin Archery Shooting Gallery ($0111) Light World greeting (0x22B, replaces vanilla Dark World 0x0085 at $058292). Em dash rendered as '-' (font has no em dash). Exact wording approved by scawful 2026-11-20 (Option 1)."
     }
   ]
 }
