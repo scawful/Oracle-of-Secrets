@@ -392,6 +392,7 @@ incsrc "Sprites/NPCs/ranch_milk.asm"
 
 %log_start("toadstool_inhabitants", !LOG_SPRITES)
 incsrc "Sprites/NPCs/toadstool_inhabitants.asm"
+incsrc "Sprites/NPCs/chest_hut_game.asm"
 %log_end("toadstool_inhabitants", !LOG_SPRITES)
 
 ; cloud_bridge moved to the end of bank $30 (2026-11-16): the Kydreeok
@@ -454,6 +455,12 @@ incsrc "Sprites/Enemies/lyra_sea_enemies.asm"
 %log_start("night_poe", !LOG_SPRITES)
 incsrc "Sprites/Enemies/night_poe.asm"
 %log_end("night_poe", !LOG_SPRITES)
+
+; In-place overworld consumable harvesting (Q-OOS-06 Option A: Banana, Seashell,
+; Honeycomb, Deku Stick). Bank $32; 0 bytes in Bank $2B.
+%log_start("consumable_harvest", !LOG_OVERWORLD)
+incsrc "Overworld/consumable_harvest.asm"
+%log_end("consumable_harvest", !LOG_OVERWORLD)
 
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the

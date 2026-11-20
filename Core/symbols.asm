@@ -309,7 +309,11 @@ Horse_Momentum             = $7F57A8 ; gallop acceleration ramp 0..24 (0=standst
 Horse_PrevMoveDir          = $7F57A9 ; previous frame cardinal facing ($2F: 0,2,4,6; $FF=unset)
 Horse_PrevDpad             = $7F57AA ; previous frame D-pad nibble ($F0 & $0F) for smooth diagonal banking
 Horse_CgiCache_End         = $7F57AB ; last byte used by Epona in UNUSED_7F5000
-assert Horse_CgiCache_End < $7F57FC, "Epona transient WRAM collided with PigMoblin_Vram* ($7F57FC)"
+assert Horse_CgiCache_End < $7F57F8, "Epona transient WRAM collided with ConsumableHarvest_* ($7F57F8)"
+ConsumableHarvest_LastArea = $7F57F8 ; cached $8A ($FF resets latches on OW re-entry)
+ConsumableHarvest_LatchLo  = $7F57F9 ; per-visit harvested bitmask for pins 0..7
+ConsumableHarvest_LatchHi  = $7F57FA ; per-visit harvested bitmask for pins 8..11
+ConsumableHarvest_Cooldown = $7F57FB ; frame debounce (12 pickup, 24 bag-full)
 PigMoblin_VramState        = $7F57FC ; 0=idle, $80..$84=5-stage NMI DMA, $01=live
 PigMoblin_LastArea         = $7F57FD ; cached $8A (OW) or $A0 low byte (UW)
 PigMoblin_LastInd          = $7F57FE ; cached $00 (OW) or $80|($A1&1) (UW)

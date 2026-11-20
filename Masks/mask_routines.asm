@@ -1688,6 +1688,9 @@ if !DISABLE_ITEMS == 0
   JSL GustJar_FrameTick
 endif
   JSL DekuStick_Main
+if defined("CONSUMABLE_HARVEST_DEFINED")
+  JSL ConsumableHarvest_FrameTick
+endif
   PLB
   %m16()
   PLY : PLX : PLA
