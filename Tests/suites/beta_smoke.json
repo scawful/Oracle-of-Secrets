@@ -2,46 +2,110 @@
   "name": "beta_smoke",
   "version": 1,
   "checkpoints": "Data/debug/checkpoints.json",
-  "description": "Permanent beta runtime smoke. Addresses and rooms are the current checkpoints, warps, and File Select GBC rule (GameState < !GameState_FaroreRescued).",
+  "description": "Permanent beta runtime smoke. Addresses and rooms are the current checkpoints, warps, File Select GBC rule (GameState < !GameState_FaroreRescued), and the shipped Epona, soaring, Wolfos, Chain Chomp, Sea Urchin, rod, and sword contracts.",
   "scenarios": [
     {
       "id": "sq_lw_link",
       "kind": "save_quit_matrix",
       "checkpoint": "loom-beach",
-      "spawn": {"via_room": 260, "area": 51},
+      "spawn": {
+        "via_room": 260,
+        "area": 51
+      },
       "preserve": [
-        {"addr": "0x7EF3C5", "value": 1, "name": "GameState_LoomBeach"},
-        {"addr": "0x7EF3CA", "value": 0, "name": "SavedWorld"},
-        {"addr": "0x7E02B2", "value": 0, "name": "CurrentMask"}
+        {
+          "addr": "0x7EF3C5",
+          "value": 1,
+          "name": "GameState_LoomBeach"
+        },
+        {
+          "addr": "0x7EF3CA",
+          "value": 0,
+          "name": "SavedWorld"
+        },
+        {
+          "addr": "0x7E02B2",
+          "value": 0,
+          "name": "CurrentMask"
+        }
       ],
-      "expect": {"file_select_form": "link", "saved_world": 0, "game_state": 1},
-      "jump_target": {"kind": "overworld", "id": 51, "x": 1976, "y": 3448},
+      "expect": {
+        "file_select_form": "link",
+        "saved_world": 0,
+        "game_state": 1
+      },
+      "jump_target": {
+        "kind": "overworld",
+        "id": 51,
+        "x": 1976,
+        "y": 3448
+      },
       "note": "Light World Loom Beach $33 via room $0104 (warps.json). intro-bed leaves GameState $00, which cannot save; preserve forces !GameState_LoomBeach."
     },
     {
       "id": "sq_abyss_pre_farore",
       "kind": "save_quit_matrix",
       "checkpoint": "abyss-arrival",
-      "spawn": {"via_room": 32, "area": 64},
+      "spawn": {
+        "via_room": 32,
+        "area": 64
+      },
       "preserve": [
-        {"addr": "0x7EF3C5", "value": 2, "name": "GameState_KydrogComplete"},
-        {"addr": "0x7EF3CA", "value": 64, "name": "SavedWorld_Abyss"}
+        {
+          "addr": "0x7EF3C5",
+          "value": 2,
+          "name": "GameState_KydrogComplete"
+        },
+        {
+          "addr": "0x7EF3CA",
+          "value": 64,
+          "name": "SavedWorld_Abyss"
+        }
       ],
-      "expect": {"file_select_form": "gbc", "saved_world": 64, "game_state": 2},
-      "jump_target": {"kind": "overworld", "id": 64, "x": 744, "y": 536},
+      "expect": {
+        "file_select_form": "gbc",
+        "saved_world": 64,
+        "game_state": 2
+      },
+      "jump_target": {
+        "kind": "overworld",
+        "id": 64,
+        "x": 744,
+        "y": 536
+      },
       "note": "Eon Abyss arrival $40 via room $0020. SavedWorld $40 and GameState $02 is FileSelect_IsSlotGbcEligible."
     },
     {
       "id": "sq_abyss_post_farore",
       "kind": "save_quit_matrix",
       "checkpoint": "d8-entrance",
-      "spawn": {"via_room": 32, "area": 64},
+      "spawn": {
+        "via_room": 32,
+        "area": 64
+      },
       "preserve": [
-        {"addr": "0x7EF3C5", "value": 3, "name": "GameState_FaroreRescued"},
-        {"addr": "0x7EF3CA", "value": 64, "name": "SavedWorld_Abyss"}
+        {
+          "addr": "0x7EF3C5",
+          "value": 3,
+          "name": "GameState_FaroreRescued"
+        },
+        {
+          "addr": "0x7EF3CA",
+          "value": 64,
+          "name": "SavedWorld_Abyss"
+        }
       ],
-      "expect": {"file_select_form": "link", "saved_world": 64, "game_state": 3},
-      "jump_target": {"kind": "overworld", "id": 64, "x": 744, "y": 536},
+      "expect": {
+        "file_select_form": "link",
+        "saved_world": 64,
+        "game_state": 3
+      },
+      "jump_target": {
+        "kind": "overworld",
+        "id": 64,
+        "x": 744,
+        "y": 536
+      },
       "note": "d8-entrance sets GameState $03 (!GameState_FaroreRescued) while SavedWorld stays $40. File Select must show normal Link."
     },
     {
@@ -51,7 +115,12 @@
       "entrance": 39,
       "room": 152,
       "parent_map": 54,
-      "jump_target": {"kind": "dungeon", "id": 152, "x": 256, "y": 464},
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 152,
+        "x": 256,
+        "y": 464
+      },
       "note": "Entrance $27 -> room $0098, door on Garo Desert $36 tile (256, 464) from warps.json."
     },
     {
@@ -61,7 +130,12 @@
       "entrance": 9,
       "room": 132,
       "parent_map": 176,
-      "jump_target": {"kind": "dungeon", "id": 132, "x": 336, "y": 336},
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 132,
+        "x": 336,
+        "y": 336
+      },
       "note": "Entrance $09 -> room $0084. Door table area $B0 (336, 336). Exit lands on special overworld module $0B."
     },
     {
@@ -72,7 +146,12 @@
       "dest_map": 21,
       "via_room": 260,
       "submodule": 46,
-      "jump_target": {"kind": "overworld", "id": 51, "x": 1976, "y": 3448},
+      "jump_target": {
+        "kind": "overworld",
+        "id": 51,
+        "x": 1976,
+        "y": 3448
+      },
       "note": "Loom Beach $33 -> Mountainside $15. Submodule $2E is the whirlpool module (ZSCustomOverworld.asm, $11 == #$2E)."
     },
     {
@@ -86,9 +165,18 @@
       "max_black_scanlines": 0,
       "buttons": "Right",
       "after_land": [
-        {"addr": "0x7E02B2", "value": 9, "name": "CurrentMask_Horse"}
+        {
+          "addr": "0x7E02B2",
+          "value": 9,
+          "name": "CurrentMask_Horse"
+        }
       ],
-      "jump_target": {"kind": "overworld", "id": 0, "x": 456, "y": 649},
+      "jump_target": {
+        "kind": "overworld",
+        "id": 0,
+        "x": 456,
+        "y": 649
+      },
       "retroid_card": {
         "id": "vblank_epona_ranch",
         "title": "Test Epona Ranch",
@@ -108,12 +196,33 @@
       "max_black_scanlines": 0,
       "buttons": "Right",
       "after_land": [
-        {"addr": "0x7EF439", "value": 1, "name": "KORL_Unlocked"},
-        {"addr": "0x7FF3D4", "value": 1, "name": "KORL_Mounted"},
-        {"addr": "0x7E005D", "value": 4, "name": "LinkState_Swim"},
-        {"addr": "0x7E0345", "value": 1, "name": "Swimming"}
+        {
+          "addr": "0x7EF439",
+          "value": 1,
+          "name": "KORL_Unlocked"
+        },
+        {
+          "addr": "0x7FF3D4",
+          "value": 1,
+          "name": "KORL_Mounted"
+        },
+        {
+          "addr": "0x7E005D",
+          "value": 4,
+          "name": "LinkState_Swim"
+        },
+        {
+          "addr": "0x7E0345",
+          "value": 1,
+          "name": "Swimming"
+        }
       ],
-      "jump_target": {"kind": "overworld", "id": 48, "x": 552, "y": 3208},
+      "jump_target": {
+        "kind": "overworld",
+        "id": 48,
+        "x": 552,
+        "y": 3208
+      },
       "retroid_card": {
         "id": "vblank_korl_quay",
         "title": "Test King of Red Lions",
@@ -133,10 +242,23 @@
       "max_black_scanlines": 0,
       "buttons": "A",
       "after_land": [
-        {"addr": "0x7E02B2", "value": 1, "name": "CurrentMask_Deku"},
-        {"addr": "0x7E00BC", "value": 53, "name": "LinkGraphics_Deku"}
+        {
+          "addr": "0x7E02B2",
+          "value": 1,
+          "name": "CurrentMask_Deku"
+        },
+        {
+          "addr": "0x7E00BC",
+          "value": 53,
+          "name": "LinkGraphics_Deku"
+        }
       ],
-      "jump_target": {"kind": "overworld", "id": 35, "x": 2360, "y": 2808},
+      "jump_target": {
+        "kind": "overworld",
+        "id": 35,
+        "x": 2360,
+        "y": 2808
+      },
       "retroid_card": {
         "id": "vblank_deku_hover",
         "title": "Test Deku Hover",
@@ -152,8 +274,671 @@
       "entrance": 1,
       "room": 260,
       "message_id": 37,
-      "jump_target": {"kind": "message", "id": 37, "x": 0, "y": 0},
+      "jump_target": {
+        "kind": "message",
+        "id": 37,
+        "x": 0,
+        "y": 0
+      },
       "note": "intro-bed warps into room $0104 (entrance $01) with GameState 0 so the plea can run. Message $0025 is Impa's Loom Beach line; the runner arms $1CF0 when the box is not already that id."
+    },
+    {
+      "id": "ent_d1_grotto",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "d1-entrance",
+      "entrance": 38,
+      "room": 74,
+      "parent_map": 16,
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 74,
+        "x": 112,
+        "y": 16
+      },
+      "note": "D1 Mushroom Grotto. Entrance $26 -> room $004A, door on area $10 (112, 16) from warps.json."
+    },
+    {
+      "id": "ent_d2_tail",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "d2-entrance",
+      "entrance": 21,
+      "room": 95,
+      "parent_map": 47,
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 95,
+        "x": 320,
+        "y": 80
+      },
+      "note": "D2 Tail Palace. Entrance $15 -> room $005F, door on area $2F (320, 80)."
+    },
+    {
+      "id": "ent_d3_castle",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "d3-entrance",
+      "entrance": 43,
+      "room": 89,
+      "parent_map": 11,
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 89,
+        "x": 432,
+        "y": 336
+      },
+      "note": "D3 Kalyxo Castle. Entrance $2B -> room $0059, door on area $0B (432, 336)."
+    },
+    {
+      "id": "ent_d4_zora",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "d4-entrance",
+      "entrance": 37,
+      "room": 40,
+      "parent_map": 30,
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 40,
+        "x": 800,
+        "y": 32
+      },
+      "note": "D4 Zora Temple. Entrance $25 -> room $0028, door on area $1E (800, 32)."
+    },
+    {
+      "id": "ent_d5_glacia",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "d5-entrance",
+      "entrance": 52,
+      "room": 219,
+      "parent_map": 6,
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 219,
+        "x": 160,
+        "y": 224
+      },
+      "note": "D5 Glacia Estate. Entrance $34 -> room $00DB, door on area $06 (160, 224)."
+    },
+    {
+      "id": "ent_d7_dragon",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "d7-entrance",
+      "entrance": 53,
+      "room": 214,
+      "parent_map": 56,
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 214,
+        "x": 384,
+        "y": 256
+      },
+      "note": "D7 Dragon Ship. Entrance $35 -> room $00D6, door on area $38 (384, 256)."
+    },
+    {
+      "id": "ent_d8_fortress",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "d8-entrance",
+      "entrance": 55,
+      "room": 12,
+      "parent_map": 75,
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 12,
+        "x": 672,
+        "y": 64
+      },
+      "note": "D8 Fortress of Secrets. Entrance $37 -> room $000C, door on area $4B (672, 64)."
+    },
+    {
+      "id": "ent_d8_sky",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "jump-d8-sky",
+      "entrance": 41,
+      "room": 144,
+      "parent_map": 135,
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 144,
+        "x": 240,
+        "y": 224
+      },
+      "note": "Sky Tower doorway. Entrance $29 -> room $0090. Exit is special overworld $87 (240, 224)."
+    },
+    {
+      "id": "ent_shrine_wisdom",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "jump-shrine-wisdom",
+      "entrance": 51,
+      "room": 201,
+      "parent_map": 99,
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 201,
+        "x": 752,
+        "y": 96
+      },
+      "note": "Shrine of Wisdom. Entrance $33 -> room $00C9, door on area $63 (752, 96). The entered frame keeps a 15-row black band after the fade settles.",
+      "max_black_scanlines": 16
+    },
+    {
+      "id": "ent_shrine_courage",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "jump-shrine-courage",
+      "entrance": 12,
+      "room": 83,
+      "parent_map": 166,
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 83,
+        "x": 848,
+        "y": 128
+      },
+      "note": "Shrine of Courage. Entrance $0C -> room $0053, door on area $A6 (848, 128). Exit uses special overworld module $0B."
+    },
+    {
+      "id": "epona_ride_boost_facing",
+      "kind": "state_contract",
+      "land": {
+        "via_room": 3,
+        "area": 0
+      },
+      "expect_mem": [
+        {
+          "addr": "0x7E02B2",
+          "value": 9,
+          "name": "mounted"
+        },
+        {
+          "addr": "0x7F5671",
+          "max": 4,
+          "name": "carrots_spent"
+        },
+        {
+          "addr": "0x7F5672",
+          "min": 1,
+          "name": "spur_timer"
+        },
+        {
+          "addr": "0x7E002F",
+          "mask": 6,
+          "value": 6,
+          "name": "facing_east"
+        }
+      ],
+      "jump_target": {
+        "kind": "overworld",
+        "id": 0,
+        "x": 456,
+        "y": 649
+      },
+      "note": "Toto Ranch $00. HorseForm_FrameTick calls HorseForm_EnsureInit (5 carrots at $7F5671). A spur spends one carrot and sets Horse_SpurTimer ($7F5672) to 48. Facing $2F stays east ($06) while Right is held. CurrentMask 9 is Horse.",
+      "after_land": [
+        {
+          "addr": "0x7E02B2",
+          "value": 9,
+          "name": "CurrentMask_Horse"
+        },
+        {
+          "addr": "0x7E002F",
+          "value": 6,
+          "name": "Facing_East"
+        }
+      ],
+      "buttons": "A,Right",
+      "frames": 48
+    },
+    {
+      "id": "soar_kalyxo",
+      "kind": "state_contract",
+      "land": {
+        "via_room": 3,
+        "area": 0
+      },
+      "expect_mem": [
+        {
+          "addr": "0x7EC13C",
+          "value": 0,
+          "name": "origin_kalyxo"
+        },
+        {
+          "addr": "0x7EC13D",
+          "value": 0,
+          "name": "view_kalyxo"
+        }
+      ],
+      "jump_target": {
+        "kind": "overworld",
+        "id": 0,
+        "x": 456,
+        "y": 649
+      },
+      "note": "Kalyxo Light World is Soaring world 0 ($7EC13C origin, $7EC13D view). special_overworld_transitions.asm.",
+      "after_land": [
+        {
+          "addr": "0x7EC13B",
+          "value": 0,
+          "name": "Soaring_MapSwitchPending"
+        },
+        {
+          "addr": "0x7EC13C",
+          "value": 0,
+          "name": "Soaring_OriginWorld_Kalyxo"
+        },
+        {
+          "addr": "0x7EC13D",
+          "value": 0,
+          "name": "Soaring_ViewWorld_Kalyxo"
+        }
+      ],
+      "frames": 8
+    },
+    {
+      "id": "soar_abyss_moosh",
+      "kind": "state_contract",
+      "land": {
+        "via_room": 32,
+        "area": 64
+      },
+      "expect_mem": [
+        {
+          "addr": "0x7EC13C",
+          "value": 1,
+          "name": "origin_abyss"
+        },
+        {
+          "addr": "0x7EC13D",
+          "value": 1,
+          "name": "view_abyss"
+        },
+        {
+          "addr": "0x7E02B2",
+          "value": 7,
+          "name": "moosh_form"
+        }
+      ],
+      "jump_target": {
+        "kind": "overworld",
+        "id": 64,
+        "x": 744,
+        "y": 536
+      },
+      "note": "Eon Abyss is Soaring world 1. Song of Healing outdoors here calls Link_TransformMoosh (CurrentMask 7). OcarinaEffect_Epona.",
+      "after_land": [
+        {
+          "addr": "0x7EC13C",
+          "value": 1,
+          "name": "Soaring_OriginWorld_Abyss"
+        },
+        {
+          "addr": "0x7EC13D",
+          "value": 1,
+          "name": "Soaring_ViewWorld_Abyss"
+        },
+        {
+          "addr": "0x7E02B2",
+          "value": 7,
+          "name": "CurrentMask_Moosh"
+        }
+      ],
+      "frames": 24
+    },
+    {
+      "id": "soar_lyra",
+      "kind": "state_contract",
+      "land": {
+        "via_room": 132,
+        "area": 176
+      },
+      "expect_mem": [
+        {
+          "addr": "0x7EC13C",
+          "value": 2,
+          "name": "origin_lyra"
+        },
+        {
+          "addr": "0x7EC13D",
+          "value": 2,
+          "name": "view_lyra"
+        }
+      ],
+      "jump_target": {
+        "kind": "overworld",
+        "id": 176,
+        "x": 336,
+        "y": 336
+      },
+      "note": "Lyra Sea / Goron Coast $B0 is Soaring world 2. Room $0084 exits to area $B0.",
+      "after_land": [
+        {
+          "addr": "0x7EC13C",
+          "value": 2,
+          "name": "Soaring_OriginWorld_Lyra"
+        },
+        {
+          "addr": "0x7EC13D",
+          "value": 2,
+          "name": "Soaring_ViewWorld_Lyra"
+        }
+      ],
+      "frames": 8
+    },
+    {
+      "id": "wolfos_blue",
+      "kind": "state_contract",
+      "land": {
+        "via_room": 3,
+        "area": 0
+      },
+      "expect_mem": [
+        {
+          "addr": "0x7E0DA0",
+          "value": 0,
+          "name": "wolfos_variant"
+        }
+      ],
+      "jump_target": {
+        "kind": "overworld",
+        "id": 0,
+        "x": 456,
+        "y": 649
+      },
+      "note": "Standard Blue Wolfos. SprSubtype $03 skips location detect and stores SprMiscA $00. Sprite_Wolfos_Prep.",
+      "after_land": [
+        {
+          "addr": "0x7EF358",
+          "value": 0,
+          "name": "WolfMask_Clear"
+        },
+        {
+          "addr": "0x7E0E20",
+          "value": 169,
+          "name": "SprType_Wolfos"
+        },
+        {
+          "addr": "0x7E0E30",
+          "value": 3,
+          "name": "SprSubtype"
+        },
+        {
+          "addr": "0x7E0D10",
+          "value": 64,
+          "name": "SprX"
+        },
+        {
+          "addr": "0x7E0D00",
+          "value": 64,
+          "name": "SprY"
+        },
+        {
+          "addr": "0x7E0DD0",
+          "value": 8,
+          "name": "SprState_Init"
+        }
+      ],
+      "frames": 16
+    },
+    {
+      "id": "wolfos_grey",
+      "kind": "state_contract",
+      "land": {
+        "via_room": 3,
+        "area": 0
+      },
+      "expect_mem": [
+        {
+          "addr": "0x7E0DA0",
+          "value": 4,
+          "name": "wolfos_variant"
+        }
+      ],
+      "jump_target": {
+        "kind": "overworld",
+        "id": 0,
+        "x": 456,
+        "y": 649
+      },
+      "note": "Castle Mask-Quest Wolfos. SprSubtype $04 stores SprMiscA $04 (!WolfosFlag_Quest). WolfMask must be 0 or Prep despawns the slot.",
+      "after_land": [
+        {
+          "addr": "0x7EF358",
+          "value": 0,
+          "name": "WolfMask_Clear"
+        },
+        {
+          "addr": "0x7E0E20",
+          "value": 169,
+          "name": "SprType_Wolfos"
+        },
+        {
+          "addr": "0x7E0E30",
+          "value": 4,
+          "name": "SprSubtype"
+        },
+        {
+          "addr": "0x7E0D10",
+          "value": 64,
+          "name": "SprX"
+        },
+        {
+          "addr": "0x7E0D00",
+          "value": 64,
+          "name": "SprY"
+        },
+        {
+          "addr": "0x7E0DD0",
+          "value": 8,
+          "name": "SprState_Init"
+        }
+      ],
+      "frames": 16
+    },
+    {
+      "id": "wolfos_ice",
+      "kind": "state_contract",
+      "land": {
+        "via_room": 3,
+        "area": 0
+      },
+      "expect_mem": [
+        {
+          "addr": "0x7E0DA0",
+          "value": 1,
+          "name": "wolfos_variant"
+        }
+      ],
+      "jump_target": {
+        "kind": "overworld",
+        "id": 0,
+        "x": 456,
+        "y": 649
+      },
+      "note": "Roving Ice Wolfos. SprSubtype $01 stores SprMiscA $01 (!WolfosFlag_Ice).",
+      "after_land": [
+        {
+          "addr": "0x7EF358",
+          "value": 0,
+          "name": "WolfMask_Clear"
+        },
+        {
+          "addr": "0x7E0E20",
+          "value": 169,
+          "name": "SprType_Wolfos"
+        },
+        {
+          "addr": "0x7E0E30",
+          "value": 1,
+          "name": "SprSubtype"
+        },
+        {
+          "addr": "0x7E0D10",
+          "value": 64,
+          "name": "SprX"
+        },
+        {
+          "addr": "0x7E0D00",
+          "value": 64,
+          "name": "SprY"
+        },
+        {
+          "addr": "0x7E0DD0",
+          "value": 8,
+          "name": "SprState_Init"
+        }
+      ],
+      "frames": 16
+    },
+    {
+      "id": "vblank_chain_chomp",
+      "kind": "vblank_budget",
+      "mechanic": "chomp",
+      "entrance": 9,
+      "room": 132,
+      "frames": 120,
+      "max_overruns": 0,
+      "max_black_scanlines": 0,
+      "buttons": "",
+      "jump_target": {
+        "kind": "dungeon",
+        "id": 132,
+        "x": 336,
+        "y": 336
+      },
+      "note": "Room $084 via entrance $09, the room the Chain Chomp lag pass measured at 60 FPS. Room $0B2 is the 3-chomp stress case in chain_chomp_opt.asm and has no entrance row."
+    },
+    {
+      "id": "urchin_killable",
+      "kind": "state_contract",
+      "land": {
+        "via_room": 3,
+        "area": 0
+      },
+      "expect_mem": [
+        {
+          "addr": "0x7F6AE0",
+          "value": 3,
+          "name": "urchin_sword_damage"
+        }
+      ],
+      "jump_target": {
+        "kind": "overworld",
+        "id": 0,
+        "x": 456,
+        "y": 649
+      },
+      "note": "Sea Urchin $AE Prep fills DMGTABLE row $7F6AE0. Byte 0 = $03 (L1 sword hits). An all-zero row was why weapons could not kill it.",
+      "after_land": [
+        {
+          "addr": "0x7E0E20",
+          "value": 174,
+          "name": "SprType_SeaUrchin"
+        },
+        {
+          "addr": "0x7E0D10",
+          "value": 72,
+          "name": "SprX"
+        },
+        {
+          "addr": "0x7E0D00",
+          "value": 72,
+          "name": "SprY"
+        },
+        {
+          "addr": "0x7E0DD0",
+          "value": 8,
+          "name": "SprState_Init"
+        }
+      ],
+      "frames": 16
+    },
+    {
+      "id": "rod_after_equipment",
+      "kind": "state_contract",
+      "land": {
+        "via_room": 3,
+        "area": 0
+      },
+      "expect_mem": [
+        {
+          "addr": "0x7EF345",
+          "value": 1,
+          "name": "fire_rod_owned"
+        },
+        {
+          "addr": "0x7EF346",
+          "value": 1,
+          "name": "ice_rod_owned"
+        },
+        {
+          "addr": "0x2DAD0A",
+          "value": 156,
+          "name": "menu_exit_stz"
+        },
+        {
+          "addr": "0x2DAD0B",
+          "le16": "0x020B",
+          "name": "menu_exit_clears_cursor"
+        }
+      ],
+      "jump_target": {
+        "kind": "overworld",
+        "id": 0,
+        "x": 456,
+        "y": 649
+      },
+      "note": "Menu_Exit at $2DAD0A is STZ.w $020B (9C 0B 02). LinkItem_FireAndIceRod skips both rods while that cursor is nonzero. Fire Rod $7EF345 and Ice Rod $7EF346 stay owned after the landing write.",
+      "after_land": [
+        {
+          "addr": "0x7EF345",
+          "value": 1,
+          "name": "FireRod"
+        },
+        {
+          "addr": "0x7EF346",
+          "value": 1,
+          "name": "IceRod"
+        },
+        {
+          "addr": "0x7E020B",
+          "value": 5,
+          "name": "StaleEquipmentCursor"
+        }
+      ]
+    },
+    {
+      "id": "sword_lv4_goronblade",
+      "kind": "state_contract",
+      "land": {
+        "via_room": 3,
+        "area": 0
+      },
+      "expect_mem": [
+        {
+          "addr": "0x2D8290",
+          "le16": "0x2C8A",
+          "name": "lv4_master_tl"
+        },
+        {
+          "addr": "0x2D8292",
+          "le16": "0x2C65",
+          "name": "lv4_master_tr"
+        },
+        {
+          "addr": "0x2BCDA1",
+          "le16": "0x248A",
+          "name": "goronblade_tl"
+        },
+        {
+          "addr": "0x2BCDA8",
+          "le16": "0x2465",
+          "name": "goronblade_tr"
+        }
+      ],
+      "jump_target": {
+        "kind": "message",
+        "id": 0,
+        "x": 0,
+        "y": 0
+      },
+      "note": "SwordGFX level 4 at $2D8290 is blue ($2C8A, $2C65). SwordSlots_MarkerSlot owned path at $2BCDA0 writes the reforged Goronblade as orange ($248A, $2465).",
+      "frames": 1
     }
   ]
 }

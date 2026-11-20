@@ -136,9 +136,7 @@ FinaleContinue_LoadCheckpointOrWorld:
   ; Finale Continue active: run standard session resets, arm FinaleBeat, and
   ; reload Entrance $7B (Room $0002 with underworld song bank $15 + open plate
   ; directly into Room $0000 Ganondorf -> Beast Ganon).
-if !ENABLE_KALYXO_BOAT == 1
   JSL Boat_ResetSession
-endif
   JSL ItemBindings_AdapterReset
   JSL ItemBindings_RestoreY
 if !SPECIAL_OVERWORLD_NATIVE == 1

@@ -46,3 +46,5 @@ Sprite_VampireBat,$11,Sprites/Bosses/vampire_bat.asm,vampire_bat,Keese subtype 0
 Sprite_Ganondorf,$D3,Sprites/Bosses/ganondorf.asm,ganondorf,Finale phase 1 (code spawn in room $00),
 Sprite_GanonBall,$46,Sprites/Bosses/ganondorf.asm,ganondorf,Ganondorf energy ball (volley),
 Sprite_DungeonWeb,$B7,Sprites/Objects/dungeon_web.asm,dungeon_web,Doorway web (0=horiz 32x16; 1=vert 16x32),
+Sprite_HorseNPC,$2D,Sprites/NPCs/horse.asm,horse,Toto Ranch Epona; SprMiscA $F1 dispatches to the fishing floater,1
+Sprite_FishingFloater,$2D,Items/fishing_rod.asm,fishing_rod,Shared sprite id $2D with Epona; floater sets SprMiscA to $F1,1

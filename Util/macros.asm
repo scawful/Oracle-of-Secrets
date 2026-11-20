@@ -30,8 +30,6 @@ endif
 ; --- Feature Toggle Flags ---
 ; Active RC features default to 1. Set to 0 to isolate a defect.
 ; Override these via Config/feature_flags.asm (generate with Scripts/Build/set_feature_flags.py).
-; Source-built sprite sheets; identity sheet $64 owns the audited bank $40 tail.
-!ENABLE_SOURCE_SPRITE_SHEETS        = 1
 ; Sky room sky layer ($A0 proof): sheet EA slot6, row6 colours, BG1 fill.
 !ENABLE_SKY_ROOM_SKY                = 1
 ; Sky overworld source art; the live project ROM carries the Sky maps ($87/$94).
@@ -60,10 +58,6 @@ endif
 ; Aux ABI 1 needs an explicitly bound authoring table; preserve ordinary ROMs.
 !ENABLE_OW_AUX_EXTENSION              = 1
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
-; Native cached-exit ferry: Kalyxo Docks $30/$31 <-> Sea Zora Quay $99 (bound in
-; Data/overworld/kalyxo_boat_placements.asm). Opening arrival is unchanged unless
-; Boat_Marker holds !Boat_Magic.
-!ENABLE_KALYXO_BOAT                   = 1
 ; Forest Glade ambush (prototype, off): after Kydrog's msg $21 the glade
 ; animals flee, a thunder blackout swaps stalfos art into the glade slots,
 ; stalfos rise around Link, and a mosaic ramp leads into the module $15

@@ -126,8 +126,10 @@ LoadDarkWorldIntro:
   ; banishment until the escape, outdoor deaths and continues load the Abyss.
   ; The saved world is the lock: Kydrog_WarpPlayerAway sets $7EF3CA = $40 with
   ; Story2_KydrogEncounter; the first light world arrival after that sets it
-  ; to $00 (today the DW $6A warp tile, $02B236; later the sword warp home,
-  ; decisions.org). The same condition ends the Part 0 storm (storm.asm).
+  ; to $00. MirrorWarp_Initialize ($02B236) still clears SavedWorld on that
+  ; path. Tile type $6A is the west strong sea current (Masks/zora_mask.asm
+  ; $68/$69/$6A/$6B = N/S/W/E), not a Dark World warp tile. The same
+  ; condition ends the Part 0 storm (storm.asm).
   ; GameOver keeps $7EF3CA while GameState >= 2 ($09F520 patch below). The
   ; old OOSPROG < 2 force is not used: it ended at the Maku Tree and sent a
   ; death or continue after the escape back to the Abyss.
@@ -238,6 +240,14 @@ org $0EF587
               CMP.b #$75 : BEQ .on_dark_dm
               CMP.b #$7D : BNE EXIT_0EF581
   .on_dark_dm
+
+; #_0EF622 (.bright_white) still compared vanilla Death Mountain $43/$45, so
+; Oracle areas $73/$75 fell through with fixed Y=#$40 and never reached
+; .main_mountain. $7D stays on that fixed row, matching vanilla $47.
+; Immediates sit one byte after each CMP opcode ($0EF625/$0EF629).
+assert read1($0EF624) == $C9 && read1($0EF628) == $C9, "FlashGanonTowerPalette $0EF622 compares moved"
+org $0EF624 : CMP.b #$73
+org $0EF628 : CMP.b #$75
 
 org $0EF531
 Palettes_GanonTowerFlash:

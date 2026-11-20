@@ -346,7 +346,7 @@ def main():
         require(args.rom_role == 'editable_base', 'source sheet generation requires editable_base role; compiled-ROM writes are unsupported')
         if args.respect_flags:
             from asm_source import _load_global_defines
-            enabled = _load_global_defines(root).get(FLAG)
+            enabled = _load_global_defines(root).get(FLAG, 1)
             require(enabled in (0, 1), 'source sheet feature flag is missing or invalid')
             if not enabled:
                 print('Source sprite sheets disabled; no override is assembled.'); return 0

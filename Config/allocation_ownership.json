@@ -2377,9 +2377,7 @@
       "base": 3854336,
       "size": 4096,
       "status": "proposed",
-      "condition": {
-        "ENABLE_KALYXO_BOAT": 1
-      },
+      "condition": {},
       "lifetime": "Code and two unbound native50-byte ($32 hexadecimal) caches. Opening/experiment must end at or before3AD000; ferry must end at or before3AE000, where native2P owns the next slot. No old3AA000 ice-block overlap. Source-first review; no emitted candidate yet.",
       "reset": "No runtime ROM writes. Bind only after selected full-boat/current landing approval.",
       "save": "No save format, entrance/exit ID, actor or sprite allocation. Uses existing synthetic cached-exit selector0151.",
@@ -2446,9 +2444,7 @@
       "base": 8265419,
       "size": 19,
       "status": "proposed",
-      "condition": {
-        "ENABLE_KALYXO_BOAT": 1
-      },
+      "condition": {},
       "lifetime": "Separate conditional19-byte block immediately after the fixed91-byte Core/symbols block ending at SongTintContext; no alias with Arrival/BossKit/BossDirector state. Claimed only with ferry feature enabled.",
       "reset": "Boat_ResetSession clears marker on Module05 file-load/Continue; Boat_Clear on completion/cancellation/stale scene. Other bytes read only after a successful boarding initializes them.",
       "save": "Volatile; no SRAM field. Native Save policy is unchanged.",

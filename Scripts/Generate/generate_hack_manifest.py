@@ -2588,7 +2588,7 @@ def generate_manifest(
     }
     sheet_sources = [("source_sprite_sheets", Path("Data/graphics/source_sprite_sheets.json"),
                       Path("Core/Generated/source_sprite_sheets"), "ENABLE_SOURCE_SPRITE_SHEETS")]
-    if defines.get("ENABLE_EXPANDED_GRAPHICS_TABLE") == 1 and defines.get("ENABLE_SOURCE_SPRITE_SHEETS") == 1:
+    if defines.get("ENABLE_EXPANDED_GRAPHICS_TABLE") == 1 and defines.get("ENABLE_SOURCE_SPRITE_SHEETS", 1) == 1:
         sheet_sources.append(("snowpeak_graphics", Path("Data/graphics/snowpeak_sheet.json"),
                               Path("Core/Generated/source_sprite_sheets/snowpeak"), "ENABLE_EXPANDED_GRAPHICS_TABLE"))
     for metadata_key, source_sheet_spec, source_output, source_flag in sheet_sources:

@@ -28,6 +28,27 @@ REQUIRED_IDS = (
     "vblank_korl_quay",
     "vblank_deku_hover",
     "dlg_boot_intro_box",
+    "ent_d1_grotto",
+    "ent_d2_tail",
+    "ent_d3_castle",
+    "ent_d4_zora",
+    "ent_d5_glacia",
+    "ent_d7_dragon",
+    "ent_d8_fortress",
+    "ent_d8_sky",
+    "ent_shrine_wisdom",
+    "ent_shrine_courage",
+    "epona_ride_boost_facing",
+    "soar_kalyxo",
+    "soar_abyss_moosh",
+    "soar_lyra",
+    "wolfos_blue",
+    "wolfos_grey",
+    "wolfos_ice",
+    "vblank_chain_chomp",
+    "urchin_killable",
+    "rod_after_equipment",
+    "sword_lv4_goronblade",
 )
 
 
@@ -125,6 +146,19 @@ class ScriptedRuntime:
             "probe": self._world(0x09, area=self.area),
         }
 
+    def tap(self, button, hold=6, settle=12):
+        self.taps = getattr(self, "taps", [])
+        self.taps.append(button)
+        if button == "Start":
+            self.mem[suite.MESSAGE] = 0
+            self.mem[0x7E020B] = 0
+
+    def u8(self, addr):
+        return self.mem.get(addr, 0) & 0xFF
+
+    def u16(self, addr):
+        return (self.u8(addr) | (self.u8(addr + 1) << 8)) & 0xFFFF
+
     def screenshot(self):
         width, height = 320, 240
         rgb = bytes([40, 80, 30]) * (width * height)
@@ -203,8 +237,8 @@ class ReportContractTest(unittest.TestCase):
         self.assertEqual(tuple(report), suite.REPORT_KEYS)
         self.assertEqual(report["tool"], "oos-runtime-suite")
         self.assertEqual(report["suite_name"], "beta_smoke")
-        self.assertEqual(report["total_scenarios"], 10)
-        self.assertEqual(report["passed"], 10)
+        self.assertEqual(report["total_scenarios"], len(REQUIRED_IDS))
+        self.assertEqual(report["passed"], len(REQUIRED_IDS))
         self.assertEqual(report["failed"], 0)
         self.assertEqual(report["findings"], [])
         self.assertIsNone(report["rom_sha256"])
@@ -378,6 +412,40 @@ class RetroidCardTest(unittest.TestCase):
         self.assertEqual(report["findings"][0]["severity"], "critical")
         self.assertIn(report["findings"][0]["jump_target"]["kind"], suite.JUMP_KINDS)
         self.assertEqual(suite.exit_code(report, baseline_set=False, strict=False), 1)
+
+
+class StateContractTest(unittest.TestCase):
+    def test_sword_words_and_rod_cursor(self):
+        document = _suite()
+        sword = next(item for item in document["scenarios"] if item["id"] == "sword_lv4_goronblade")
+        rod = next(item for item in document["scenarios"] if item["id"] == "rod_after_equipment")
+        runtime = ScriptedRuntime()
+        runtime.mem[0x2D8290] = 0x8A
+        runtime.mem[0x2D8291] = 0x2C
+        runtime.mem[0x2D8292] = 0x65
+        runtime.mem[0x2D8293] = 0x2C
+        runtime.mem[0x2BCDA1] = 0x8A
+        runtime.mem[0x2BCDA2] = 0x24
+        runtime.mem[0x2BCDA8] = 0x65
+        runtime.mem[0x2BCDA9] = 0x24
+        runtime.mem[0x2DAD0A] = 0x9C
+        runtime.mem[0x2DAD0B] = 0x0B
+        runtime.mem[0x2DAD0C] = 0x02
+        report = suite.run_suite(
+            document, checkpoints=_checkpoints(), scenarios=[sword, rod],
+            rom=None, rom_sha=None, dry_run=False, baseline=None, runtime=runtime)
+        self.assertEqual(report["failed"], 0)
+        self.assertEqual(report["passed"], 2)
+
+    def test_chain_chomp_room_uses_the_dungeon_path(self):
+        document = _suite()
+        scenario = next(item for item in document["scenarios"] if item["id"] == "vblank_chain_chomp")
+        report = suite.run_suite(
+            document, checkpoints=_checkpoints(), scenarios=[scenario],
+            rom=None, rom_sha=None, dry_run=False, baseline=None,
+            runtime=ScriptedRuntime())
+        self.assertEqual(report["passed"], 1)
+        self.assertEqual(report["findings"], [])
 
 
 if __name__ == "__main__":

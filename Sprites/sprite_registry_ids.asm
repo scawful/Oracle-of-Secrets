@@ -48,3 +48,5 @@ Sprite_VampireBat = $11 ; Keese subtype 02 miniboss
 Sprite_Ganondorf = $D3 ; Finale phase 1 (code spawn in room $00)
 Sprite_GanonBall = $46 ; Ganondorf energy ball (volley)
 Sprite_DungeonWeb = $B7 ; Doorway web (0=horiz 32x16; 1=vert 16x32)
+Sprite_HorseNPC = $2D ; Toto Ranch Epona; SprMiscA $F1 dispatches to the fishing floater
+Sprite_FishingFloater = $2D ; Shared sprite id $2D with Epona; floater sets SprMiscA to $F1

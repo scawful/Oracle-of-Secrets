@@ -157,9 +157,7 @@ Soaring_ScrubWorldTransitionState:
   STZ.w $0AA5
   STZ.w $0AA9
   STZ.w $0AB2
-if !ENABLE_KALYXO_BOAT == 1
   JSL Boat_ResetSession
-endif
 if !ENABLE_HORSE_FORM == 1
   LDA.w $02B2 : CMP.b #$09 : BNE +
     JSL HorseForm_SilentDismount

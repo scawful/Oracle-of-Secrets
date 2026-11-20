@@ -106,7 +106,8 @@ def _graphics_sources(value, graphics_root):
     spec = sheet_overrides.read_spec(spec_path)
     globals_ = [entry for entry in spec['sheets'] if 'global_sheet' in entry]
     names = {entry['flag'] for entry in globals_ if entry.get('flag')}
-    names.update(('ENABLE_SOURCE_SPRITE_SHEETS', 'ENABLE_D4_ZORA_REDESIGN'))
+    names.update(('ENABLE_D4_ZORA_REDESIGN',))
+    optional_names = {'ENABLE_SOURCE_SPRITE_SHEETS'}
     defines, define_files = {}, {}
     for relative in ('Util/macros.asm', 'Config/module_flags.asm', 'Config/feature_flags.asm'):
         path = root / relative
@@ -117,7 +118,7 @@ def _graphics_sources(value, graphics_root):
         define_files[relative] = _sha(raw)
         for line in raw.decode('utf-8').splitlines():
             match = re.match(r'^\s*!([A-Za-z0-9_]+)(.*)$', line.split(';', 1)[0])
-            if not match or match[1] not in names:
+            if not match or match[1] not in (names | optional_names):
                 continue
             rest = match[2].strip()
             _require(rest.startswith('='), 'GRAPHICS_FLAG_ASSIGNMENT_INVALID')
@@ -129,8 +130,9 @@ def _graphics_sources(value, graphics_root):
                                 else int(literal)) if valid else None
     _require(all(name in defines and defines[name] is not None for name in names),
              'GRAPHICS_FLAG_UNRESOLVED')
-    _require(defines['ENABLE_SOURCE_SPRITE_SHEETS'] == 1,
-             'GRAPHICS_SOURCE_FEATURE_DISABLED')
+    if 'ENABLE_SOURCE_SPRITE_SHEETS' in defines:
+        _require(defines['ENABLE_SOURCE_SPRITE_SHEETS'] == 1,
+                 'GRAPHICS_SOURCE_FEATURE_DISABLED')
     d4_selected = defines['ENABLE_D4_ZORA_REDESIGN'] != 0
     _require(spec_name == (d4_name if d4_selected else ordinary_name),
              'GRAPHICS_SPEC_SELECTION_MISMATCH')

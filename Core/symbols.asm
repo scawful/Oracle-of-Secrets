@@ -45,8 +45,7 @@ assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-
 }
 base off
 
-; Separate conditional owner; keep the legacy91-byte block invariant.
-if !ENABLE_KALYXO_BOAT == 1
+; Kalyxo ferry transient tail. Keep the legacy 91-byte block invariant.
 !Boat_Magic = $B04F
 base $7E1ECB
 {
@@ -67,7 +66,6 @@ assert Boat_Marker == $7E1ECB && Boat_TransientEnd == $7E1EDE
 assert pc() <= $7E1F00, "Ferry transient state exceeds its bounded WRAM tail"
 }
 base off
-endif
 
 ; Glade ambush Abyss landing (!ENABLE_GLADE_AMBUSH, Sprites/Bosses/kydrog.asm).
 ; Vanilla-unused $7E02B8-$7E02B9 (usdasm UNUSED_7E02B8/B9, zero at boot); the

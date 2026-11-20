@@ -1,10 +1,6 @@
-; Reversible ferry prototype, ported from b617e7b0 (2026-10-30).
-; Reuses current Module08 cached-exit contract, not historical STV2 storage.
-; Default OFF; both endpoint caches/underlays remain explicitly unbound.
-; No actor, entrance, saved state, graphics profile or whole-hull writer.
-; Source review precedes build/native qualification of this composition.
-
-assert !ENABLE_KALYXO_BOAT == 1
+; Kalyxo cached-exit ferry, ported from b617e7b0 (2026-10-30).
+; Reuses the Module08 cached-exit contract. Opening arrival is unchanged
+; unless Boat_Marker holds !Boat_Magic.
 
 incsrc "Data/overworld/kalyxo_boat_placements.asm"
 

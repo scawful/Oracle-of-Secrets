@@ -5,8 +5,6 @@
 ; group0A or palette set08 share those remapped tables. Their inherited
 ; wall-sheet changes require visual qualification with this profile.
 
-assert !ENABLE_SOURCE_SPRITE_SHEETS == 1, "Sky graphics require source sheets E8/E9"
-
 pushpc
 
 ; These existing slots were audited against all regular/spawn entrances,

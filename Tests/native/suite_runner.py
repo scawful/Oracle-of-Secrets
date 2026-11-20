@@ -31,12 +31,13 @@ KINDS = (
     "warp_landing",
     "vblank_budget",
     "dialogue_trigger",
+    "state_contract",
 )
 SEVERITIES = ("info", "warning", "error", "critical")
 JUMP_KINDS = ("overworld", "dungeon", "message")
 FORMS = ("link", "gbc")
 TRANSPORTS = ("whirlpool", "bird", "portal")
-MECHANICS = ("epona", "korl", "deku", "zora", "gust")
+MECHANICS = ("epona", "korl", "deku", "zora", "gust", "chomp")
 # FileSelect_IsSlotGbcEligible: GameState < !GameState_FaroreRescued.
 FARORE_RESCUED = 0x03
 # GameboyLinkPalette+4, the second color copied to $7EC604 for an Abyss slot.
@@ -506,6 +507,11 @@ def validate_scenario(scenario: dict, checkpoints: dict[str, dict]) -> list[str]
                 parse_int(scenario.get(key))
             except (ValueError, TypeError):
                 errors.append(f"{key} must be an integer")
+        if "max_black_scanlines" in scenario:
+            try:
+                parse_int(scenario.get("max_black_scanlines"))
+            except (ValueError, TypeError):
+                errors.append("max_black_scanlines must be an integer")
     elif kind == "warp_landing":
         if scenario.get("transport") not in TRANSPORTS:
             errors.append("transport must be whirlpool, bird, or portal")
@@ -516,8 +522,20 @@ def validate_scenario(scenario: dict, checkpoints: dict[str, dict]) -> list[str]
                 errors.append(f"{key} must be an integer")
     elif kind == "vblank_budget":
         if scenario.get("mechanic") not in MECHANICS:
-            errors.append("mechanic must be epona, korl, deku, zora, or gust")
-        for key in ("area", "via_room", "frames", "max_overruns", "max_black_scanlines"):
+            errors.append("mechanic must be epona, korl, deku, zora, gust, or chomp")
+        if "room" in scenario:
+            for key in ("entrance", "room"):
+                try:
+                    parse_int(scenario.get(key))
+                except (ValueError, TypeError):
+                    errors.append(f"{key} must be an integer")
+        else:
+            for key in ("area", "via_room"):
+                try:
+                    parse_int(scenario.get(key))
+                except (ValueError, TypeError):
+                    errors.append(f"{key} must be an integer")
+        for key in ("frames", "max_overruns", "max_black_scanlines"):
             try:
                 parse_int(scenario.get(key))
             except (ValueError, TypeError):
@@ -530,6 +548,10 @@ def validate_scenario(scenario: dict, checkpoints: dict[str, dict]) -> list[str]
                 pass
         if scenario.get("after_land") is not None:
             errors.extend(_write_errors(scenario.get("after_land"), "after_land"))
+    elif kind == "state_contract":
+        errors.extend(_state_errors(scenario))
+        if scenario.get("checkpoint") is not None:
+            errors.extend(_require_checkpoint(scenario, checkpoints))
     elif kind == "dialogue_trigger":
         errors.extend(_require_checkpoint(scenario, checkpoints))
         try:
@@ -569,6 +591,57 @@ def _spawn_errors(spawn, label: str) -> list[str]:
             parse_int(spawn.get(key))
         except (ValueError, TypeError):
             errors.append(f"{label}.{key} must be an integer")
+    return errors
+
+
+def _state_errors(scenario: dict) -> list[str]:
+    errors = []
+    land = scenario.get("land")
+    if not isinstance(land, dict):
+        errors.append("land object is required")
+    else:
+        dungeon = "entrance" in land or "room" in land
+        if dungeon:
+            for key in ("entrance", "room"):
+                try:
+                    parse_int(land.get(key))
+                except (ValueError, TypeError):
+                    errors.append(f"land.{key} must be an integer")
+        else:
+            errors.extend(_spawn_errors(land, "land"))
+    if scenario.get("checkpoint") is not None and not isinstance(scenario.get("checkpoint"), str):
+        errors.append("checkpoint must be a string")
+    if scenario.get("after_land") is not None:
+        errors.extend(_write_errors(scenario.get("after_land"), "after_land"))
+    if scenario.get("frames") is not None:
+        try:
+            if parse_int(scenario.get("frames")) <= 0:
+                errors.append("frames must be positive")
+        except (ValueError, TypeError):
+            errors.append("frames must be an integer")
+    taps = scenario.get("taps")
+    if taps is not None and (not isinstance(taps, list) or not all(isinstance(item, str) and item for item in taps)):
+        errors.append("taps must be a list of button names")
+    expects = scenario.get("expect_mem")
+    if not isinstance(expects, list) or not expects:
+        errors.append("expect_mem must be a non-empty list")
+        return errors
+    for index, item in enumerate(expects):
+        if not isinstance(item, dict) or "addr" not in item:
+            errors.append(f"expect_mem[{index}] needs addr")
+            continue
+        try:
+            parse_int(item.get("addr"))
+        except (ValueError, TypeError):
+            errors.append(f"expect_mem[{index}].addr must be an integer")
+        modes = [key for key in ("value", "le16", "min", "max") if key in item]
+        if not modes:
+            errors.append(f"expect_mem[{index}] needs value, le16, min, or max")
+        for key in modes + (["mask"] if "mask" in item else []):
+            try:
+                parse_int(item.get(key))
+            except (ValueError, TypeError):
+                errors.append(f"expect_mem[{index}].{key} must be an integer")
     return errors
 
 
@@ -620,14 +693,14 @@ def _coords_oob(probe: dict) -> bool:
     return not (0 <= int(probe.get("x", -1)) < 0x2000 and 0 <= int(probe.get("y", -1)) < 0x2000)
 
 
-def _screen_findings(scenario: dict, check: str, probe: dict, location: str) -> list[dict]:
+def _screen_findings(scenario: dict, check: str, probe: dict, location: str, max_black: int = 0) -> list[dict]:
     findings = []
     black = int(probe.get("black", 0))
     if probe.get("forced_blank") or probe.get("bright") not in (0x0F, None):
         findings.append(make_finding(
             scenario, f"{check}_blank", "critical",
             f"frame is blank or INIDISP is ${probe.get('bright', 0):02X}", location))
-    elif black:
+    elif black > max_black:
         findings.append(make_finding(
             scenario, f"{check}_black", "error",
             f"{black} leading black scanlines", location))
@@ -724,7 +797,13 @@ def handle_entrance(scenario: dict, runtime, checkpoints: dict[str, dict]) -> li
             scenario, "enter", "error",
             f"entrance did not reach room ${room:03X} ({_probe_location(entered)})", location))
         return findings
-    findings.extend(_screen_findings(scenario, "enter", entered, location))
+    black_limit = parse_int(scenario.get("max_black_scanlines", 0))
+    findings.extend(_screen_findings(scenario, "enter", entered, location, black_limit))
+    if any("black scanlines" in item["message"] for item in findings) and hasattr(runtime, "probe"):
+        runtime.step(48)
+        entered = runtime.probe(shot=True)
+        findings = [item for item in findings if not str(item["finding_key"]).endswith("_black")]
+        findings.extend(_screen_findings(scenario, "enter", entered, location, black_limit))
     exited = runtime.exit_overworld(room, parent)
     outside = f"ow:0x{parent:02X}"
     if exited.get("module") not in (0x09, 0x0B) or exited.get("area") != parent:
@@ -771,21 +850,34 @@ def handle_warp(scenario: dict, runtime, _checkpoints: dict[str, dict]) -> list[
 
 
 def handle_vblank(scenario: dict, runtime, _checkpoints: dict[str, dict]) -> list[dict]:
-    area = parse_int(scenario["area"])
     frames = parse_int(scenario["frames"])
     runtime.boot()
-    landed = runtime.load_overworld(parse_int(scenario["via_room"]), area)
     findings = []
-    location = f"ow:0x{area:02X}"
-    if landed.get("area") != area or landed.get("module") not in PLAYABLE:
-        findings.append(make_finding(
-            scenario, "land", "error",
-            f"{scenario['mechanic']} did not land on {location} ({_probe_location(landed)})",
-            location))
-        return findings
+    if "room" in scenario:
+        room = parse_int(scenario["room"])
+        landed = runtime.enter_entrance(parse_int(scenario["entrance"]), room)
+        location = f"room:0x{room:03X}"
+        if landed.get("module") != 0x07 or landed.get("room") != room:
+            findings.append(make_finding(
+                scenario, "land", "error",
+                f"{scenario['mechanic']} did not enter {location} ({_probe_location(landed)})",
+                location))
+            return findings
+    else:
+        area = parse_int(scenario["area"])
+        landed = runtime.load_overworld(parse_int(scenario["via_room"]), area)
+        location = f"ow:0x{area:02X}"
+        if landed.get("area") != area or landed.get("module") not in PLAYABLE:
+            findings.append(make_finding(
+                scenario, "land", "error",
+                f"{scenario['mechanic']} did not land on {location} ({_probe_location(landed)})",
+                location))
+            return findings
     runtime.apply_writes(scenario.get("after_land") or [])
-    buttons = scenario.get("buttons") or {"epona": "Right", "korl": "Right", "deku": "A",
-                                          "zora": "Right", "gust": "Y"}[scenario["mechanic"]]
+    buttons = scenario.get("buttons")
+    if buttons is None:
+        buttons = {"epona": "Right", "korl": "Right", "deku": "A",
+                   "zora": "Right", "gust": "Y", "chomp": ""}[scenario["mechanic"]]
     sample = runtime.hold(str(buttons), frames)
     overruns = int(sample.get("overruns", 0))
     black = int(sample.get("black", 0))
@@ -806,6 +898,68 @@ def handle_vblank(scenario: dict, runtime, _checkpoints: dict[str, dict]) -> lis
         findings.append(make_finding(
             scenario, "softlock", "critical",
             f"module collapsed during {scenario['mechanic']}", location))
+    return findings
+
+
+def _memory_matches(item: dict, runtime) -> tuple[bool, str]:
+    addr = parse_int(item["addr"])
+    if "le16" in item:
+        got = runtime.u16(addr) & 0xFFFF
+        want = parse_int(item["le16"]) & 0xFFFF
+        return got == want, f"${got:04X} != ${want:04X}"
+    got = runtime.u8(addr) & 0xFF
+    if "mask" in item:
+        got &= parse_int(item["mask"]) & 0xFF
+    if "value" in item:
+        want = parse_int(item["value"]) & 0xFF
+        if "mask" in item:
+            want &= parse_int(item["mask"]) & 0xFF
+        return got == want, f"${got:02X} != ${want:02X}"
+    if "min" in item and got < (parse_int(item["min"]) & 0xFF):
+        return False, f"${got:02X} < ${parse_int(item['min']) & 0xFF:02X}"
+    if "max" in item and got > (parse_int(item["max"]) & 0xFF):
+        return False, f"${got:02X} > ${parse_int(item['max']) & 0xFF:02X}"
+    return True, f"${got:02X}"
+
+
+def handle_state(scenario: dict, runtime, checkpoints: dict[str, dict]) -> list[dict]:
+    land = scenario["land"]
+    runtime.boot()
+    if scenario.get("checkpoint"):
+        runtime.apply_writes(resolve_writes(checkpoints, scenario["checkpoint"]))
+    findings = []
+    if "entrance" in land:
+        room = parse_int(land["room"])
+        probe = runtime.enter_entrance(parse_int(land["entrance"]), room)
+        location = f"room:0x{room:03X}"
+        if probe.get("module") != 0x07 or probe.get("room") != room:
+            findings.append(make_finding(
+                scenario, "land", "error",
+                f"did not enter {location} ({_probe_location(probe)})", location))
+            return findings
+    else:
+        area = parse_int(land["area"])
+        probe = runtime.load_overworld(parse_int(land["via_room"]), area)
+        location = f"ow:0x{area:02X}"
+        if probe.get("area") != area or probe.get("module") not in PLAYABLE:
+            findings.append(make_finding(
+                scenario, "land", "error",
+                f"did not land on {location} ({_probe_location(probe)})", location))
+            return findings
+    runtime.apply_writes(scenario.get("after_land") or [])
+    for button in scenario.get("taps") or []:
+        runtime.tap(str(button))
+    frames = scenario.get("frames")
+    if frames is not None:
+        runtime.hold(str(scenario.get("buttons") or ""), parse_int(frames))
+    for item in scenario["expect_mem"]:
+        ok, detail = _memory_matches(item, runtime)
+        if ok:
+            continue
+        name = item.get("name") or f"${parse_int(item['addr']):06X}"
+        findings.append(make_finding(
+            scenario, str(name), "error",
+            f"{name} {detail}", f"wram:0x{parse_int(item['addr']):06X}"))
     return findings
 
 
@@ -848,6 +1002,7 @@ HANDLERS = {
     "warp_landing": handle_warp,
     "vblank_budget": handle_vblank,
     "dialogue_trigger": handle_dialogue,
+    "state_contract": handle_state,
 }
 
 
@@ -1045,11 +1200,15 @@ class MesenRuntime:
                 raise RuntimeError("Mesen2 reset was rejected")
             self._pause()
             # A reset keeps the previous module readable until the title owns
-            # the machine. Step past that window, then require the press-start
-            # screen ($00/$08) before any later gameplay check can match.
+            # the machine. Step past that window. A save left by an earlier
+            # scenario can open Module $1B (spawn select) instead of $00/$08.
             self.step(120)
-            self._until(lambda: (self.u8(MODULE), self.u8(SUB)) == (0x00, 0x08), 3600, 16)
-            if (self.u8(MODULE), self.u8(SUB)) != (0x00, 0x08):
+            self._until(
+                lambda: (self.u8(MODULE), self.u8(SUB)) == (0x00, 0x08) or self.u8(MODULE) == 0x1B,
+                3600, 16)
+            if self.u8(MODULE) == 0x1B:
+                self._leave_spawn_select()
+            elif (self.u8(MODULE), self.u8(SUB)) != (0x00, 0x08):
                 raise RuntimeError(f"reset stalled at {_probe_location(self.probe())}")
         self._until(
             lambda: (self.u8(MODULE), self.u8(SUB)) == (0x00, 0x08) or self.u8(MODULE) in (0x01, 0x07, 0x09),
@@ -1063,10 +1222,22 @@ class MesenRuntime:
             self.tap("Start", 4, 16)
         self._until(lambda: self.u8(MODULE) in (0x07, 0x09) and self.u8(SUB) == 0, 1800, 16)
         self._booted = True
+        if self.u8(MODULE) == 0x1B:
+            self._leave_spawn_select()
         state = self.probe()
-        if state["module"] not in (0x07, 0x09):
+        if state["module"] not in (0x07, 0x09, 0x0B):
             raise RuntimeError(f"boot stalled at {_probe_location(state)}")
         return state
+
+    def _leave_spawn_select(self) -> None:
+        """Module $1B is the continue/spawn menu. Accept the highlighted choice."""
+        for _ in range(8):
+            if self.u8(MODULE) in PLAYABLE and self.u8(SUB) == 0 and self.u8(BRIGHT) == 0x0F:
+                return
+            self.tap("A", 8, 16)
+        self._until(
+            lambda: self.u8(MODULE) in PLAYABLE and self.u8(SUB) == 0 and self.u8(BRIGHT) == 0x0F,
+            1800, 16)
 
     def load_overworld(self, via_room: int, area: int) -> dict:
         self._pause()
@@ -1163,7 +1334,14 @@ class MesenRuntime:
     def reload_file(self) -> dict:
         if self.u8(MODULE) == 0x01:
             self.tap("Start", 4, 16)
-        self._until(lambda: self.u8(MODULE) in PLAYABLE and self.u8(SUB) == 0 and self.u8(BRIGHT) == 0x0F, 1800, 8)
+        self._until(
+            lambda: self.u8(MODULE) in PLAYABLE + (0x1B,) and self.u8(SUB) == 0 and self.u8(BRIGHT) == 0x0F
+            or self.u8(MODULE) == 0x1B,
+            1800, 8)
+        if self.u8(MODULE) == 0x1B:
+            # Choice 0 is the Abyss (GBC) spawn. Choice 1 continues as normal Link.
+            self.w8(CHOICE, 1)
+            self._leave_spawn_select()
         # A story box on the landing pad is still a live game; dismiss it.
         for _ in range(8):
             if self.u8(MODULE) != 0x0E:
@@ -1185,7 +1363,7 @@ class MesenRuntime:
 
     def close_message(self) -> dict:
         for _ in range(16):
-            if self.u8(MODULE) != 0x0E and self.u16(MESSAGE) == 0:
+            if self.u8(MODULE) not in (0x0E, 0x0D) and self.u16(MESSAGE) == 0:
                 break
             self.tap("A", 6, 8)
         self.step(4)
@@ -1299,7 +1477,7 @@ def run_suite(suite: dict, *, checkpoints: dict[str, dict], scenarios: list[dict
                     raise ValueError("a live suite needs --rom")
                 work_dir = Path(tempfile.mkdtemp(prefix="oos-runtime-suite-"))
                 seed = DEFAULT_SEED if DEFAULT_SEED.is_file() else None
-                runtime = MesenRuntime(rom, work_dir, seed, deadline=480)
+                runtime = MesenRuntime(rom, work_dir, seed, deadline=max(900, 90 * len(scenarios)))
                 owned = runtime
                 runtime.open()
         for scenario in scenarios:

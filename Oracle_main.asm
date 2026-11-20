@@ -78,9 +78,7 @@ namespace Oracle
   incsrc "Core/link.asm"
   incsrc "Core/sram.asm"
   incsrc "Core/symbols.asm"
-  if !ENABLE_KALYXO_BOAT == 1
-    assert !DISABLE_OVERWORLD == 0
-  endif
+  assert !DISABLE_OVERWORLD == 0, "Kalyxo ferry requires the overworld module"
   incsrc "Core/message.asm"
   incsrc "Core/progression.asm"
 
@@ -204,12 +202,10 @@ incsrc "Core/gfx_sheet_table.asm"
 incsrc "Core/link_sheet_patch.asm"
 
 ; Source-owned compressed sheets patch their streams and rows of the table above.
-if !ENABLE_SOURCE_SPRITE_SHEETS == 1
-  if !ENABLE_D4_ZORA_REDESIGN == 1
-    incsrc "Core/Generated/d4_zora_sprite_sheets/sheet_overrides.asm"
-  else
-    incsrc "Core/Generated/source_sprite_sheets/sheet_overrides.asm"
-  endif
+if !ENABLE_D4_ZORA_REDESIGN == 1
+  incsrc "Core/Generated/d4_zora_sprite_sheets/sheet_overrides.asm"
+else
+  incsrc "Core/Generated/source_sprite_sheets/sheet_overrides.asm"
 endif
 if !DISABLE_MENU == 0
   incsrc "Core/Generated/menu_icons/menu_icon_overrides.asm"

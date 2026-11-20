@@ -143,7 +143,7 @@ class OwnershipTests(unittest.TestCase):
         from allocation_contracts import base_block
         real=read_ledger(ROOT/'Config/allocation_ownership.json')
         claim=next(c for c in real['claims'] if c['id']=='kalyxo_boat_native_transient')
-        self.assertEqual(claim['condition'],{'ENABLE_KALYXO_BOAT':1})
+        self.assertEqual(claim['condition'],{})
         self.assertEqual(claim['binding'],{'source':'shared:Core/symbols.asm','symbol':'Boat_Marker','base_block':True})
         self.assertEqual(base_block((ROOT/'Core/symbols.asm').read_text(),'Boat_Marker'),(0x7E1ECB,19))
 

@@ -493,14 +493,13 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
 
         flags.write_text('')
         macros = root / 'Util/macros.asm'
-        for missing in ('ENABLE_SOURCE_SPRITE_SHEETS', 'ENABLE_D4_ZORA_REDESIGN'):
-            macros.write_text('!ENABLE_TEST_SKY = 0\n' + ''.join(
-                f'!{name} = {number}\n' for name, number in
-                (('ENABLE_SOURCE_SPRITE_SHEETS', 1), ('ENABLE_D4_ZORA_REDESIGN', 0))
-                if name != missing))
-            with self.subTest(missing=missing):
-                with self.assertRaisesRegex(ValueError, 'FLAG_UNRESOLVED'):
-                    R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+        # Retired ENABLE_SOURCE_SPRITE_SHEETS is optional when absent (defaults on).
+        macros.write_text('!ENABLE_TEST_SKY = 0\n!ENABLE_D4_ZORA_REDESIGN = 0\n')
+        R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+        # Missing active ENABLE_D4_ZORA_REDESIGN still fails closed.
+        macros.write_text('!ENABLE_TEST_SKY = 0\n!ENABLE_SOURCE_SPRITE_SHEETS = 1\n')
+        with self.assertRaisesRegex(ValueError, 'FLAG_UNRESOLVED'):
+            R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
 
     def test_d4_source_selection_prefix_and_sha_are_authenticated(self):
         root, value, _ = self.bound_global()
