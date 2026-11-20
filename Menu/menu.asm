@@ -469,6 +469,9 @@ Menu_Exit:
   JSL SwordSlots_ExitReload            ; heavy/story swap made in Equipment
   JSL Supply_ProcessPendingExitAction
   JSL MenuMapTravel_ExitAction       ; Map request from the Map page
+  ; Clear shared menu cursor ($020B): vanilla LinkItem_FireAndIceRod ($07:9F03)
+  ; tests LDA $020B : BNE .exit and blocks both rods if Equipment/Quest/Map left it nonzero.
+  STZ.w $020B
   RTS
 }
 
