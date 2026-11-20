@@ -55,9 +55,9 @@
  "bank_metrics": {
   "bank5a_stream_budget": 27384,
   "bank5a_stream_bytes": 27346,
-  "bank5b_stream_bytes": 24738,
-  "bank5b_free_bytes": 8030,
-  "total_lz2_bytes": 52084
+  "bank5b_stream_bytes": 24934,
+  "bank5b_free_bytes": 7834,
+  "total_lz2_bytes": 52280
  },
  "styles": {
   "onox": {
@@ -1895,7 +1895,7 @@
       "0FE",
       "0FF"
      ],
-     "posterized_chars": 28
+     "posterized_chars": 32
     },
     "0E": {
      "slot": 4,
@@ -1925,7 +1925,7 @@
      "slot": 6,
      "remapped": false,
      "donor_chars": [],
-     "posterized_chars": 48
+     "posterized_chars": 52
     }
    }
   },
@@ -2152,7 +2152,7 @@
       "0FC",
       "0FD"
      ],
-     "posterized_chars": 32
+     "posterized_chars": 36
     },
     "0E": {
      "slot": 4,
@@ -2170,7 +2170,7 @@
      "slot": 6,
      "remapped": false,
      "donor_chars": [],
-     "posterized_chars": 48
+     "posterized_chars": 52
     }
    }
   },
@@ -2687,7 +2687,7 @@
      "slot": 6,
      "remapped": false,
      "donor_chars": [],
-     "posterized_chars": 48
+     "posterized_chars": 52
     }
    }
   }
