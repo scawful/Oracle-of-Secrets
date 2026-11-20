@@ -1,0 +1,75 @@
+{
+  "id": "fsa_sheet_08",
+  "role": "snowpeak-overworld",
+  "maps": [
+    "0x02",
+    "0x03",
+    "0x04",
+    "0x05",
+    "0x06",
+    "0x07"
+  ],
+  "sources": [
+    "/Users/scawful/Documents/Zelda/FSA Tilesets/Tile Sheet 08.PNG"
+  ],
+  "sha256": "0ea1d7164107dddce8d62b50cb748dacd51dc44d574b2be71f773ea82795ac9f",
+  "tile8_count": 4096,
+  "tile8_unique": 1821,
+  "duplicate_ratio": 0.5554,
+  "tags": {
+    "flat": 776,
+    "ice": 1777,
+    "ground": 647,
+    "snow": 649,
+    "cliff": 247
+  },
+  "collision_hints": {
+    "skip": 776,
+    "slip": 1777,
+    "walk": 1296,
+    "solid": 247
+  },
+  "palette": [
+    [
+      216,
+      232,
+      232
+    ],
+    [
+      144,
+      216,
+      224
+    ],
+    [
+      128,
+      152,
+      168
+    ],
+    [
+      72,
+      152,
+      184
+    ],
+    [
+      96,
+      88,
+      112
+    ],
+    [
+      48,
+      72,
+      120
+    ],
+    [
+      80,
+      40,
+      40
+    ],
+    [
+      40,
+      40,
+      40
+    ]
+  ],
+  "bytes": 98304
+}

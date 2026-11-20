@@ -1,0 +1,140 @@
+{
+  "sheet37": {
+    "decoded_sha256": "19279a4cee41b2ee83d52421256b8327dd50338b0a0c0994ee0ec08d35b515a8",
+    "decoded_bytes": 1536,
+    "global_sheet": "0xDF",
+    "diff_vs_rom_sheet_37": [
+      "0x2B",
+      "0x3B"
+    ]
+  },
+  "kits": [
+    {
+      "id": "fsa_sheet_08",
+      "role": "snowpeak-overworld",
+      "maps": [
+        "0x02",
+        "0x03",
+        "0x04",
+        "0x05",
+        "0x06",
+        "0x07"
+      ],
+      "tile8_count": 4096,
+      "tile8_unique": 1821,
+      "duplicate_ratio": 0.5554,
+      "tags": {
+        "flat": 776,
+        "ice": 1777,
+        "ground": 647,
+        "snow": 649,
+        "cliff": 247
+      },
+      "collision_hints": {
+        "skip": 776,
+        "slip": 1777,
+        "walk": 1296,
+        "solid": 247
+      },
+      "sha256": "0ea1d7164107dddce8d62b50cb748dacd51dc44d574b2be71f773ea82795ac9f"
+    },
+    {
+      "id": "fsa_sheet_20",
+      "role": "snowpeak-estate",
+      "maps": [
+        "0x06"
+      ],
+      "tile8_count": 4096,
+      "tile8_unique": 1978,
+      "duplicate_ratio": 0.5171,
+      "tags": {
+        "flat": 788,
+        "ice": 1652,
+        "cliff": 423,
+        "ground": 735,
+        "snow": 498
+      },
+      "collision_hints": {
+        "skip": 788,
+        "slip": 1652,
+        "solid": 423,
+        "walk": 1233
+      },
+      "sha256": "7ad5c8371f1da2df24711e869b169cf2f77c63668d753b5a03aedc478cfe5150"
+    },
+    {
+      "id": "mc_temple_of_droplets",
+      "role": "snowpeak-caves",
+      "maps": [
+        "0x05",
+        "0x06",
+        "0x07"
+      ],
+      "tile8_count": 2048,
+      "tile8_unique": 1789,
+      "duplicate_ratio": 0.1265,
+      "tags": {
+        "flat": 117,
+        "foliage": 78,
+        "ice": 1209,
+        "ground": 344,
+        "cliff": 211,
+        "snow": 89
+      },
+      "collision_hints": {
+        "skip": 117,
+        "solid": 289,
+        "slip": 1209,
+        "walk": 433
+      },
+      "sha256": "81ebadc6969c4797639ef490dcdce3ea3bd30feaf3a8d7bd13112471ea574990"
+    },
+    {
+      "id": "mc_ice_dungeon_04",
+      "role": "glacia-lower",
+      "maps": [
+        "0x06"
+      ],
+      "tile8_count": 1920,
+      "tile8_unique": 904,
+      "duplicate_ratio": 0.5292,
+      "tags": {
+        "flat": 819,
+        "ground": 356,
+        "cliff": 96,
+        "ice": 382,
+        "snow": 267
+      },
+      "collision_hints": {
+        "skip": 819,
+        "walk": 623,
+        "solid": 96,
+        "slip": 382
+      },
+      "sha256": "c686c7d65bfad8f50a4abc88c14e4f9b13462307220ca8ea2626440b6162b38a"
+    },
+    {
+      "id": "mc_lake_hylia",
+      "role": "frost-glacier",
+      "maps": [
+        "0xBE",
+        "0xBF"
+      ],
+      "tile8_count": 2048,
+      "tile8_unique": 1311,
+      "duplicate_ratio": 0.3599,
+      "tags": {
+        "flat": 111,
+        "ground": 888,
+        "ice": 402,
+        "snow": 647
+      },
+      "collision_hints": {
+        "skip": 111,
+        "walk": 1535,
+        "slip": 402
+      },
+      "sha256": "35aafc1dac4e92aab19027b827e99162ab8e871aca1c8289b993aa4f18c01812"
+    }
+  ]
+}

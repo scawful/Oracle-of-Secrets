@@ -61,14 +61,28 @@ class MinishCapLinkSheetTests(unittest.TestCase):
                 )
 
     def test_praying_pull_flute_bed_match_remapped_inthebeef_zspr(self) -> None:
-        # Praying (R17C1/R18C1/R19C1), Upside-Down (R04C7), Flute (R25C5), Bed (R26C1/C4)
+        # Praying (R17C1/R18C1/R19C1), Upside-Down (R04C7). Bed/flute heads are
+        # replaced below so they are hair, not a remapped cap.
         for r, c in mc_builder.ZSPR_HEAD_CELLS:
+            if (r, c) in mc_builder.HATLESS_BED_CELLS:
+                continue
             got = cell_pixels(self.grid, r, c)
             exp = [[mc_builder.ZSPR_TO_ROM_PAL[v] for v in row] for row in cell_pixels(self.zgrid, r, c)]
             self.assertEqual(got, exp, f"Head cell R{r:02d}C{c} must match remapped InTheBEEF ZSPR")
             cnt = color_counts(got)
             self.assertEqual(cnt.get(15, 0), 0, f"Head R{r:02d}C{c} has pink hair C15")
             self.assertLessEqual(cnt.get(8, 0), 4, f"Head R{r:02d}C{c} has blue headband")
+
+        for (r, c), rows in mc_builder.HATLESS_BED_CELLS.items():
+            got = cell_pixels(self.grid, r, c)
+            exp = mc_builder._parse_hatless_rows(rows)
+            self.assertEqual(got, exp, f"Hatless bed cell R{r:02d}C{c} drifted")
+            cnt = color_counts(got)
+            self.assertEqual(cnt.get(15, 0), 0, f"Hatless R{r:02d}C{c} has pink")
+            for cap in (9, 10, 11, 12, 14):
+                self.assertEqual(cnt.get(cap, 0), 0, f"Hatless R{r:02d}C{c} still has cap index {cap}")
+            self.assertGreater(cnt.get(2, 0) + cnt.get(6, 0), 40, f"Hatless R{r:02d}C{c} has no hair")
+            self.assertLessEqual(cnt.get(8, 0), 4, f"Hatless R{r:02d}C{c} has a blue headband")
 
         # Midway pull (R13C0) and all secondary ZSPR body frames
         for r, c in mc_builder.ZSPR_BODY_CELLS:

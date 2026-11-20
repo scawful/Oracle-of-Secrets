@@ -151,6 +151,90 @@ SLEEVE_RECOLOR_CELLS: tuple[tuple[int, int], ...] = (
 
 ALL_UPGRADED_CELLS = set(ZSPR_HEAD_CELLS) | set(ZSPR_BODY_CELLS) | set(SLEEVE_RECOLOR_CELLS)
 
+# Intro-bed / flute heads. The InTheBEEF cells at these slots are a cap silhouette
+# (dome + brim) remapped into hair colors, so Link still reads as hatted in bed.
+# These grids are hair, face, and a back-of-head part: no green cap (9-12) and
+# no brown hat band (14).
+HATLESS_BED_CELLS: dict[tuple[int, int], tuple[str, ...]] = {
+    # Front flute head: spiky hair and ears over the original eye line.
+    (25, 5): (
+        ".....5....5.....",
+        "....525..525....",
+        "...52252225225..",
+        "..5266666666625.",
+        ".523266666666325",
+        "5232666666666635",
+        "5633263223623365",
+        "5363622226662635",
+        "5266322366463625",
+        "5626336664466265",
+        ".52655664655625.",
+        ".53618544581635.",
+        "..554814418455..",
+        "...5664444665...",
+        "....55511555....",
+        ".......55.......",
+    ),
+    # Back of the sleeping head: bright center part, no brown hat band.
+    (26, 1): (
+        "..55..55555.55..",
+        ".56655322235665.",
+        "5665332223365665",
+        "5656222233623565",
+        ".53222222623325.",
+        "5222262222326265",
+        "5332263226226635",
+        ".56226232336335.",
+        ".54323636363265.",
+        ".53632363622635.",
+        ".56633363633665.",
+        "..533332263335..",
+        "..532332263235..",
+        ".53262236336235.",
+        "..556265562655..",
+        "....555..555....",
+    ),
+    # Side sleeping head: same profile and eye, brown hat pixels turned to hair.
+    (26, 4): (
+        "...5..55555.....",
+        "..5355665225....",
+        "..565664453355..",
+        ".56656666452235.",
+        ".525566666532225",
+        ".525256666436325",
+        "5666225564336635",
+        "5363222653266665",
+        "535332633266465.",
+        "565333366634555.",
+        ".556362363641865",
+        "..53563252641865",
+        ".526356352544665",
+        "..56235552566515",
+        "...555..53555.5.",
+        ".........5......",
+    ),
+}
+
+
+def _parse_hatless_rows(rows: tuple[str, ...]) -> list[list[int]]:
+    if len(rows) != 16:
+        raise ValueError(f"hatless cell needs 16 rows, got {len(rows)}")
+    parsed: list[list[int]] = []
+    for row in rows:
+        if len(row) != 16:
+            raise ValueError(f"hatless row width {len(row)}")
+        parsed.append([0 if ch == "." else int(ch, 16) for ch in row])
+    return parsed
+
+
+def apply_hatless_bed(grid: list[list[int]]) -> None:
+    for (r, c), rows in HATLESS_BED_CELLS.items():
+        cell = _parse_hatless_rows(rows)
+        y0, x0 = r * 16, c * 16
+        for dy in range(16):
+            for dx in range(16):
+                grid[y0 + dy][x0 + dx] = cell[dy][dx]
+
 
 def decode_4bpp_sheet(data: bytes) -> list[list[int]]:
     if len(data) != SHEET_SIZE:
@@ -255,6 +339,7 @@ def build_sheet(base_bytes: bytes, zspr_path: Path = DEFAULT_ZSPR) -> bytes:
                     # Only convert brown sleeve pixels adjacent to tunic/skin/arm, not deep bottom boots
                     grid[y0 + dy][x0 + dx] = 11  # sleeve shade -> Mail tunic dark
 
+    apply_hatless_bed(grid)
     return encode_4bpp_sheet(grid)
 
 

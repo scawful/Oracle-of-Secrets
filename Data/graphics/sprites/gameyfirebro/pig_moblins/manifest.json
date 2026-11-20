@@ -1,0 +1,321 @@
+{
+  "id": "pig_moblins",
+  "source_folder": "2025-06-16_010_moblins",
+  "frame_count": 24,
+  "sheet_bytes": 16384,
+  "sheet_sha256": "84a2c42e3a3da6e2243fda401c19b944e5d0d63b8aad25d84193f8732d14b3bc",
+  "frames": [
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 8,
+      "palette_row": 0,
+      "png": "frames/000.png",
+      "source_frame": 0,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 8,
+      "palette_row": 0,
+      "png": "frames/001.png",
+      "source_frame": 1,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 9,
+      "palette_row": 0,
+      "png": "frames/002.png",
+      "source_frame": 2,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 8,
+      "palette_row": 0,
+      "png": "frames/003.png",
+      "source_frame": 3,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 11,
+      "palette_row": 0,
+      "png": "frames/004.png",
+      "source_frame": 4,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 11,
+      "palette_row": 0,
+      "png": "frames/005.png",
+      "source_frame": 5,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        32
+      ],
+      "colors": 7,
+      "palette_row": 0,
+      "png": "frames/006.png",
+      "source_frame": 6,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        32
+      ],
+      "colors": 7,
+      "palette_row": 0,
+      "png": "frames/007.png",
+      "source_frame": 7,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        32
+      ],
+      "colors": 7,
+      "palette_row": 0,
+      "png": "frames/008.png",
+      "source_frame": 8,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        32
+      ],
+      "colors": 7,
+      "palette_row": 0,
+      "png": "frames/009.png",
+      "source_frame": 9,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 6,
+      "palette_row": 0,
+      "png": "frames/010.png",
+      "source_frame": 10,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        32
+      ],
+      "colors": 6,
+      "palette_row": 0,
+      "png": "frames/011.png",
+      "source_frame": 11,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 8,
+      "palette_row": 0,
+      "png": "frames/012.png",
+      "source_frame": 12,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 8,
+      "palette_row": 0,
+      "png": "frames/013.png",
+      "source_frame": 13,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 11,
+      "palette_row": 0,
+      "png": "frames/014.png",
+      "source_frame": 14,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 11,
+      "palette_row": 0,
+      "png": "frames/015.png",
+      "source_frame": 15,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 8,
+      "palette_row": 0,
+      "png": "frames/016.png",
+      "source_frame": 16,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 8,
+      "palette_row": 0,
+      "png": "frames/017.png",
+      "source_frame": 17,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        32
+      ],
+      "colors": 6,
+      "palette_row": 0,
+      "png": "frames/018.png",
+      "source_frame": 18,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        32
+      ],
+      "colors": 6,
+      "palette_row": 0,
+      "png": "frames/019.png",
+      "source_frame": 19,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        32
+      ],
+      "colors": 7,
+      "palette_row": 0,
+      "png": "frames/020.png",
+      "source_frame": 20,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 6,
+      "palette_row": 0,
+      "png": "frames/021.png",
+      "source_frame": 21,
+      "bundle": "bundle_b",
+      "tile_index": null,
+      "sheet_offset": 8192
+    },
+    {
+      "size": [
+        16,
+        32
+      ],
+      "colors": 6,
+      "palette_row": 0,
+      "png": "frames/022.png",
+      "source_frame": 22,
+      "bundle": "bundle_b",
+      "tile_index": null,
+      "sheet_offset": 8192
+    },
+    {
+      "size": [
+        16,
+        32
+      ],
+      "colors": 7,
+      "palette_row": 0,
+      "png": "frames/023.png",
+      "source_frame": 23,
+      "bundle": "bundle_b",
+      "tile_index": null,
+      "sheet_offset": 8192
+    }
+  ]
+}

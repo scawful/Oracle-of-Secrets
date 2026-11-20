@@ -1,0 +1,61 @@
+{
+  "id": "cheep_blooper",
+  "source_folder": "2024-07-13_060_cheep_blooper",
+  "frame_count": 4,
+  "sheet_bytes": 8192,
+  "sheet_sha256": "79195b16a782edb69de3935d13b9faa92771644a4b5c75e76bd85ce839e08e55",
+  "frames": [
+    {
+      "size": [
+        16,
+        16
+      ],
+      "colors": 8,
+      "palette_row": 0,
+      "png": "frames/000.png",
+      "source_frame": 0,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        16
+      ],
+      "colors": 8,
+      "palette_row": 0,
+      "png": "frames/001.png",
+      "source_frame": 1,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        16
+      ],
+      "colors": 4,
+      "palette_row": 0,
+      "png": "frames/002.png",
+      "source_frame": 2,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        16
+      ],
+      "colors": 4,
+      "palette_row": 0,
+      "png": "frames/003.png",
+      "source_frame": 3,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    }
+  ]
+}

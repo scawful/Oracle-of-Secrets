@@ -1,0 +1,70 @@
+{
+  "id": "mc_ice_dungeon_04",
+  "role": "glacia-lower",
+  "maps": [
+    "0x06"
+  ],
+  "sources": [
+    "/Users/scawful/Zelda/ReferenceLibrary/sources/documents-zelda/SePH Folder/Christmas_Present_2/_MC Style/minish_dungeon_04.png"
+  ],
+  "sha256": "c686c7d65bfad8f50a4abc88c14e4f9b13462307220ca8ea2626440b6162b38a",
+  "tile8_count": 1920,
+  "tile8_unique": 904,
+  "duplicate_ratio": 0.5292,
+  "tags": {
+    "flat": 819,
+    "ground": 356,
+    "cliff": 96,
+    "ice": 382,
+    "snow": 267
+  },
+  "collision_hints": {
+    "skip": 819,
+    "walk": 623,
+    "solid": 96,
+    "slip": 382
+  },
+  "palette": [
+    [
+      216,
+      224,
+      232
+    ],
+    [
+      216,
+      200,
+      216
+    ],
+    [
+      160,
+      160,
+      208
+    ],
+    [
+      128,
+      120,
+      160
+    ],
+    [
+      88,
+      88,
+      152
+    ],
+    [
+      248,
+      0,
+      248
+    ],
+    [
+      72,
+      48,
+      80
+    ],
+    [
+      0,
+      0,
+      8
+    ]
+  ],
+  "bytes": 46080
+}

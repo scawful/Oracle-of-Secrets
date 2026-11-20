@@ -1,0 +1,74 @@
+{
+  "id": "mc_temple_of_droplets",
+  "role": "snowpeak-caves",
+  "maps": [
+    "0x05",
+    "0x06",
+    "0x07"
+  ],
+  "sources": [
+    "/Users/scawful/Documents/Zelda/Graphics/MCGFX/TempleOfDroplets1.png",
+    "/Users/scawful/Documents/Zelda/Graphics/MCGFX/TempleOfDroplets2.png"
+  ],
+  "sha256": "81ebadc6969c4797639ef490dcdce3ea3bd30feaf3a8d7bd13112471ea574990",
+  "tile8_count": 2048,
+  "tile8_unique": 1789,
+  "duplicate_ratio": 0.1265,
+  "tags": {
+    "flat": 117,
+    "foliage": 78,
+    "ice": 1209,
+    "ground": 344,
+    "cliff": 211,
+    "snow": 89
+  },
+  "collision_hints": {
+    "skip": 117,
+    "solid": 289,
+    "slip": 1209,
+    "walk": 433
+  },
+  "palette": [
+    [
+      168,
+      168,
+      216
+    ],
+    [
+      112,
+      128,
+      184
+    ],
+    [
+      0,
+      136,
+      0
+    ],
+    [
+      120,
+      112,
+      168
+    ],
+    [
+      104,
+      88,
+      136
+    ],
+    [
+      88,
+      64,
+      104
+    ],
+    [
+      56,
+      72,
+      128
+    ],
+    [
+      48,
+      40,
+      64
+    ]
+  ],
+  "bytes": 49152
+}

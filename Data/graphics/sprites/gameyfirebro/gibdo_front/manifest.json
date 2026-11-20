@@ -1,0 +1,22 @@
+{
+  "id": "gibdo_front",
+  "source_folder": "2024-10-04_016_gibdo_front",
+  "frame_count": 1,
+  "sheet_bytes": 8192,
+  "sheet_sha256": "a391f7724e4f7c5d983a4fd11eb5ede71963ccd3cf4086a629b6b657c0ee526d",
+  "frames": [
+    {
+      "size": [
+        16,
+        16
+      ],
+      "colors": 2,
+      "palette_row": 0,
+      "png": "frames/000.png",
+      "source_frame": 0,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    }
+  ]
+}

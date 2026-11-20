@@ -1,0 +1,70 @@
+{
+  "id": "fsa_sheet_20",
+  "role": "snowpeak-estate",
+  "maps": [
+    "0x06"
+  ],
+  "sources": [
+    "/Users/scawful/Documents/Zelda/FSA Tilesets/Tile Sheet 20.PNG"
+  ],
+  "sha256": "7ad5c8371f1da2df24711e869b169cf2f77c63668d753b5a03aedc478cfe5150",
+  "tile8_count": 4096,
+  "tile8_unique": 1978,
+  "duplicate_ratio": 0.5171,
+  "tags": {
+    "flat": 788,
+    "ice": 1652,
+    "cliff": 423,
+    "ground": 735,
+    "snow": 498
+  },
+  "collision_hints": {
+    "skip": 788,
+    "slip": 1652,
+    "solid": 423,
+    "walk": 1233
+  },
+  "palette": [
+    [
+      216,
+      232,
+      232
+    ],
+    [
+      144,
+      208,
+      208
+    ],
+    [
+      128,
+      144,
+      168
+    ],
+    [
+      72,
+      136,
+      176
+    ],
+    [
+      88,
+      88,
+      120
+    ],
+    [
+      64,
+      56,
+      88
+    ],
+    [
+      40,
+      40,
+      88
+    ],
+    [
+      40,
+      40,
+      40
+    ]
+  ],
+  "bytes": 98304
+}

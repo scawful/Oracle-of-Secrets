@@ -1,0 +1,48 @@
+{
+  "id": "eow_poe_lantern",
+  "source_folder": "2026-04-02_003_poe_lantern",
+  "frame_count": 3,
+  "sheet_bytes": 8192,
+  "sheet_sha256": "77018f2508acf0c4c9033987a372cc296900785589e02cd9477fb59003feaf15",
+  "frames": [
+    {
+      "size": [
+        32,
+        32
+      ],
+      "colors": 9,
+      "palette_row": 0,
+      "png": "frames/000.png",
+      "source_frame": 0,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        16
+      ],
+      "colors": 6,
+      "palette_row": 0,
+      "png": "frames/001.png",
+      "source_frame": 1,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    },
+    {
+      "size": [
+        16,
+        16
+      ],
+      "colors": 6,
+      "palette_row": 0,
+      "png": "frames/002.png",
+      "source_frame": 2,
+      "bundle": "bundle_a",
+      "tile_index": null,
+      "sheet_offset": 0
+    }
+  ]
+}

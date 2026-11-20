@@ -1,0 +1,121 @@
+{
+  "id": "red_octorok",
+  "source_folder": "2026-04-05_000_master_enemies",
+  "frame_count": 8,
+  "sheet_bytes": 1024,
+  "sheet_sha256": "791eafa1139a7631f9b179077de4e5f6f45c80f3bbd4aedb262f226b11c41901",
+  "frames": [
+    {
+      "source_frame": 14,
+      "bundle": "bundle_a",
+      "size": [
+        16,
+        16
+      ],
+      "colors": 4,
+      "palette_row": 0,
+      "tile_index": 0,
+      "tile_columns": 2,
+      "tile_rows": 2,
+      "png": "frames/014.png"
+    },
+    {
+      "source_frame": 15,
+      "bundle": "bundle_a",
+      "size": [
+        16,
+        16
+      ],
+      "colors": 4,
+      "palette_row": 0,
+      "tile_index": 4,
+      "tile_columns": 2,
+      "tile_rows": 2,
+      "png": "frames/015.png"
+    },
+    {
+      "source_frame": 17,
+      "bundle": "bundle_a",
+      "size": [
+        16,
+        16
+      ],
+      "colors": 5,
+      "palette_row": 0,
+      "tile_index": 8,
+      "tile_columns": 2,
+      "tile_rows": 2,
+      "png": "frames/017.png"
+    },
+    {
+      "source_frame": 18,
+      "bundle": "bundle_a",
+      "size": [
+        16,
+        16
+      ],
+      "colors": 5,
+      "palette_row": 0,
+      "tile_index": 12,
+      "tile_columns": 2,
+      "tile_rows": 2,
+      "png": "frames/018.png"
+    },
+    {
+      "source_frame": 59,
+      "bundle": "bundle_b",
+      "size": [
+        16,
+        16
+      ],
+      "colors": 3,
+      "palette_row": 1,
+      "tile_index": 16,
+      "tile_columns": 2,
+      "tile_rows": 2,
+      "png": "frames/059.png"
+    },
+    {
+      "source_frame": 71,
+      "bundle": "bundle_b",
+      "size": [
+        16,
+        16
+      ],
+      "colors": 4,
+      "palette_row": 3,
+      "tile_index": 20,
+      "tile_columns": 2,
+      "tile_rows": 2,
+      "png": "frames/071.png"
+    },
+    {
+      "source_frame": 72,
+      "bundle": "bundle_b",
+      "size": [
+        16,
+        16
+      ],
+      "colors": 3,
+      "palette_row": 3,
+      "tile_index": 24,
+      "tile_columns": 2,
+      "tile_rows": 2,
+      "png": "frames/072.png"
+    },
+    {
+      "source_frame": 73,
+      "bundle": "bundle_b",
+      "size": [
+        16,
+        16
+      ],
+      "colors": 3,
+      "palette_row": 3,
+      "tile_index": 28,
+      "tile_columns": 2,
+      "tile_rows": 2,
+      "png": "frames/073.png"
+    }
+  ]
+}

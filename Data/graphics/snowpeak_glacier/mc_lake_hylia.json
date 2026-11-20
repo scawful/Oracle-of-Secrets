@@ -1,0 +1,70 @@
+{
+  "id": "mc_lake_hylia",
+  "role": "frost-glacier",
+  "maps": [
+    "0xBE",
+    "0xBF"
+  ],
+  "sources": [
+    "/Users/scawful/Documents/Zelda/Graphics/MCGFX/LakeHylia1.png",
+    "/Users/scawful/Documents/Zelda/Graphics/MCGFX/LakeHylia2.png"
+  ],
+  "sha256": "35aafc1dac4e92aab19027b827e99162ab8e871aca1c8289b993aa4f18c01812",
+  "tile8_count": 2048,
+  "tile8_unique": 1311,
+  "duplicate_ratio": 0.3599,
+  "tags": {
+    "flat": 111,
+    "ground": 888,
+    "ice": 402,
+    "snow": 647
+  },
+  "collision_hints": {
+    "skip": 111,
+    "walk": 1535,
+    "slip": 402
+  },
+  "palette": [
+    [
+      232,
+      224,
+      216
+    ],
+    [
+      136,
+      208,
+      240
+    ],
+    [
+      176,
+      160,
+      144
+    ],
+    [
+      136,
+      112,
+      112
+    ],
+    [
+      96,
+      160,
+      232
+    ],
+    [
+      104,
+      88,
+      112
+    ],
+    [
+      248,
+      0,
+      248
+    ],
+    [
+      40,
+      40,
+      136
+    ]
+  ],
+  "bytes": 49152
+}

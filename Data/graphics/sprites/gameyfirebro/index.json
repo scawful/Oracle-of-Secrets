@@ -1,0 +1,74 @@
+{
+  "packs": [
+    {
+      "id": "eow_poe_lantern",
+      "source_folder": "2026-04-02_003_poe_lantern",
+      "frames": 3,
+      "bytes": 8192,
+      "sha256": "77018f2508acf0c4c9033987a372cc296900785589e02cd9477fb59003feaf15"
+    },
+    {
+      "id": "pig_moblins",
+      "source_folder": "2025-06-16_010_moblins",
+      "frames": 24,
+      "bytes": 16384,
+      "sha256": "84a2c42e3a3da6e2243fda401c19b944e5d0d63b8aad25d84193f8732d14b3bc"
+    },
+    {
+      "id": "chain_chomp",
+      "source_folder": "2024-06-28_091_chomp_anim",
+      "frames": 5,
+      "bytes": 8192,
+      "sha256": "e7580804364ea574987961dab60baf2a846fd3a008a2579714282fed7286ad48"
+    },
+    {
+      "id": "gibdo",
+      "source_folder": "2024-10-04_015_gibdo",
+      "frames": 1,
+      "bytes": 8192,
+      "sha256": "350f3f3829dcc26d52c60fd0e466add75645c288e61a4854c6a614a88f4ed079"
+    },
+    {
+      "id": "gibdo_front",
+      "source_folder": "2024-10-04_016_gibdo_front",
+      "frames": 1,
+      "bytes": 8192,
+      "sha256": "a391f7724e4f7c5d983a4fd11eb5ede71963ccd3cf4086a629b6b657c0ee526d"
+    },
+    {
+      "id": "cheep_blooper",
+      "source_folder": "2024-07-13_060_cheep_blooper",
+      "frames": 4,
+      "bytes": 8192,
+      "sha256": "79195b16a782edb69de3935d13b9faa92771644a4b5c75e76bd85ce839e08e55"
+    },
+    {
+      "id": "cheep_anim",
+      "source_folder": "2024-07-13_059_cheep_anim",
+      "frames": 2,
+      "bytes": 8192,
+      "sha256": "b499f7fa4bb5f5351a6eab3808d3215cf0252fbdaa9d161de50d915cf0511682"
+    },
+    {
+      "id": "blooper_anim",
+      "source_folder": "2024-07-13_056_blooper_anim",
+      "frames": 8,
+      "bytes": 8192,
+      "sha256": "32d497eec3caf13facee990b60ac78bdec734699797e1a3cec5f54144b990753"
+    },
+    {
+      "id": "red_octorok",
+      "source_folder": "2026-04-05_000_master_enemies",
+      "frames": 8,
+      "bytes": 1024,
+      "sha256": "791eafa1139a7631f9b179077de4e5f6f45c80f3bbd4aedb262f226b11c41901"
+    },
+    {
+      "id": "red_octorok_modular",
+      "source_folder": "2024-06-29_086_beetles_shaved",
+      "frames": 7,
+      "bytes": 8192,
+      "sha256": "b1601cd23d865e8f751203cfb4058f057693165deebea912fb4e3b025760a764"
+    }
+  ]
+}
