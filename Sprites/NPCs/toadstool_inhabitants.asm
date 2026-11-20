@@ -16,6 +16,7 @@
 
 !ToadstoolForager_Msg = $022A
 !ToadstoolArchery_Msg = $022B
+!ArcheryRing_WinMsg   = $022D
 
 pushpc
 
@@ -61,6 +62,18 @@ ToadstoolArchery_ShowIntro:
   STA.w $1CF1
   JSL $05FA8E ; Sprite_ShowMessageMinimal
   STZ.w SprTimerA, X
+  RTL
+}
+
+; Called from Items/magic_rings.asm ArcheryGame_RingPrize on first 5/5 streak.
+; Preserves X and Y (Sprite_ShowMessageMinimal leaves X/Y untouched).
+ArcheryRing_ShowWinMsg:
+{
+  LDA.b #!ArcheryRing_WinMsg&$FF
+  STA.w $1CF0
+  LDA.b #!ArcheryRing_WinMsg>>8
+  STA.w $1CF1
+  JSL $05FA8E ; Sprite_ShowMessageMinimal
   RTL
 }
 

@@ -134,6 +134,7 @@ ArcheryGame_RingPrize:
   AND.b #!ArcheryRing_PrizeBit : BNE .rupees
     LDA.l FOUNDRINGS : ORA.b #!ArcheryRing_PrizeBit : STA.l FOUNDRINGS
     LDA.b #!ArcheryRing_SFX3 : STA.w $012F
+    JSL ArcheryRing_ShowWinMsg
   .rupees
   LDA.b #$00 : XBA
   LDA.w ArcheryGame_PrizesM1, Y

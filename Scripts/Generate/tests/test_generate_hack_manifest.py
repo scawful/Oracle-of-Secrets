@@ -1994,7 +1994,7 @@ class RepositoryMessageSourceTest(unittest.TestCase):
         self.assertEqual(messages["data_end"], "0x2FFDFF")
         self.assertEqual(
             messages["expanded_range"],
-            {"first": "0x18D", "last": "0x22B", "count": 159},
+            {"first": "0x18D", "last": "0x22D", "count": 161},
         )
         self.assertEqual(
             messages["source"],

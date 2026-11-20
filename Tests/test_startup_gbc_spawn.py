@@ -334,7 +334,7 @@ class StartupGbcSpawnTests(unittest.TestCase):
         self.assertNotIn("PYRAMID", entry["text"])
 
         contract = msg_contract.validate_contract(ROOT)
-        self.assertEqual(contract.message_count, 159)
+        self.assertEqual(contract.message_count, 161)
 
         registry = json.loads((ROOT / "Data" / "dialogue" / "message_registry.json").read_text(encoding="utf-8"))
         reg_21b = next(r for r in registry["ranges"] if r["start"] == "0x21B")

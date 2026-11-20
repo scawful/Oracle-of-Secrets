@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 159,
+    "expanded": 161,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -793,12 +793,22 @@
     {
       "bank": "expanded",
       "id": 157,
-      "text": "Mind the stumps out there,[2]traveler. These woods twist[3]back on folks who rush.[K][V]If you're hunting mushrooms,[V]check the grotto up north-[K][V]and keep an eye on those[V]thieves in the hollow!"
+      "text": "Mind the stumps out there,[2]traveler.  These woods twist[3]back on folks who rush.[K][V]If you're hunting mushrooms,[V]check the grotto up north.[K][V]And keep an eye on those[V]thieves in the hollow!"
     },
     {
       "bank": "expanded",
       "id": 158,
-      "text": "Well howdy, traveler![2]You look like a straight[3]shooter[...] Want to try your[K][V]skill in my woodland gallery?[V]Five shots for 20 Rupees-[V]hit all five and you'll[K][V]walk out smiling![V]    > Play[V]       No way[CH2I]"
+      "text": "Well howdy, traveler![2]You look like a straight[3]shooter[...]  Want to try your[K][V]skill in my woodland gallery?[V]Five shots for 20 Rupees.[V]Hit all five and you'll[K][V]walk out smiling![V]    > Play[V]       No way[CH2I]"
+    },
+    {
+      "bank": "expanded",
+      "id": 159,
+      "text": "Pay me 30 Rupees and I'll let[2]you open two chests.  You can[3]keep whatever's inside,[K][V]maybe even a rare[V]Seashell![K][V]What will you do?[V]    >  Open Two Chests[V]        Escape[CH2I]"
+    },
+    {
+      "bank": "expanded",
+      "id": 160,
+      "text": "Five in a row!  Haven't seen[2]shooting like that in years.[3]Take this ring.[K][V]Vasu in town can tell you[V]what it does!"
     }
   ],
   "version": 1

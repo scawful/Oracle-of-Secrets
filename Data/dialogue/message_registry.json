@@ -280,11 +280,11 @@
     },
     {
       "start": "0x22A",
-      "end": "0x22B",
+      "end": "0x22D",
       "status": "occupied",
       "expected_content": "authored",
-      "owner": "toadstool-woods-inhabitants",
-      "purpose": "Toadstool Woods NE Twin Cottage East ($00F3) Forager Elder (0x22A, replaces hijacked 0x2B..0x2E chain on Sprite $78 at $05F48A) and relocated SW Log Cabin Archery Shooting Gallery ($0111) Light World greeting (0x22B, replaces vanilla Dark World 0x0085 at $058292). Em dash rendered as '-' (font has no em dash). Exact wording approved by scawful 2026-11-20 (Option 1)."
+      "owner": "toadstool-woods-and-minigames",
+      "purpose": "Toadstool Woods NE Twin Cottage East ($00F3) Forager Elder (0x22A, Sprite $78 at $05F48A), SW Log Cabin Archery intro (0x22B, Sprite $65 at $058292), Lyra Sea $AB Chest Hut 30-Rupee/2-chest offer (0x22C, Sprite $BB at $1EF0A4), and Archery 5/5 Power Ring win line (0x22D, Items/magic_rings.asm ArcheryRing_ShowWinMsg). ALTTP-style punctuation with zero dashes; exact wording approved by scawful 2026-11-20."
     }
   ]
 }
