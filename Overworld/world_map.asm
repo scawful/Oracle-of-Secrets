@@ -7,65 +7,14 @@ WorldMap_HandleSpriteBlink = $0AC51C
 
 pullpc
 
-DrawWisdomPendant:
-{
-  ; X position
-  LDA.b #$08 : STA.l $7EC10B
-  LDA.b #$30 : STA.l $7EC10A
-  ; Y position
-  LDA.b #$07 : STA.l $7EC109
-  LDA.b #$01 : STA.l $7EC108
-
-  LDA.b #$60 : STA.b $0D
-  LDA.b #$34 : STA.b $0C ; Tile GFX
-
-  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-  LDA.b #$0D : STA.l $7EC025
-  RTL
-}
-
-DrawPowerPendant:
-{
-  ; X position
-  LDA.b #$08 : STA.l $7EC10B
-  LDA.b #$0D : STA.l $7EC10A ; Upper nybble control Zoomed low X pos
-  ; Y position
-  LDA.b #$02 : STA.l $7EC109
-  LDA.b #$84 : STA.l $7EC108 ; Upper nybble control Zoomed low Y pos
-
-  LDA.b #$60 : STA.b $0D
-  LDA.b #$32 : STA.b $0C ; Tile GFX
-
-  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-  LDA.b #$08 : STA.l $7EC025
-  RTL
-}
-
-DrawCouragePendant:
-{
-  ; X position
-  LDA.b #$00 : STA.l $7EC10B
-  LDA.b #$87 : STA.l $7EC10A
-  ; Y position
-  LDA.b #$04 : STA.l $7EC109
-  LDA.b #$01 : STA.l $7EC108
-  ; Tile GFX
-  LDA.b #$60 : STA.b $0D
-  LDA.b #$38 : STA.b $0C
-  ; Tile Size
-  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-  LDA.b #$0A : STA.l $7EC025 ; OAM Slot used
-  RTL
-}
-
 DrawMasterSwordIcon:
 {
-  ; X position
+  ; Forest of Dreams sword. Master Sword sprite on the $40 large area.
+  ; World ($02C0, $00A0) = mode-7 tile (11, 2).
   LDA.b #$02 : STA.l $7EC10B
-  LDA.b #$FD : STA.l $7EC10A ; Upper nybble control Zoomed low X pos
-  ; Y position
+  LDA.b #$C0 : STA.l $7EC10A
   LDA.b #$00 : STA.l $7EC109
-  LDA.b #$E4 : STA.l $7EC108 ; Upper nybble control Zoomed low Y pos
+  LDA.b #$A0 : STA.l $7EC108
 
   LDA.b #$62 : STA.b $0D
   LDA.b #$34 : STA.b $0C ; Tile GFX
@@ -75,32 +24,48 @@ DrawMasterSwordIcon:
   RTL
 }
 
+DrawForestShieldIcon:
+{
+  ; Forest of Dreams shield on screen $50.
+  ; World ($0100, $0500) = mode-7 tile (4, 20). The shield glyph is in the
+  ; map CHR; this pin is the same 16x16 marker family as the sword.
+  LDA.b #$01 : STA.l $7EC10B
+  LDA.b #$00 : STA.l $7EC10A
+  LDA.b #$05 : STA.l $7EC109
+  LDA.b #$00 : STA.l $7EC108
+
+  LDA.b #$62 : STA.b $0D
+  LDA.b #$34 : STA.b $0C
+
+  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
+  LDA.b #$09 : STA.l $7EC025
+  RTL
+}
+
 DrawFortressOfSecretsIcon:
 {
-  ; X position
+  ; Fortress of Secrets door on DW $4B. World ($08A0, $0240).
   LDA.b #$08 : STA.l $7EC10B
-  LDA.b #$5E : STA.l $7EC10A
-  ; Y position
+  LDA.b #$A0 : STA.l $7EC10A
   LDA.b #$02 : STA.l $7EC109
-  LDA.b #$68 : STA.l $7EC108
+  LDA.b #$40 : STA.l $7EC108
 
   LDA.b #$66 : STA.b $0D
   LDA.b #$34 : STA.b $0C ; Tile GFX
 
   LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-  LDA.b #$0B : STA.l $7EC025
+  LDA.b #$08 : STA.l $7EC025
 
   RTL
 }
 
 DrawFinalBossIcon:
 {
-  ; X position
-  LDA.b #$08 : STA.l $7EC10B
-  LDA.b #$5E : STA.l $7EC10A
-  ; Y position
-  LDA.b #$00 : STA.l $7EC109
-  LDA.b #$68 : STA.l $7EC108
+  ; Final-boss pyramid hole on DW $57 (entrance $24). World ($0F70, $04F0).
+  LDA.b #$0F : STA.l $7EC10B
+  LDA.b #$70 : STA.l $7EC10A
+  LDA.b #$04 : STA.l $7EC109
+  LDA.b #$F0 : STA.l $7EC108
   ; Tile GFX (Skull Icon)
   LDA.b #$66 : STA.b $0D
   LDA.b #$34 : STA.b $0C
@@ -246,36 +211,23 @@ MapIconDraw:
     JMP restore_coords_and_exit
   .not_sw
   LDA.b $8A : AND.b #$40 : BEQ .lwprizes
-    LDA.l OOSPROG : AND.b #$02 : BNE .check_pendants
+    ; Before the Hall of Secrets, the only Abyss marker is the escape pin.
+    ; Power / Wisdom / Courage shrine pins are gone. Once that flag is set,
+    ; the sword, shield, fortress, and pyramid stay on the map together.
+    LDA.l OOSPROG : AND.b #!Story_HallOfSecrets : BNE .abyss_markers
       JSL DrawEonEscapeIcon
       JSR HandleMapDrawIcon
       JMP restore_coords_and_exit
-    .check_pendants
-    LDA.l OOSPROG : AND.b #$10 : BEQ .check_master_sword
-      JSL DrawPowerPendant
-      JSR HandleMapDrawIcon
-
-      JSL DrawWisdomPendant
-      JSR HandleMapDrawIcon
-
-      JSL DrawCouragePendant
-      JSR HandleMapDrawIcon
-    .check_master_sword
-    LDA.l OOSPROG : AND.b #$20 : BEQ .check_fortress
-      JSL DrawMasterSwordIcon
-      JSR HandleMapDrawIcon
-      JMP restore_coords_and_exit
-    .check_fortress
-    LDA.l OOSPROG : AND.b #$40 : BEQ .check_final_boss
-      JSL DrawFortressOfSecretsIcon
-      JSR HandleMapDrawIcon
-      JMP restore_coords_and_exit
-    .check_final_boss
-    LDA.l OOSPROG : AND.b #$80 : BEQ .exit_dw
-      JSL DrawFinalBossIcon
-      JSR HandleMapDrawIcon
-    .exit_dw
-      JMP restore_coords_and_exit
+    .abyss_markers
+    JSL DrawMasterSwordIcon
+    JSR HandleMapDrawIcon
+    JSL DrawForestShieldIcon
+    JSR HandleMapDrawIcon
+    JSL DrawFortressOfSecretsIcon
+    JSR HandleMapDrawIcon
+    JSL DrawFinalBossIcon
+    JSR HandleMapDrawIcon
+    JMP restore_coords_and_exit
   .lwprizes
 
     ; Hall of Secrets: Maku Tree met (bit 1) until Impa is met there (bit 2).
