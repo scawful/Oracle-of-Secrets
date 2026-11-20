@@ -430,6 +430,13 @@ incsrc "Sprites/Objects/dungeon_web.asm"
 incsrc "Sprites/Objects/lily_pad.asm"
 %log_end("lily_pad", !LOG_SPRITES)
 
+; Endgame Pig Moblin (sub 0=Green Guard, sub 1=Blue Elite) ($9C, GameyFireBro art).
+; Included before lyra_sea_enemies.asm so !PIG_MOBLIN_NMI_UPLOAD is defined for
+; the zero-Bank-$2B NMI tail-call from LyraSea_NmiUpload. Bank $32.
+%log_start("pig_moblin", !LOG_SPRITES)
+incsrc "Sprites/Enemies/pig_moblin.asm"
+%log_end("pig_moblin", !LOG_SPRITES)
+
 ; Lyra Sea Cheep-Cheep (sub 0) & Blooper (sub 1) ($AB, GameyFireBro art).
 ; Included before night_poe.asm so !LYRA_SEA_NMI_UPLOAD is defined for the
 ; zero-Bank-$2B NMI tail-call from NightPoe_NmiUpload. Bank $32.

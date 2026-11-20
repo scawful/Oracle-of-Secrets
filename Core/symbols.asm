@@ -305,8 +305,11 @@ Horse_PrioFenceCacheYZ     = $7F57A6 ; word: ($20 & $FFF0) | y_zone
 Horse_Momentum             = $7F57A8 ; gallop acceleration ramp 0..24 (0=standstill, 24=full stride)
 Horse_PrevMoveDir          = $7F57A9 ; previous frame cardinal facing ($2F: 0,2,4,6; $FF=unset)
 Horse_PrevDpad             = $7F57AA ; previous frame D-pad nibble ($F0 & $0F) for smooth diagonal banking
-Horse_CgiCache_End         = $7F57AB ; last byte used in UNUSED_7F5000
-assert Horse_CgiCache_End < $7F5800, "Epona transient WRAM exceeded $7F57FF UNUSED_7F5000 bound"
+Horse_CgiCache_End         = $7F57AB ; last byte used by Epona in UNUSED_7F5000
+assert Horse_CgiCache_End < $7F57FC, "Epona transient WRAM collided with PigMoblin_Vram* ($7F57FC)"
+PigMoblin_VramState        = $7F57FC ; 0=idle, $80..$84=5-stage NMI DMA, $01=live
+PigMoblin_LastArea         = $7F57FD ; cached $8A (OW) or $A0 low byte (UW)
+PigMoblin_LastInd          = $7F57FE ; cached $00 (OW) or $80|($A1&1) (UW)
 
 ; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon
 ; order: Kydreeok, Song frees Kydrog, Ganon). Until that scene exists, Ganondorf waits this many

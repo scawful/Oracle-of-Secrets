@@ -488,7 +488,12 @@ LyraSea_NmiUpload:
   CMP.b #$09 : BEQ .mod_ok
   CMP.b #$0B : BEQ .mod_ok
 .fast_exit
-  PLA : PLP : RTL
+  PLA : PLP
+  if defined("PIG_MOBLIN_NMI_UPLOAD")
+    JML PigMoblin_NmiUpload
+  else
+    RTL
+  endif
 
 .mod_ok
   PHX : PHY

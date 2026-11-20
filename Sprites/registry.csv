@@ -52,3 +52,5 @@ Sprite_LilyPad,$AD,Sprites/Objects/lily_pad.asm,lily_pad,Rideable Gust Jar lily 
 Sprite_NightPoe,$B4,Sprites/Enemies/night_poe.asm,night_poe,Nighttime EoW Lantern Poe (sub 0=night OW/always UW+Abyss; sub 1=always),
 Sprite_CheepCheep,$AB,Sprites/Enemies/lyra_sea_enemies.asm,lyra_sea_enemies,Lyra Sea leaping Cheep-Cheep (sub 0; GameyFireBro art),1
 Sprite_Blooper,$AB,Sprites/Enemies/lyra_sea_enemies.asm,lyra_sea_enemies,Lyra Sea darting Blooper (sub 1; GameyFireBro art),1
+Sprite_PigMoblin,$9C,Sprites/Enemies/pig_moblin.asm,pig_moblin,Endgame armed Pig Moblin Green Fortress Guard (sub 0; GameyFireBro art),1
+Sprite_BlueMoblin,$9C,Sprites/Enemies/pig_moblin.asm,pig_moblin,Endgame armed Pig Moblin Blue Elite Captain (sub 1; GameyFireBro art),1
