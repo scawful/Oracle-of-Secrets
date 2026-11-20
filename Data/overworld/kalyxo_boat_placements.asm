@@ -1,7 +1,10 @@
 ; Current native cached-exit contract used by GoronCheckpoint/SpecialSoaring.
 ; NOT historical STV2 keys0186/0187. No exit/entrance allocation is emitted.
 ; Bound in QUEUE225: Kalyxo Docks $30/$31 (16, 23) <-> Sea Zora Quay $99 (23, 19).
+; Live rev5 parent $30 area tile (48, 23) is still $0FC0; $99 tile (23, 19) is still $085E.
 !KALYXO_BOAT_ENDPOINTS_BOUND = 1
+!Boat_StopCount = 2
+!Boat_EndpointWords = !Boat_StopCount*2
 !Boat_DocksFacing = $0006
 !Boat_IslandFacing = $0004
 !Boat_DocksOpenTile = $0FC0
@@ -34,6 +37,7 @@ if !KALYXO_BOAT_ENDPOINTS_BOUND == 1
   assert !Boat_DocksWaterTile < $1000 && !Boat_IslandWaterTile < $1000
   assert !Boat_DocksOpenTile != !Boat_DocksWaterTile
   assert !Boat_IslandOpenTile != !Boat_IslandWaterTile
+  assert !Boat_StopCount == 2 && !Boat_EndpointWords == 4
 endif
 Boat_Caches:
 Boat_DocksCache:

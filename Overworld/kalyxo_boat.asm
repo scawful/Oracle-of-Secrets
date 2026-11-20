@@ -43,20 +43,8 @@ else
     JSR Boat_Clear
   .no_stale_scene
   SEP #$20
-  LDA.b $1B : BEQ +
-  BRL .refuse
-  +
-  LDA.w $0112 : ORA.w $02E4 : ORA.w $0FFC : ORA.w $04C6 : BEQ +
-  BRL .refuse
-  +
-  LDA.l FollowerId : BEQ +
-  BRL .refuse
-  +
-  LDA.l SavedWorld : BEQ +
-  BRL .refuse
-  +
-  LDA.b $5D : ORA.b $4B : ORA.b $4D : ORA.w $0308 : BEQ +
-  BRL .refuse
+  JSR Boat_TravelBlocked : BCC +
+    BRL .refuse
   +
   LDA.b $F6 : AND.b #$80 : BNE + ; fresh A press, never held/replayed A
   BRL .refuse
@@ -86,7 +74,10 @@ else
   BRL .next8
   +
   STA.l Boat_Face
+  ; Low nibble = source word offset. High nibble = paired destination offset.
+  ; A-press still pairs the two bound stops. Recovery masks the low nibble.
   TYA : STA.l Boat_Endpoint
+  EOR.b #$02 : ASL #4 : ORA.l Boat_Endpoint : STA.l Boat_Endpoint
   LDA.b $10 : STA.l Boat_SourceModule
   REP #$20
   LDA.b $20 : STA.l Boat_SaveY
@@ -120,10 +111,122 @@ else
   .next
   SEP #$20
   .next8
-  INY : INY : CPY.w #4 : BCS .refuse
+  INY : INY : CPY.w #!Boat_EndpointWords : BCS .refuse
   BRL .endpoint
   .refuse
   CLC : RTS
+endif
+}
+
+; M8. SEC = indoor, frozen, following, wrong world, or a busy Link state.
+; Shared by the plank A-press and Boat_StartCrossingFromNpc.
+Boat_TravelBlocked:
+{
+  LDA.b $1B : BNE .block
+  LDA.w $0112 : ORA.w $02E4 : ORA.w $0FFC : ORA.w $04C6 : BNE .block
+  LDA.l FollowerId : BNE .block
+  LDA.l SavedWorld : BNE .block
+  LDA.b $5D : ORA.b $4B : ORA.b $4D : ORA.w $0308 : BNE .block
+  CLC : RTS
+  .block
+  SEC : RTS
+}
+
+; JSL Boat_StartCrossingFromNpc
+; In: A = destination stop index (0 = Kalyxo Docks, 1 = Sea Zora Quay).
+;     M/X width, X, and Y are preserved. Scratch $00-$07 is clobbered.
+; Out: SEC and module $0C owns the crossing. CLC and Link was not moved,
+;      except a stale ferry marker is recovered the same way an A-press would.
+; The caller does not need a fresh A press, a facing match, or the 15px window.
+; $8A must be the parent of a bound stop ($30 covers wide screens $30/$31).
+; A third stop is another cache row plus !Boat_StopCount; placements asserts
+; the two-stop A-press pair until that row exists.
+Boat_StartCrossingFromNpc:
+{
+if !KALYXO_BOAT_ENDPOINTS_BOUND == 0
+  CLC : RTL
+else
+  PHP
+  REP #$30
+  PHX : PHY
+  PHB : PHK : PLB
+  SEP #$30
+  AND.b #$0F : PHA
+  REP #$20
+  LDA.l Boat_Marker : CMP.w #!Boat_Magic : BNE .no_stale
+    JSR Boat_RecoverInterrupted
+    JSR Boat_Clear
+  .no_stale
+  SEP #$30
+  PLA : STA.b $00
+  CMP.b #!Boat_StopCount : BCC .index_ok
+    JMP .refuse
+  .index_ok
+  JSR Boat_TravelBlocked : BCC .travel_ok
+    JMP .refuse
+  .travel_ok
+  REP #$30
+  SEP #$20
+  LDY.w #$0000
+  .seek
+    REP #$20
+    TYX
+    LDA.l Boat_CacheOffsets, X : TAX
+    LDA.l Boat_Caches+0, X : AND.w #$00FF : STA.b $04
+    LDA.b $8A : AND.w #$00FF : CMP.b $04 : BEQ .found_area
+    SEP #$20
+    INY : INY : CPY.w #!Boat_EndpointWords : BCC .seek
+    JMP .refuse
+  .found_area
+  SEP #$20
+  TYA : LSR A : CMP.b $00 : BNE .other_stop
+    JMP .refuse
+  .other_stop
+  REP #$20
+  LDA.b $20 : STA.l Boat_SaveY
+  LDA.b $22 : STA.l Boat_SaveX
+  TYX
+  LDA.l Boat_CacheOffsets, X : TAX
+  LDA.l Boat_Caches+8, X : STA.b $20
+  LDA.l Boat_Caches+10, X : STA.b $22
+  ; Same Map16 transform as GetMap16Tile, at the snapped pier anchor.
+  LDA.b $20 : CLC : ADC.w #12 : SEC : SBC.w $0708
+  AND.w $070A : ASL #3 : STA.b $06
+  LDA.b $22 : CLC : ADC.w #8 : LSR #3
+  SEC : SBC.w $070C : AND.w $070E : CLC : ADC.b $06
+  STA.l Boat_PlankIndex : TAX
+  LDA.l $7E2000, X : STA.l Boat_PlankTile
+  TYX
+  CMP.l Boat_OpenTiles, X : BEQ .tile_ok
+    LDA.l Boat_SaveY : STA.b $20
+    LDA.l Boat_SaveX : STA.b $22
+    SEP #$20
+    JMP .refuse
+  .tile_ok
+  SEP #$20
+  LDA.l Boat_ArrivalFaces, X : EOR.b #$02
+  STA.l Boat_Face : STA.b $2F
+  LDA.b $00 : ASL A : ASL #4 : STA.b $02
+  TYA : ORA.b $02 : STA.l Boat_Endpoint
+  LDA.b $10 : STA.l Boat_SourceModule
+  LDA.b #$00 : STA.l Boat_PlankChanged
+  LDA.b #$01 : STA.l Boat_State
+  LDA.b #$0C : STA.b $10
+  REP #$20
+  LDA.w #!Boat_Magic : STA.l Boat_Marker
+  LDA.w #$0000 : STA.l Boat_Timer : STA.l Boat_LoadTries
+  SEP #$20
+  PLB
+  REP #$30
+  PLY : PLX
+  PLP
+  SEC : RTL
+  .refuse
+  PLB
+  REP #$30
+  PLY : PLX
+  PLP
+  CLC : RTL
 endif
 }
 
@@ -169,7 +272,7 @@ Boat_Board:
   BCC .animate
     ; One tile, one stripe: bounded well below a whole-hull live stamp.
     REP #$30
-    LDA.l Boat_Endpoint : AND.w #$00FF : TAX
+    LDA.l Boat_Endpoint : AND.w #$000F : TAX
     LDA.l Boat_ClosedTiles, X : TAY
     LDA.l Boat_PlankIndex : TAX
     TYA ; existing endpoint terrain, restored exactly on cancellation
@@ -195,7 +298,7 @@ Boat_Depart:
   RTS
   .cross
   REP #$30
-  LDA.l Boat_Endpoint : AND.w #$00FF : EOR.w #2 : TAX
+  LDA.l Boat_Endpoint : AND.w #$00F0 : LSR #4 : TAX
   JSR Boat_CopyCache
   LDA.w #$0000 : STA.l Boat_LoadTries
   SEP #$30
@@ -224,7 +327,7 @@ Boat_Load:
     ; Leave the cutscene and reload the valid source endpoint through the
     ; ordinary engine. No borrowed item, story bit or control lock remains.
     REP #$30
-    LDA.l Boat_Endpoint : AND.w #$00FF : TAX
+    LDA.l Boat_Endpoint : AND.w #$000F : TAX
     JSR Boat_CopyCache
     LDA.w #$0000 : STA.l Boat_Marker
     SEP #$30
@@ -237,7 +340,7 @@ Boat_Load:
   STZ.b $11 : STZ.b $B0 : STZ.b $4B
   STZ.b $26 : STZ.b $67
   REP #$30
-  LDA.l Boat_Endpoint : AND.w #$00FF : EOR.w #2 : TAX
+  LDA.l Boat_Endpoint : AND.w #$00F0 : LSR #4 : TAX
   SEP #$20
   LDA.l Boat_ArrivalFaces, X : STA.b $2F
   SEP #$10
@@ -255,12 +358,9 @@ Boat_Arrive:
   REP #$20
   LDA.w #$0000 : STA.l Boat_Marker
   SEP #$20
-  LDA.b $8A : AND.b #$80 : BEQ .native
-    LDA.b #$0B : BRA .module
-  .native
-  LDA.b #$09
-  .module
-  STA.b $10
+  ; Player control is module $09 on every overworld, including special areas.
+  ; Module $0B is not a resident mode after the Q322 unification.
+  LDA.b #$09 : STA.b $10 : STA.w $010C
   STZ.b $11 : STZ.b $B0 : STZ.b $26 : STZ.b $67
   RTS
 }
@@ -328,7 +428,7 @@ Boat_CanRecoverPlank:
   CMP.w #$000B : BEQ .play_module
     CLC : RTS
   .play_module
-  LDA.l Boat_Endpoint : AND.w #$00FF : CMP.w #$0004 : BCC .endpoint_range
+  LDA.l Boat_Endpoint : AND.w #$000F : CMP.w #$0004 : BCC .endpoint_range
     CLC : RTS
   .endpoint_range
   BIT.w #$0001 : BEQ .endpoint_aligned
