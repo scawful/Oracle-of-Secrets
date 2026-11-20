@@ -1669,6 +1669,57 @@ HorseHud_FillBlankBuffers:
     DEX #2 : BPL .loop
   RTS
 }
+
+; Clears residual Link button/action/sword locks on dismount so B-button sword
+; swings and items work immediately on foot (M=8, DBR=$00).
+HorseForm_ClearLinkLocks:
+{
+  STZ.b $3A : STZ.b $3B : STZ.b $3C
+  STZ.w $0301 : STZ.w $037A : STZ.w $0372
+  STZ.w $0308 : STZ.w $0376 : STZ.w $0377 : STZ.w $02E3
+  LDA.b #$01 : TRB.b $50
+  LDA.b $5D : CMP.b #$11 : BNE +
+    STZ.b $5D
+  +
+  RTL
+}
+
+; Current Ranch residents have measured non-overlapping CHR usage. Unknown
+; dynamically spawned actors suspend the NPC composition, not the actor itself.
+; Includes Page 0 bush debris ($EC) and Page 0 drops ($D8-$E2; excludes $E3 fairy).
+Horse_RanchActorsSafe:
+{
+  PHP : PHB : REP #$30 : PHA : PHX
+  SEP #$20 : LDA.b #0 : PHA : PLB
+  LDX.w #15
+  .scan
+    LDA.w $0DD0, X : BEQ .next
+    LDA.w $0E20, X
+    CMP.b #$2D : BEQ .next ; horse
+    CMP.b #$2A : BEQ .next ; sweeper, BD
+    CMP.b #$3C : BEQ .next ; kid, BD
+    CMP.b #$74 : BEQ .next ; runner, C2 second half
+    CMP.b #$0B : BEQ .next ; cucco
+    CMP.b #$07 : BEQ .next ; pull switch
+    CMP.b #$EB : BEQ .next ; heart piece
+    CMP.b #$AC : BEQ .next ; apple
+    CMP.b #$EC : BEQ .next ; bush/rock debris (page 0)
+    CMP.b #$D8 : BCC .chk_mirror
+    CMP.b #$E3 : BCC .next ; $D8-$E2 Page 0 drops (excludes $E3 page 1 fairy)
+  .chk_mirror
+    ; Ordinary Light World entry always initializes the native mirror portal,
+    ; even at an unset (0,8) anchor. Its native frame0 uses page0 CHR4C/4D/5C/5D
+    ; and palette2, disjoint from the private C2 first32 chars and SP3 colors.
+    ; Refuse altered frame/page/palette rather than admitting arbitrary 6C art.
+    CMP.b #$6C : BNE .unsafe
+    LDA.w $0DC0, X : BNE .unsafe
+    LDA.w $0F50, X : AND.b #$0F : CMP.b #$04 : BEQ .next
+  .unsafe
+    REP #$30 : PLX : PLA : PLB : PLP : CLC : RTL
+  .next
+    DEX : BPL .scan
+  REP #$30 : PLX : PLA : PLB : PLP : SEC : RTL
+}
 HorseBank5EHelpers_End:
 assert pc() <= $5F0000, "Epona Bank $5E extension slice exceeded $5EFFFF"
 pullpc

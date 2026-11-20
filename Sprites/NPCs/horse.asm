@@ -65,7 +65,8 @@ if !ENABLE_HORSE_PARK_ANYWHERE == 1
   LDA.l Horse_HasAnchor : BEQ .ranch_profile
   LDA.b $8A : CMP.l Horse_AnchorArea : BNE .despawn_before_draw
   JSL Horse_RanchProfileReady : BCC .off_ranch
-    JSL Horse_SlotsBusy : BCS .SpriteIsNotActive
+    JSL Horse_ParkedBusy : BCS .SpriteIsNotActive
+    JSL Horse_RanchActorsSafe : BCC .SpriteIsNotActive
     BRA .draw_ok
   .off_ranch
   JSL Horse_ParkedBusy : BCS .SpriteIsNotActive
@@ -75,7 +76,11 @@ if !ENABLE_HORSE_PARK_ANYWHERE == 1
   .ranch_profile
 endif
   JSL Horse_RanchProfileReady : BCC .despawn_before_draw
-  JSL Horse_SlotsBusy : BCS .SpriteIsNotActive
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  JSL Horse_ParkedBusy : BCS .SpriteIsNotActive
+else
+  LDA.l InCutScene : BNE .SpriteIsNotActive
+endif
   JSL Horse_RanchActorsSafe : BCC .SpriteIsNotActive
   .draw_ok
   JSR Sprite_HorseNPC_Draw

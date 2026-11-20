@@ -1329,6 +1329,56 @@ class TestHorseOverhaul(unittest.TestCase):
                 self.assertEqual(actual_vram, expected_vram, f"VRAM $5000 mismatch for NpcFrame={frame_id}")
                 self.assertEqual(fx.get(0x7E1EEA), frame_id)
 
+    def test_ranch_npc_ignores_sword_beam_and_page0_drops_and_dismount_clears_locks(self):
+        # 1. Ranch NPC NMI & Sprite_HorseNPC_Long must NOT blink out or restore VRAM
+        #    when Master Sword Beam ($0C), BeamHit ($04), bush debris ($EC), or Page 0
+        #    drops ($D8-$E2) are active; Page 1 fairy ($E3) must still safely fail.
+        fx = self.make_fixture()
+        fx.put16(0x7E1EDE, 0x4852)
+        fx.put(0x7E0AA3, 6)
+        fx.put(0x7EC2FC, 0x4F); fx.put(0x7EC2FD, 0x49)
+        fx.put(0x7EC2FE, 0x4A); fx.put(0x7EC2FF, 0x50)
+        fx.put(0x10, 0x09)
+        fx.put(0x7E1EE8, 1)    # Horse_NpcActive = 1
+        fx.put(0x7E1EE9, 14)   # Horse_NpcFrame = 14
+        fx.put(0x7E1EE7, 0xFF)
+        fx.put(0x7E1EEA, 14)   # already uploaded
+        fx.put(0x7E1EED, 1)
+        # Active Master Sword beam ($0C) + beam hit ($04) + bush debris ($EC) + Rupee ($D9)
+        fx.put(0x0C4A, 0x0C)
+        fx.put(0x0C4B, 0x04)
+        fx.put(0x0DD1, 0x09); fx.put(0x0E21, 0xEC)
+        fx.put(0x0DD2, 0x09); fx.put(0x0E22, 0xD9)
+
+        # Horse_SlotsBusy must exempt $0C and $04 (C=0)
+        fx.run_jsl("Horse_SlotsBusy", mf=True, xf=True, db=0x00)
+        self.assertFalse(bool(fx.cpu.c), "Master Sword Beam ($0C) and BeamHit ($04) must not trip Horse_SlotsBusy")
+
+        # Horse_RanchActorsSafe must accept $EC bush debris and $D8-$E2 drops (C=1)
+        fx.run_jsl("Horse_RanchActorsSafe", mf=True, xf=True, db=0x00)
+        self.assertTrue(bool(fx.cpu.c), "Page 0 bush debris ($EC) and drops ($D8-$E2) must be Ranch-safe")
+
+        # Horse_NmiUpload must keep Horse_NpcUploadedFrame == 14 (0 restore DMA)
+        fx.run_jsl("Horse_NmiUpload", mf=True, xf=False, db=0x00)
+        self.assertEqual(fx.get(0x7E1EEA), 14, "Ranch Epona must stay uploaded during Master Sword beam")
+
+        # Page 1 fairy ($E3) must still fail Horse_RanchActorsSafe (C=0)
+        fx.put(0x0DD3, 0x09); fx.put(0x0E23, 0xE3)
+        fx.run_jsl("Horse_RanchActorsSafe", mf=True, xf=True, db=0x00)
+        self.assertFalse(bool(fx.cpu.c), "Page 1 fairy ($E3) must remain excluded from RanchActorsSafe")
+
+        # 2. HorseForm_ClearLinkLocks clears all residual sword/action locks on dismount
+        fx2 = self.make_fixture()
+        for addr in (0x3A, 0x3B, 0x3C, 0x0301, 0x037A, 0x0372, 0x0308, 0x0376, 0x0377, 0x02E3):
+            fx2.put(addr, 0x10)
+        fx2.put(0x50, 0x03)
+        fx2.put(0x5D, 0x11)
+        fx2.run_jsl("HorseForm_ClearLinkLocks", mf=True, xf=True, db=0x00)
+        for addr in (0x3A, 0x3B, 0x3C, 0x0301, 0x037A, 0x0372, 0x0308, 0x0376, 0x0377, 0x02E3):
+            self.assertEqual(fx2.get(addr), 0x00, f"Lock byte {addr:#x} not cleared by HorseForm_ClearLinkLocks")
+        self.assertEqual(fx2.get(0x50), 0x02, "Only bit 0 of $50 should be cleared")
+        self.assertEqual(fx2.get(0x5D), 0x00, "Stale grab state $5D=$11 must clear to $00")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

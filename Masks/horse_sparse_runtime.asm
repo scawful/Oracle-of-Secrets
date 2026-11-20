@@ -32,6 +32,10 @@ Horse_SlotsBusy:
     ; Ancilla $1D (dash tremor) is the long-jump landing shake: BG offsets
     ; only, no graphics, so it must not force a silent dismount.
     CMP.b #$1D : BEQ .next_ancilla
+    ; Master Sword beam ($0C) and beam-hit sparkle ($04) use upper Page 0 fixed
+    ; chars ($80/$83/$B7/$D5/$D6/$D7), disjoint from mounted/parked Epona VRAM.
+    CMP.b #$0C : BEQ .next_ancilla
+    CMP.b #$04 : BEQ .next_ancilla
     ; A rider's own arrows ($09 in flight, $0A stuck in a wall) and item
     ; receipts ($22, VRAM $40E0/$41E0 disjoint from horse slots) must not
     ; unseat them (mounted bow / minigame reward). Unmounted, they still report busy.
@@ -70,37 +74,8 @@ Horse_RanchProfileReady:
   REP #$30 : PLA : PLP : CLC : RTL
 }
 
-; Current Ranch residents have measured non-overlapping CHR usage. Unknown
-; dynamically spawned actors suspend the NPC composition, not the actor itself.
-Horse_RanchActorsSafe:
-{
-  PHP : PHB : REP #$30 : PHA : PHX
-  SEP #$20 : LDA.b #0 : PHA : PLB
-  LDX.w #15
-  .scan
-    LDA.w $0DD0, X : BEQ .next
-    LDA.w $0E20, X
-    CMP.b #$2D : BEQ .next ; horse
-    CMP.b #$2A : BEQ .next ; sweeper, BD
-    CMP.b #$3C : BEQ .next ; kid, BD
-    CMP.b #$74 : BEQ .next ; runner, C2 second half
-    CMP.b #$0B : BEQ .next ; cucco
-    CMP.b #$07 : BEQ .next ; pull switch
-    CMP.b #$EB : BEQ .next ; heart piece
-    CMP.b #$AC : BEQ .next ; apple
-    ; Ordinary Light World entry always initializes the native mirror portal,
-    ; even at an unset (0,8) anchor. Its native frame0 uses page0 CHR4C/4D/5C/5D
-    ; and palette2, disjoint from the private C2 first32 chars and SP3 colors.
-    ; Refuse altered frame/page/palette rather than admitting arbitrary 6C art.
-    CMP.b #$6C : BNE .unsafe
-    LDA.w $0DC0, X : BNE .unsafe
-    LDA.w $0F50, X : AND.b #$0F : CMP.b #$04 : BEQ .next
-  .unsafe
-    REP #$30 : PLX : PLA : PLB : PLP : CLC : RTL
-  .next
-    DEX : BPL .scan
-  REP #$30 : PLX : PLA : PLB : PLP : SEC : RTL
-}
+; Current Ranch residents check (Horse_RanchActorsSafe) lives in
+; Masks/horse_mounted_helpers.asm (Bank $5E tail) to preserve Bank $53 headroom.
 
 ; Checks whether Module $0E submodule ($11) keeps Overworld OAM on screen and
 ; leaves sprite VRAM untouched (matching vanilla Module0E_Interface $00F81B).
@@ -160,6 +135,8 @@ endif
   .ancilla_scan
     LDA.w $0C4A, X : BEQ .next_ancilla
     CMP.b #$1D : BEQ .next_ancilla
+    CMP.b #$0C : BEQ .next_ancilla
+    CMP.b #$04 : BEQ .next_ancilla
     CMP.b #$22 : BEQ .next_ancilla
     CMP.b #$09 : BEQ .seen_arrow
     CMP.b #$0A : BNE .native
@@ -442,15 +419,11 @@ endif
   CMP.b #16 : BCS .restore_npc
 
   .ranch_scan
-  ; Tight DBR=$00 ancilla check + DBR=$00 Horse_RanchActorsSafe (eliminates
-  ; duplicate 16-sprite scan from Horse_SlotsBusy).
+  ; Ranch NPC cells live in Page 1 ($5000-$51FF), disjoint from Page 0 item/beam
+  ; ancillas ($0C4A). Gate on InCutScene + Horse_RanchActorsSafe only (matching
+  ; off-Ranch Horse_ParkedBusy) so Master Sword beams/items never blink Epona out
+  ; or burn 2KB of wasted restore+upload VBlank DMA.
   LDA.l InCutScene : BNE .restore_npc
-  LDX.w #9
-  .ranch_anc
-    LDA.w $0C4A, X : BEQ .ranch_anc_next
-    CMP.b #$1D : BNE .restore_npc
-    .ranch_anc_next
-    DEX : BPL .ranch_anc
   JSL Horse_RanchActorsSafe : BCC .restore_npc
   LDA.w Horse_NpcFrame&$FFFF : CMP.w Horse_NpcUploadedFrame&$FFFF : BNE .npc_rows_budget
   BRA .not_mounted_exit

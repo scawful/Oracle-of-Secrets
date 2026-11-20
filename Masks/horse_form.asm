@@ -341,6 +341,7 @@ endif
   ORA.w $0CF8 : STA.w $012E
 
   JSL ResetToLinkGraphics
+  JSL HorseForm_ClearLinkLocks
   JSL HorseForm_ClearState
   JSL Horse_SyncCarrotHud
   LDA.b #$18 : STA.l Horse_DismountCooldown
@@ -366,6 +367,7 @@ else
 endif
   JSL Horse_RestoreSp3Palette
   JSL ResetToLinkGraphics
+  JSL HorseForm_ClearLinkLocks
   JSL HorseForm_ClearState
   JSL Horse_SyncCarrotHud
   LDA.b #$10 : STA.l Horse_DismountCooldown
