@@ -688,13 +688,23 @@ def render() -> str:
     data: list[int] = []
     src: list[int] = []
     ln: list[int] = []
+    seen_spans: dict[tuple[int, ...], tuple[int, int]] = {}
     for _p, _doc, cls, _k in words_by_profile:
         for o in CLASSES:
             if o in cls:
-                start = len(data) * 2
-                data += cls[o]
-                src.append(start + 2 * (len(cls[o]) - 1))
-                ln.append(2 * (len(cls[o]) - 1))
+                key = tuple(cls[o])
+                hit = seen_spans.get(key)
+                if hit is not None:
+                    src.append(hit[0])
+                    ln.append(hit[1])
+                else:
+                    start = len(data) * 2
+                    data += cls[o]
+                    span_src = start + 2 * (len(cls[o]) - 1)
+                    span_len = 2 * (len(cls[o]) - 1)
+                    seen_spans[key] = (span_src, span_len)
+                    src.append(span_src)
+                    ln.append(span_len)
             else:
                 src.append(0xFFFF)
                 ln.append(0xFFFF)

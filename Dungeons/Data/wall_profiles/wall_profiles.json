@@ -6,7 +6,11 @@
   {"id": 2, "name": "glacia_frozen_timber", "words": "glacia_frozen_timber.words.json",
    "kit": "glacia_estate_timber"},
   {"id": 3, "name": "glacia_cave_art17", "words": "glacia_cave_art17.words.json",
-   "kit": "glacia_cave_art17"}
+   "kit": "glacia_cave_art17"},
+  {"id": 4, "name": "abyss_gbc_ee_p5", "words": "abyss_gbc_ee_p5.words.json"},
+  {"id": 5, "name": "abyss_gbc_ee_p3", "words": "abyss_gbc_ee_p3.words.json"},
+  {"id": 6, "name": "abyss_gbc_ec_p5", "words": "abyss_gbc_ec_p5.words.json"},
+  {"id": 7, "name": "abyss_gbc_ec_p3", "words": "abyss_gbc_ec_p3.words.json"}
  ],
  "groups": [
   {"name": "d1", "kind": "dungeon", "profile": "d1_grotto_floor",
@@ -16,6 +20,22 @@
   {"name": "glacia_estate", "kind": "room_group", "profile": "glacia_frozen_timber",
    "rooms": ["0DB", "0CB", "0BB", "0BC", "0BD", "0AD", "0AC", "0CC"]},
   {"name": "glacia_cave", "kind": "room_group", "profile": "glacia_cave_art17",
-   "rooms": ["09E", "09F", "0AE", "0AF", "0BE", "0BF", "0CD", "0CE", "0CF", "0DC", "0DD"]}
+   "rooms": ["09E", "09F", "0AE", "0AF", "0BE", "0BF", "0CD", "0CE", "0CF", "0DC", "0DD"]},
+  {"name": "abyss_gbc_fortress_finale", "kind": "room_group", "profile": "abyss_gbc_ee_p5",
+   "rooms": ["00C", "01C", "04C", "05C", "06B", "06D", "04D", "05D", "06C", "07B", "07C", "07D", "08B", "08D", "09B", "09D", "000", "010", "002"]},
+  {"name": "abyss_gbc_origins", "kind": "room_group", "profile": "abyss_gbc_ee_p5",
+   "rooms": ["005"]},
+  {"name": "abyss_gbc_volcanic", "kind": "room_group", "profile": "abyss_gbc_ee_p5",
+   "rooms": ["004", "013", "014", "015", "023", "024"]},
+  {"name": "abyss_gbc_caves", "kind": "room_group", "profile": "abyss_gbc_ee_p5",
+   "rooms": ["0D0", "0D1", "0D2", "0F6", "112", "117", "123", "125"]},
+  {"name": "abyss_gbc_fire_fairy", "kind": "room_group", "profile": "abyss_gbc_ee_p3",
+   "rooms": ["02D", "03D", "116"]},
+  {"name": "abyss_gbc_houses", "kind": "room_group", "profile": "abyss_gbc_ec_p5",
+   "rooms": ["0C9", "00F", "0F4", "0F5", "100", "110", "11C"]},
+  {"name": "abyss_gbc_rites_boss", "kind": "room_group", "profile": "abyss_gbc_ec_p5",
+   "rooms": ["00D"]},
+  {"name": "abyss_gbc_rites_hall_archery", "kind": "room_group", "profile": "abyss_gbc_ec_p3",
+   "rooms": ["01D", "111"]}
  ]
 }
