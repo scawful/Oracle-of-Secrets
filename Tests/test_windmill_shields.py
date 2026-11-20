@@ -146,6 +146,14 @@ class Mini65816:
             elif op == 0x91:  # STA (dp),Y
                 ptr = self.read(0x7E0000 | ((self.d + self.take()) & 0xFFFF), 2)
                 self.put(0x7E0000 | ((ptr + (self.y & xmask)) & 0xFFFF), self.a, m)
+            elif op == 0xB7:  # LDA [dp],Y
+                ptr = self.read(0x7E0000 | ((self.d + self.take()) & 0xFFFF), 3)
+                self.load_a(self.read(ptr + (self.y & xmask), m))
+            elif op == 0x8F:  # STA long
+                self.put(self.take(3), self.a, m)
+            elif op == 0x80:  # BRA
+                off = self.take(); off -= 256 if off >= 128 else 0
+                self.pc += off
             elif op == 0x29:  # AND #imm
                 self.load_a((self.a & mmask) & self.take(m))
             elif op == 0x05:  # ORA dp
@@ -262,7 +270,10 @@ class WindmillGuyCompiledTests(unittest.TestCase):
         src = tmp / "harness.asm"
         rom_path = tmp / "harness.sfc"
         sym_path = tmp / "harness.sym"
-        rom_path.write_bytes(b"\x00" * 0x200000)
+        rom_img = bytearray(b"\x00" * 0x200000)
+        # Seed vanilla $01:B647 (PC 0x00B647): INY : LDA [$0D],Y : CLC : ADC #$40 : STA.w $0AA3
+        rom_img[0x00B647:0x00B650] = bytes.fromhex("C8B70D1869408DA30A")
+        rom_path.write_bytes(rom_img)
 
         # Extract Sprite_WindmillGuy_Long + Sprite_WindmillGuy_Draw directly from windmill_guy.asm
         wm_text = WINDMILL_ASM.read_text(encoding="utf-8")
@@ -404,6 +415,33 @@ class WindmillGuyCompiledTests(unittest.TestCase):
         cpu.run(self.labels["Sprite_WindmillGuy_Long"], {0x06BBBF})
         # Only PrepOamCoord and CheckActive called; OAM_AllocateDeferToPlayer & DrawShadow skipped!
         self.assertEqual(cpu.calls, [0x348000, 0x348030])
+
+    def test_header_spriteset_hook_fixes_room_c9_and_preserves_other_rooms(self) -> None:
+        # Room $00C9 with header spriteset $22 must bypass +$40 so $0AA3 = $22 (Sheet $38 / $AB).
+        # Room $0120 (shared header $22 for Fairies), other rooms, and non-$22 headers keep +$40.
+        cases = [
+            (0x00C9, 0x22, 0x22),  # Eon Windmill -> Sheet $38 ($AB)
+            (0x0120, 0x22, 0x62),  # Fairy Fountain -> keeps Sheet $41 ($B4)
+            (0x00C9, 0x33, 0x73),  # Future Yaze header change on $00C9 -> standard +$40
+            (0x0005, 0x12, 0x52),  # Ordinary dungeon room -> standard +$40
+            (0x01C9, 0x22, 0x62),  # High byte $A1 != 0 -> must not match $00C9
+        ]
+        for room_id, hdr_ss, expected_aa3 in cases:
+            with self.subTest(room=f"0x{room_id:04X}", hdr_ss=f"0x{hdr_ss:02X}"):
+                # Entry contract from WallSel_HeaderGfx ($01:B641): M=8 (0x20), X=16 (0x00), Y=2
+                cpu = Mini65816(self.rom, x=0x1234, p=0x20, db=0x01)
+                cpu.y = 0x0002
+                cpu.put(0x7E00A0, room_id, 2)
+                cpu.put(0x7E000D, 0x7E2000, 3)  # [$0D] -> header buffer in WRAM
+                cpu.put(0x7E2003, hdr_ss, 1)    # byte 3 (after INY: Y=3) = spriteset
+                cpu.put(0x7E0AA3, 0xEE, 1)
+                cpu.push(0x01B64F, 3)
+                cpu.run(self.labels["WindmillGuy_HeaderSpriteset"], {0x01B650})
+                self.assertEqual(cpu.read(0x7E0AA3, 1), expected_aa3)
+                self.assertEqual(cpu.y, 0x0003)
+                self.assertEqual(cpu.x, 0x1234)
+                self.assertEqual(cpu.db, 0x01)
+                self.assertEqual(cpu.p & 0x30, 0x20)  # M=8, X=16 preserved
 
 
 class WindmillDualArchAndShieldContractsTests(unittest.TestCase):

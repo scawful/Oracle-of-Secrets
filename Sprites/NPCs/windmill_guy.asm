@@ -22,7 +22,11 @@
 ;   $7EF34C = 3 - Song of Storms learned
 ;
 ; GRAPHICS / PALETTES:
-;   Room $00C9 uses spriteset $22 (34) -> slot 3 loads Sheet $38 (VRAM $C0..$FF).
+;   Room $00C9 header specifies spriteset $22 (34). Vanilla $01:B647 adds #$40
+;   to dungeon header spritesets, which would load UW spriteset $62 (slot 3 =
+;   Sheet $41 / global $B4, Great Fairy). WindmillGuy_HeaderSpriteset hooks
+;   $01:B647 so Room $00C9 with header $22 keeps $0AA3 = $22 (slot 3 = Sheet
+;   $38 / global $AB, VRAM $C0..$FF) without disturbing Room $0120 ($62).
 ;   Authentic GBC Oracle of Seasons spr_guruguru (frames 4d10d & 4d11e) occupies
 ;   the 12 blank tiles of Sheet $38 via Data/graphics/spr38.txt (OBJ5 $2B only):
 ;     Frame 0 (4d10d, 16x24, 3 tiles): $CF/$DF (horn 16x8), $E8 (body 16x16)
@@ -200,4 +204,39 @@ Sprite_WindmillGuy_Main:
 
   .done
   RTS
+}
+
+; =========================================================
+; Room $00C9 header spriteset hook ($01:B647)
+; Replaces INY : LDA [$0D],Y : CLC : ADC #$40 : STA.w $0AA3 (9 bytes).
+; Entry/Exit: M=8, X=16, Y advanced by 1 (as vanilla), X/DBR preserved.
+; Keeps $0AA3 = $22 for Room $00C9 when header byte == $22 so slot 3 loads
+; Sheet $38 (global $AB, Data/graphics/spr38.txt) instead of UW $62 (Sheet $41).
+; Room $0120 (shared header $22 for Fairies) and any future header change keep
+; the standard +$40 dungeon offset.
+; =========================================================
+pushpc
+assert read3($01B647) == $0DB7C8 && read3($01B64A) == $406918 && read3($01B64D) == $0AA38D, "Room header spriteset load at $01:B647 moved"
+org $01B647 ; @hook module=Sprites name=WindmillGuy_HeaderSpriteset kind=jsl target=WindmillGuy_HeaderSpriteset expected_m=8 expected_x=16 expected_exit_m=8 expected_exit_x=16 protected_size=9
+  JSL WindmillGuy_HeaderSpriteset
+  NOP #5
+assert pc() == $01B650
+pullpc
+
+WindmillGuy_HeaderSpriteset:
+{
+  INY
+  LDA.b [$0D], Y
+  CMP.b #$22 : BNE .add_uw_offset
+  LDA.b $A0 : CMP.b #$C9 : BNE .restore_header
+  LDA.b $A1 : BNE .restore_header
+    LDA.b #$22
+    BRA .store
+.restore_header
+  LDA.b #$22
+.add_uw_offset
+  CLC : ADC.b #$40
+.store
+  STA.l $7E0AA3
+  RTL
 }

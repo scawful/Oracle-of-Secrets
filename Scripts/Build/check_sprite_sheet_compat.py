@@ -109,6 +109,7 @@ SPRITE_SHEET_RULES: dict[int, dict[str, Any]] = {
     0x73: {"name": "Farore",              "slot": 3, "sheets": {0xB5, 0xC3}, "scope": "ow"},
     0x7B: {"name": "KydrogNPC",           "slot": 0, "sheets": {0xC4, 0xB3}, "scope": "ow"},
     0x9E: {"name": "MakuTree",            "slot": 2, "sheets": {0xC8},       "scope": "ow"},
+    0xB2: {"name": "WindmillGuy",         "slot": 3, "sheets": {0xAB},       "scope": "dungeon"},
 }
 
 # Light World areas that switch to phase-0 peacetime sprite lists once their
@@ -528,7 +529,11 @@ def scan_rom_sprite_compat(rom: bytes, root: Path = ROOT) -> dict[str, Any]:
         if not rh:
             continue
         ss = rh["spriteset"]
-        sheets = decode_sprite_blockset(rom, ss + 0x40)
+        # WindmillGuy_HeaderSpriteset ($01:B647 in Sprites/NPCs/windmill_guy.asm)
+        # keeps $0AA3 = $22 for Room $00C9 when header spriteset == $22 so slot 3
+        # loads Sheet $38 (global $AB, spr38.txt) instead of UW $62 (Sheet $41).
+        effective_ss = ss if (room_id == 0x00C9 and ss == 0x22) else (ss + 0x40)
+        sheets = decode_sprite_blockset(rom, effective_ss)
         for b in _check_sheet_format(sheets, custom_spr_sheets):
             dun_invalid_sheet_fmt.append({
                 "room_id": f"0x{room_id:04X}",
