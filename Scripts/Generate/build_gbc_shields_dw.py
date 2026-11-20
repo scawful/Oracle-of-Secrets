@@ -28,10 +28,10 @@ Palette Invariants (SP-5 C12..C15 + Option D C8; ZERO Sword C9..C11 bleed):
   - L2 GBC Iron Shield:   {0, 12, 13, 14, 15}
       C12=$7BDE (#F0F0F8 silver), C13=$1CA4 (#202838 navy-steel outline),
       C14=$6ECE (#70B0DC steel),  C15=$4947 (#385090 iron-slate)
-  - L3 GBC Mirror Shield: {0, 8, 12, 13, 14, 15} (original $1BD658 + SP-5 C8!)
-      C8 =$67F8 (#C6FFCE pale turquoise-silver), C12=$3B3B (#DECE73 gold rim),
-      C13=$18C6 (#313131 dark outline),          C14=$62F8 (#C6BDC6 silver-lavender),
-      C15=$518B (#5A63A5 indigo mirror face)
+  - L3 GBC Mirror Shield: {0, 8, 12, 13, 14, 15} (Option D C8 pre-baked!)
+      C8 =$7B13 (#98C0F0 ice-blue mirror), C12=$373C (#E0C868 gold rim),
+      C13=$18A5 (#282830 dark outline),    C14=$7FFE (#F0F8F8 white sheen),
+      C15=$5589 (#4860A8 deep steel shadow)
 
 Usage:
   python3 Scripts/Generate/build_gbc_shields_dw.py [--check] [--preview OUT.png]
@@ -63,14 +63,14 @@ L2_LEGEND = {
     "D": 15,  # $4947 #385090 deep iron-slate shadow
 }
 
-# L3 Mirror Shield pixel legend -> 4BPP indices (original $1BD658 + SP-5 C8)
+# L3 Mirror Shield pixel legend -> 4BPP indices (Option D C8 + SP-5 C12..C15)
 L3_LEGEND = {
     ".": 0,   # transparent
-    "I": 8,   # $67F8 #C6FFCE pale turquoise-silver mirror sheen (SP-5 C8)
-    "G": 12,  # $3B3B #DECE73 antique gold bezel / trim
-    "K": 13,  # $18C6 #313131 crisp dark outline
-    "W": 14,  # $62F8 #C6BDC6 cool silver-lavender rim
-    "D": 15,  # $518B #5A63A5 cool indigo-blue mirror face
+    "I": 8,   # $7B13 #98C0F0 bright ice-blue reflective mirror sheen (Option D C8)
+    "G": 12,  # $373C #E0C868 sleek gold bezel / trim
+    "K": 13,  # $18A5 #282830 crisp dark outline
+    "W": 14,  # $7FFE #F0F8F8 pure white mirror specular glint
+    "D": 15,  # $5589 #4860A8 deep blue-steel mirror shadow
 }
 
 # Exact BGR555 -> RGBA palettes for preview sheets
@@ -83,7 +83,7 @@ def _bgr555(w: int) -> tuple[int, int, int, int]:
 
 L1_RGB = {0: (0, 0, 0, 0), 12: _bgr555(0x379F), 13: _bgr555(0x0865), 14: _bgr555(0x15F9), 15: _bgr555(0x08EF)}
 L2_RGB = {0: (0, 0, 0, 0), 12: _bgr555(0x7BDE), 13: _bgr555(0x1CA4), 14: _bgr555(0x6ECE), 15: _bgr555(0x4947)}
-L3_RGB = {0: (0, 0, 0, 0), 8: _bgr555(0x67F8), 12: _bgr555(0x3B3B), 13: _bgr555(0x18C6), 14: _bgr555(0x62F8), 15: _bgr555(0x518B)}
+L3_RGB = {0: (0, 0, 0, 0), 8: _bgr555(0x7B13), 12: _bgr555(0x373C), 13: _bgr555(0x18A5), 14: _bgr555(0x7FFE), 15: _bgr555(0x5589)}
 
 # =============================================================================
 # LEVEL 1: Compact GBC Oracle Wooden Buckler (9x9 Front/Back, 4x9 Side)

@@ -20,9 +20,9 @@ Zero-Sword-Bleed Palette Invariants (STRICTLY {0, 8, 12, 13, 14, 15}; ZERO C9..C
       SP-5 C8 = $275E (#F7D64A Hylian Triforce Gold, via !HylianShield_Color8)
       $1BD650: C12=$6947 (#3952D6 royal blue), C13=$1CE7 (#393939 outline),
                C14=$047B (#DE1808 Loftwing crimson), C15=$6739 (#CECECE silver)
-  - L3 LW Custom Mirror Shield:      {0, 8, 12, 13, 14, 15} (original $1BD658 + C8!)
-      SP-5 C8 = $67F8 (#C6FFCE original turquoise-silver sheen, via !MirrorShield_Color8)
-      $1BD658: C12=$3B3B gold rim, C13=$18C6 outline, C14=$62F8 silver-lavender, C15=$518B indigo
+  - L3 LW Custom Mirror Shield:      {0, 8, 12, 13, 14, 15} (5-color Option D C8!)
+      SP-5 C8 = $7B13 (#98C0F0 cool mirror steel, via !MirrorShield_Color8)
+      $1BD658: C12=$373C gold rim, C13=$18A5 outline, C14=$7FFE sheen, C15=$5589 steel
 
 Usage:
   python3 Scripts/Generate/build_lw_shields.py [--check] [--preview OUT.png]
@@ -55,14 +55,14 @@ L2_LEGEND = {
     "S": 15,  # $6739 #CECECE gleaming metallic silver frame
 }
 
-# L3 Custom Mirror Shield pixel legend -> 4BPP indices (original $1BD658 + SP-5 C8)
+# L3 Custom Mirror Shield pixel legend -> 4BPP indices (Option D C8 + SP-5 C12..C15)
 L3_LEGEND = {
     ".": 0,   # transparent
-    "I": 8,   # $67F8 #C6FFCE pale turquoise-silver mirror sheen (SP-5 C8)
-    "G": 12,  # $3B3B #DECE73 antique gold bezel/crest
-    "K": 13,  # $18C6 #313131 charcoal outline
-    "W": 14,  # $62F8 #C6BDC6 cool silver-lavender rim
-    "D": 15,  # $518B #5A63A5 cool indigo-blue mirror face
+    "I": 8,   # $7B13 #98C0F0 cool mirror steel highlight (Option D C8)
+    "G": 12,  # $373C #E0C868 gold bezel/crest
+    "K": 13,  # $18A5 #282830 dark outline
+    "W": 14,  # $7FFE #F0F8F8 white specular sheen
+    "D": 15,  # $5589 #4860A8 deep blue-steel shadow
 }
 
 
@@ -92,11 +92,11 @@ L2_RGB = {
 }
 L3_RGB = {
     0: (0, 0, 0, 0),
-    8: _bgr555(0x67F8),
-    12: _bgr555(0x3B3B),
-    13: _bgr555(0x18C6),
-    14: _bgr555(0x62F8),
-    15: _bgr555(0x518B),
+    8: _bgr555(0x7B13),
+    12: _bgr555(0x373C),
+    13: _bgr555(0x18A5),
+    14: _bgr555(0x7FFE),
+    15: _bgr555(0x5589),
 }
 
 # =============================================================================

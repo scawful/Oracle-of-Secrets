@@ -383,7 +383,7 @@ class MirrorShieldPaletteTests(unittest.TestCase):
             int.from_bytes(self.rom[pc(0x1BD658) + i * 2 : pc(0x1BD658) + i * 2 + 2], "little")
             for i in range(4)
         ]
-        self.assertEqual(pal_words, [0x3B3B, 0x18C6, 0x62F8, 0x518B])
+        self.assertEqual(pal_words, [0x373C, 0x18A5, 0x7FFE, 0x5589])
         self.assertEqual(self.rom[pc(0x1BED4A) + 4], 0xEA)
         self.assertEqual(self.rom[pc(0x0ED73C) + 4], 0xEA)
         self.assertEqual(self.rom[pc(0x00D510) + 4], 0xEA)
@@ -391,7 +391,7 @@ class MirrorShieldPaletteTests(unittest.TestCase):
     def test_color8_load_and_refresh_hooks(self) -> None:
         def stub_day_night(cpu: Mini65816) -> None:
             self.assertEqual(cpu.p & 0x30, 0x00)
-            if cpu.a == 0x67F8:
+            if cpu.a == 0x7B13:
                 tinted = 0x6A0B
             elif cpu.a == 0x275E:
                 tinted = 0x1E4D
@@ -403,7 +403,7 @@ class MirrorShieldPaletteTests(unittest.TestCase):
 
         # Light World ($00) & Special Overworld ($80):
         #   L0/L1 leave C8 untouched; L2 writes Hylian Gold C8 ($275E -> $1E4D);
-        #   L3 writes original Mirror Turquoise-Silver C8 ($67F8 -> $6A0B).
+        #   L3 writes Mirror Steel C8 ($7B13 -> $6A0B).
         for world in (0x00, 0x80):
             for shield in (0, 1, 2, 3):
                 cpu = Mini65816(self.rom, p=0x00)
