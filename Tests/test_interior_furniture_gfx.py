@@ -148,13 +148,14 @@ class InteriorFurnitureBins(unittest.TestCase):
         # Top on slot 6, bottom on slot 5. Do not collapse them onto one sheet.
         self.assertEqual(chars, [0x1A0, 0x1A1, 0x17E, 0x17F])
 
-    def test_kettle_words_use_palette_3_sheet_07_chars(self):
+    def test_kettle_words_use_palette_3_slot6_low_half(self):
         rows = _decode_bin(BINS / "timber_kettle.bin")
         words = [w for _, tiles in rows for w in tiles]
-        self.assertEqual(words, [0x0CC1, 0x0CCC, 0x0CCD, 0x0CCE])
+        # Slot 6 chars $1B0-$1B3. Palette 3 stays $0C00 so the low half is silver/gold.
+        self.assertEqual(words, [0x0DB0, 0x0DB1, 0x0DB2, 0x0DB3])
         for word in words:
             self.assertEqual(_palette(word), 3)
-            self.assertTrue(0xC0 <= _char(word) <= 0xFF)
+            self.assertTrue(0x180 <= _char(word) <= 0x1BF)
 
 
 class DungeonBgSheetInvariants(unittest.TestCase):
@@ -167,7 +168,7 @@ class DungeonBgSheetInvariants(unittest.TestCase):
         self.assertEqual(self.spec["start"], "0x5D8000")
         self.assertEqual(self.spec["capacity"], 8192)
         ids = [entry["global_sheet"] for entry in self.spec["sheets"]]
-        self.assertEqual(ids, ["0x07", "0x1F", "0x22"])
+        self.assertEqual(ids, ["0x07", "0x1F", "0x22", "0x1C"])
         for entry in self.spec["sheets"]:
             self.assertRegex(entry["base_sha256"], r"^[0-9a-f]{64}$")
 
@@ -195,8 +196,8 @@ class DungeonBgSheetInvariants(unittest.TestCase):
     def test_kettle_patch_matches_tile_words(self):
         kettle = next(p for p in self.spec["patches"] if p["name"] == "timber_kettle")
         self.assertEqual(kettle["kind"], "grid_16x16")
-        self.assertEqual(kettle["sheet"], "0x07")
-        self.assertEqual(kettle["tiles"], ["0x01", "0x0C", "0x0D", "0x0E"])
+        self.assertEqual(kettle["sheet"], "0x1C")
+        self.assertEqual(kettle["tiles"], ["0x30", "0x31", "0x32", "0x33"])
         self.assertTrue(kettle["require_blank"])
         source = SHEETS.parent / kettle["source"]
         self.assertTrue(source.is_file())

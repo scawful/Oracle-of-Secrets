@@ -32,10 +32,11 @@ class DungeonBgOverridesTest(unittest.TestCase):
         self.rom = bytearray(0x300000)
         self.bases = {}
 
-        # Build synthetic 1536-byte 3bpp sheets for 0x07, 0x1F, 0x22, and donor 0x09.
+        # Build synthetic 1536-byte 3bpp sheets for the audited set plus donor 0x09.
         sheet_configs = {
             0x07: 0x028000,
             0x09: 0x038000,
+            0x1C: 0x068000,
             0x1F: 0x048000,
             0x22: 0x058000,
         }
@@ -45,10 +46,12 @@ class DungeonBgOverridesTest(unittest.TestCase):
             g = [[((x + y + gid) % 7) + 1 for x in range(128)] for y in range(32)]
             grids[gid] = g
 
-        # Clear blank target tiles in 0x07 ($01, $0C, $0D, $0E, $12, $13, $2B, $3B).
+        # Clear blank targets: FD0 copies on $07, kettle glyphs on $1C.
         blank8 = [[0] * 8 for _ in range(8)]
-        for tile in (0x01, 0x0C, 0x0D, 0x0E, 0x12, 0x13, 0x2B, 0x3B):
+        for tile in (0x12, 0x13, 0x2B, 0x3B):
             dbg._set_tile(grids[0x07], tile, blank8)
+        for tile in (0x30, 0x31, 0x32, 0x33):
+            dbg._set_tile(grids[0x1C], tile, blank8)
 
         # Populate expected_rows at $1F:33 and $22:33.
         for patch in self.spec['patches']:
@@ -93,7 +96,8 @@ class DungeonBgOverridesTest(unittest.TestCase):
     def test_preserves_all_untargeted_tiles_exactly(self):
         _, items = self.build()
         touched = {
-            0x07: {0x01, 0x0C, 0x0D, 0x0E, 0x12, 0x13, 0x2B, 0x3B},
+            0x07: {0x12, 0x13, 0x2B, 0x3B},
+            0x1C: {0x30, 0x31, 0x32, 0x33},
             0x1F: {0x33},
             0x22: {0x33},
         }
@@ -115,12 +119,14 @@ class DungeonBgOverridesTest(unittest.TestCase):
             self.assertEqual(sheet07[off:off + 24], self.bases[0x09][off:off + 24])
         self.assertEqual(self.base.read_bytes(), self.rom)
 
-    def test_only_nine_independent_pointer_bytes_owned(self):
+    def test_only_twelve_independent_pointer_bytes_owned(self):
         _, items = self.build()
         source = dbg.generated_files(items)[Path('bg_sheet_overrides.asm')].decode()
-        self.assertEqual(source.count('protected_size=1'), 9)
-        self.assertEqual(source.count('assert read1('), 9)
-        self.assertEqual(source.count('assert pc() =='), 9)
+        owned = len(dbg.SHEETS) * 3
+        self.assertEqual(owned, 12)
+        self.assertEqual(source.count('protected_size=1'), owned)
+        self.assertEqual(source.count('assert read1('), owned)
+        self.assertEqual(source.count('assert pc() =='), owned)
         for gid in dbg.SHEETS:
             for table in (NEW_BANK, NEW_HIGH, NEW_LOW):
                 self.assertIn(f'org ${table + gid:06X} ', source)
@@ -135,15 +141,17 @@ class DungeonBgOverridesTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'base sheet changed'):
             self.build()
 
-        # Non-blank target tile in $07 refused even when SHA matches.
+        # Non-blank kettle target on $1C is refused even when the SHA matches.
         self.setUp()
-        g7 = sheet_codec.sheet_to_grid(self.bases[0x07])
-        dbg._set_tile(g7, 0x01, [[1] * 8 for _ in range(8)])
-        raw7 = sheet_codec.grid_to_sheet(g7)
-        stream7 = lz2.stored(raw7)
-        self.rom[pc(0x028000):pc(0x028000) + len(stream7)] = stream7
+        g1c = sheet_codec.sheet_to_grid(self.bases[0x1C])
+        dbg._set_tile(g1c, 0x30, [[1] * 8 for _ in range(8)])
+        raw1c = sheet_codec.grid_to_sheet(g1c)
+        stream1c = lz2.stored(raw1c)
+        self.rom[pc(0x068000):pc(0x068000) + len(stream1c)] = stream1c
         self.base.write_bytes(self.rom)
-        self.spec['sheets'][0]['base_sha256'] = hashlib.sha256(raw7).hexdigest()
+        for entry in self.spec['sheets']:
+            if dbg.number(entry['global_sheet']) == 0x1C:
+                entry['base_sha256'] = hashlib.sha256(raw1c).hexdigest()
         self.write_spec()
         with self.assertRaisesRegex(ValueError, 'is not blank'):
             self.build()
@@ -186,7 +194,7 @@ class DungeonBgOverridesTest(unittest.TestCase):
 
     def test_timber_kettle_custom_object_words(self):
         kettle = (ROOT / 'Dungeons/Objects/Data/timber_kettle.bin').read_bytes()
-        self.assertEqual(struct.unpack('<7H', kettle), (0x8002, 0x0CC1, 0x0CCC, 0x8002, 0x0CCD, 0x0CCE, 0x0000))
+        self.assertEqual(struct.unpack('<7H', kettle), (0x8002, 0x0DB0, 0x0DB1, 0x8002, 0x0DB2, 0x0DB3, 0x0000))
 
 
 if __name__ == '__main__':

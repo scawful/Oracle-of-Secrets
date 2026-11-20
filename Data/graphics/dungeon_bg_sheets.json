@@ -14,15 +14,19 @@
     {
       "global_sheet": "0x22",
       "base_sha256": "f342c024d2b40528566ff26a8c76778dab9be9876f9bfbbe194a52d1b4531de7"
+    },
+    {
+      "global_sheet": "0x1C",
+      "base_sha256": "c792aad1bc32c3e3d702c3e60a8776ebd4dc9ac03affcc8e46bf4f4f87042e3d"
     }
   ],
   "patches": [
     {
       "name": "timber_kettle",
       "kind": "grid_16x16",
-      "sheet": "0x07",
+      "sheet": "0x1C",
       "source": "dungeon_bg/kettle_3L.txt",
-      "tiles": ["0x01", "0x0C", "0x0D", "0x0E"],
+      "tiles": ["0x30", "0x31", "0x32", "0x33"],
       "require_blank": true
     },
     {
