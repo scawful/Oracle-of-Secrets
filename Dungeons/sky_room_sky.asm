@@ -8,14 +8,27 @@
 ;
 ; After Underworld_LoadRoom has drawn the BG2 buffer ($7E2000), this fills the
 ; BG1 buffer ($7E4000): under each BG2 $1E9 cell and each pit-lip cell
-; ($1DB-$1DF) a sky word from a 32x32 lattice (sheet EA in slot 6, palette 7
-; colours 1-3); every other cell gets the blank $01E9. The fill runs before
-; any tilemap upload in every caller.
+; ($1DB-$1DF, palette and flip bits ignored) a sky word from a 32x32 lattice
+; (sheet EA in slot 6, palette 7 colours 1-3); every other cell gets the blank
+; $01E9. The fill runs before any tilemap upload in every caller.
+;
+; Layer type 1 (the open-room header value) leaves BG1 on the subscreen but
+; Underworld_HandleCamera does not copy BG2 scroll onto BG1 ($02BB66 skips
+; types 1 and 5). Door scrolls only rewrite the axis that is moving, so the
+; other axis stays at the old parallax offset. Open rooms promote the RAM
+; copy of $0414 from 1 to 6 (subscreen on, and the camera takes
+; UnderworldSyncBG1and2Scroll). The header byte is not written.
+;
+; Every open room and every enclosed D8 room ($8C $96 $A6 $9B-$9D) also
+; re-applies CGWSEL/CGADSUB and TM/TS from that layer value. Entrance $29 is
+; the only vanilla path that does this; stairs, pits and door loads keep the
+; previous room's registers.
 ;
 ; Scope: rooms $90-$95, $A0, $A7 and $B0 (header layer type 1).
 ; Sheet EA rides Sky secondary group 0A slot 6. The colours use global
-; palette14 row 7 entries 1-3; row 6 is retained for chests and common objects.
-; Existing row 7 room graphics use entries 13-14, outside the sky entries.
+; palette14 row 7 entries 1-3 ($1BE1A2); row 6 is retained for chests and
+; common objects. Existing row 7 room graphics use entries 13-14, outside
+; the sky entries.
 ; =========================================================
 
 
@@ -62,19 +75,18 @@ SkyRoom_LoadRoom:
   ; Open-air Sky Tower rooms (v3 board): every room with a sky opening.
   ; $A6, $96 and the B1 rooms ($8C $9B $9C $9D) stay enclosed and are not listed.
   LDA.b $A0
-  LDX.w #SkyRoom_List_end-SkyRoom_List-2
-  .scan
-    CMP.l SkyRoom_List,X : BEQ .sky_room
-    DEX #2 : BPL .scan
-  BRL .done
-  .sky_room
+  JSR SkyRoom_Classify
+  CMP.w #$0000 : BEQ .done
+  JSR SkyRoom_ArmLayer
+  CMP.w #$0001 : BNE .done
+
   PHB
   SEP #$20 : LDA.b #$7E : PHA : PLB : REP #$20
 
   ; Pass 1: plain sky (EA tile 0, palette 7) under BG2 $1E9 pit cells and
   ; under the pit-lip chars $1DB-$1DF (sheet 0F, slot 7), whose colour-0
   ; pixels (tooth gaps, side strips, convex corners) would otherwise show
-  ; the blank backdrop.
+  ; the blank backdrop. AND #$03FF keeps palette/flip ($09DB, $49DE, $89DF).
   ; Blank elsewhere.
   LDY.w #$1FFE
   .cell
@@ -90,6 +102,7 @@ SkyRoom_LoadRoom:
     DEY : DEY : BPL .cell
 
   ; Pass 2: cloud cells, four copies of the 32x32 period, only over sky cells.
+  ; Quadrant deltas match RoomDraw_QuadrantDataOffset ($00/$40/$1000/$1040).
   LDX.w #$0000
   .cloud
     LDA.l SkyRoom_Clouds+2,X : AND.w #$003F : ORA.w #$1D80 : PHA
@@ -117,6 +130,92 @@ SkyRoom_LoadRoom:
     RTS
 }
 
+; A = room id. Returns A = 1 open, 2 enclosed, 0 neither. X clobbered. M=16.
+SkyRoom_Classify:
+{
+  LDX.w #SkyRoom_List_end-SkyRoom_List-2
+  .open
+    CMP.l SkyRoom_List,X : BEQ .is_open
+    DEX #2 : BPL .open
+  LDX.w #SkyRoom_Enclosed_end-SkyRoom_Enclosed-2
+  .enclosed
+    CMP.l SkyRoom_Enclosed,X : BEQ .is_enclosed
+    DEX #2 : BPL .enclosed
+  LDA.w #$0000
+  RTS
+  .is_open
+  LDA.w #$0001
+  RTS
+  .is_enclosed
+  LDA.w #$0002
+  RTS
+}
+
+; A = 1 open or 2 enclosed, M=16. Arms subscreen, color math and scroll.
+; Returns the same A, M=16. Long stores: absolute ops follow DBR, and a
+; door load can arrive with DBR pointing at a code bank.
+SkyRoom_ArmLayer:
+{
+  SEP #$30
+  PHA
+  CMP.b #$01 : BNE .layer_kept
+  LDA.b #$06 : STA.l $7E0414
+  .layer_kept
+  LDA.l $7E0414 : TAX
+  CPX.b #$08 : BCS .math
+  LDA.l SkyRoom_Subscreen,X : BPL .sub_on
+  LDA.b #$00
+  LDY.b #$17
+  BRA .sub_store
+  .sub_on
+  LDY.b #$16
+  .sub_store
+  STY.b $1C
+  STA.b $1D
+  .math
+  LDA.b #$02 : STA.b $99
+  LDA.b #$20
+  CPX.b #$00 : BEQ .math_store
+  LDA.b #$32
+  CPX.b #$07 : BEQ .math_store
+  LDA.b #$62
+  CPX.b #$04 : BEQ .math_store
+  LDA.b #$20
+  .math_store
+  STA.b $9A
+  ; Drop the half-scroll fraction so the next camera step cannot add one
+  ; pixel before the type-6 sync copies BG2 onto BG1.
+  REP #$20
+  LDA.w #$0000
+  STA.l $7E0620
+  STA.l $7E0622
+  ; Open rooms only. Enclosed $96 keeps the header effect in $0428.
+  SEP #$30
+  LDA 1,S : CMP.b #$01 : BNE .scroll
+  LDA.b #$00 : STA.l $7E0428
+  REP #$20
+  LDA.w #$0000
+  STA.l $7E0422
+  STA.l $7E0424
+  .scroll
+  REP #$20
+  LDA.b $E2 : STA.b $E0 : STA.l $7E0120
+  LDA.b $E8 : STA.b $E6 : STA.l $7E0124
+  SEP #$30
+  PLA
+  REP #$30
+  AND.w #$00FF
+  RTS
+}
+
+; Vanilla Underworld_SubscreenEnable ($02894C). $FF -> TM $17, TS $00.
+SkyRoom_Subscreen:
+  db $00, $01, $01, $FF, $01, $01, $01, $01
+
 SkyRoom_List:
   dw $0090, $0091, $0092, $0093, $0094, $0095, $00A0, $00B0, $00A7
 SkyRoom_List_end:
+
+SkyRoom_Enclosed:
+  dw $008C, $0096, $00A6, $009B, $009C, $009D
+SkyRoom_Enclosed_end:
