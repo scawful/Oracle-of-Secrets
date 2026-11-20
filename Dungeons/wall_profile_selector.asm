@@ -84,7 +84,19 @@ WallSel_Common:
   ASL : PHA                      ; [class*2]
   LDA.b $A0 : CMP.w #$0128 : BCS .fallback_pop
   TAX
-  LDA.l WallSel_RoomProfile,X : AND.w #$00FF : BEQ .fallback_pop
+  LDA.l WallSel_RoomProfile,X : AND.w #$00FF : BNE .have_profile
+  ; Shared LW/Abyss rooms stay 0 in WallSel_RoomProfile (preserving vanilla LW
+  ; and WSR1 editor views) and resolve here only when in Eon Abyss ($7EF3CA=$40).
+  LDA.l $7EF3CA : AND.w #$00FF : CMP.w #$0040 : BNE .fallback_pop
+  LDX.w #$0000
+.abyss_scan
+  LDA.l WallSel_AbyssOnlyRooms,X : CMP.w #$FFFF : BEQ .fallback_pop
+  CMP.b $A0 : BEQ .abyss_hit
+  INX #3
+  BRA .abyss_scan
+.abyss_hit
+  LDA.l WallSel_AbyssOnlyRooms+2,X : AND.w #$00FF : BEQ .fallback_pop
+.have_profile
   CMP.w #!WALLSEL_PROFILE_COUNT+1 : BCS .fallback_pop
   ASL : TAX
   LDA.l WallSel_ProfileBase-2,X

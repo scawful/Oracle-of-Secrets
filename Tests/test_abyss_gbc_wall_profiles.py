@@ -194,7 +194,7 @@ class AbyssGbcWallProfileDataTests(unittest.TestCase):
         )
         self.assertEqual(proc.returncode, 0, proc.stderr or proc.stdout)
 
-    def test_exact_phase1_abyss_exclusive_partition_and_zero_shared_leak(self) -> None:
+    def test_exact_phase1_and_phase2_abyss_partition_and_wsr1_safety(self) -> None:
         _, _, styles, _ = gag.load_styles_config(ABYSS_STYLES)
         all_styled = {r for s in styles for r in s["rooms"] + s["more_rooms"]}
         expected_abyss_excl = all_styled - set(SHARED_KALYXO_ABYSS_ROOMS)
@@ -203,21 +203,33 @@ class AbyssGbcWallProfileDataTests(unittest.TestCase):
         profiles, groups, room_profile, _ = gw.load_config()
         by_name = {p["name"]: p for p in profiles}
         abyss_pids = {by_name[name]["id"] for name in ABYSS_PROFILE_NAMES}
+        abyss_shared = dict(gw.load_abyss_only_rooms(profiles, groups))
 
         # All 4 Abyss profiles are words-only (no kit route)
         for name in ABYSS_PROFILE_NAMES:
             self.assertNotIn("kit", by_name[name], f"{name} must be words-only (no kit)")
 
-        # Every Abyss-exclusive room resolves to one of profiles 4..7
+        # Every unconditional entry in WallSel_RoomProfile stays strictly <= profile_count (WSR1/Yaze safe)
+        self.assertTrue(all(0 <= pid <= len(profiles) for pid in room_profile))
+
+        # Every Abyss-exclusive room resolves unconditionally to profiles 4..7
         bound_abyss = {r for r, pid in enumerate(room_profile) if pid in abyss_pids}
         self.assertEqual(bound_abyss, expected_abyss_excl)
 
-        # Every shared Kalyxo/Abyss room stays profile 0 (vanilla SNES in LW)
+        # Every shared Kalyxo/Abyss room stays 0 in WallSel_RoomProfile (LW/WSR1 vanilla)
+        # and binds in WallSel_AbyssOnlyRooms ($7EF3CA == $40) to its floor-matched profile
+        self.assertEqual(set(abyss_shared.keys()), set(SHARED_KALYXO_ABYSS_ROOMS))
         for r in SHARED_KALYXO_ABYSS_ROOMS:
             self.assertEqual(
                 room_profile[r], 0,
-                f"Shared LW/Abyss room ${r:03X} must remain unbound (profile 0) in Phase 1",
+                f"Shared LW/Abyss room ${r:03X} must stay 0 in WallSel_RoomProfile for LW/WSR1 safety",
             )
+            self.assertIn(abyss_shared[r], abyss_pids)
+
+        # Unconditional + Abyss-gated cover 100% of all 53 styled Eon Abyss rooms
+        self.assertEqual(bound_abyss | set(abyss_shared.keys()), all_styled)
+        self.assertEqual(room_profile[0x111], 0)
+        self.assertNotIn(0x111, abyss_shared)
 
     def test_pure_gbc_glyphs_and_collision_invariants(self) -> None:
         for name in ABYSS_PROFILE_NAMES:
@@ -362,24 +374,77 @@ class AbyssGbcWallProfileCompiledCpuTests(unittest.TestCase):
         finally:
             f.close()
 
-    def test_shared_kalyxo_abyss_rooms_stay_vanilla(self) -> None:
+    def test_shared_kalyxo_abyss_rooms_world_gate_lw_vs_abyss(self) -> None:
+        words_cache = {
+            name: {
+                int(k, 16): [int(v.lstrip("$"), 16) for v in ws]
+                for k, ws in json.loads((PROFILES_DIR / f"{name}.words.json").read_text())["classes"].items()
+            }
+            for name in ABYSS_PROFILE_NAMES
+        }
+        shared_expected = [
+            (0x102, "abyss_gbc_ec_p5"),
+            (0x107, "abyss_gbc_ec_p5"),
+            (0x122, "abyss_gbc_ee_p3"),
+            (0x10E, "abyss_gbc_ee_p5"),
+            (0x114, "abyss_gbc_ee_p5"),
+            (0x11E, "abyss_gbc_ee_p5"),
+            (0x124, "abyss_gbc_ee_p5"),
+        ]
         f = self._fixture()
         try:
-            for room in SHARED_KALYXO_ABYSS_ROOMS + (0x104, 0x111, 0x001, 0x0FF):
+            # 1. Light World ($00) and Special OW ($80): ALL 7 shared rooms + LW rooms stay 100% vanilla
+            for world in (0x00, 0x80):
+                f.ram[0x0F3CA] = world
+                for room in SHARED_KALYXO_ABYSS_ROOMS + (0x104, 0x111, 0x001, 0x0FF):
+                    f.ram[0xA0] = room & 0xFF
+                    f.ram[0xA1] = (room >> 8) & 0xFF
+                    for obj in (0x001, 0x002, 0x061, 0x062, 0x03B, 0x076, 0x00D):
+                        _run_call(f, "WallSel_Sub1", m8=False, x8=False, x=obj * 2)
+                        self.assertEqual(
+                            f.cpu.a, 0x1000 + obj * 2,
+                            f"world=${world:02X} room ${room:03X} obj ${obj:03X} must return vanilla offset",
+                        )
+                    for obj in (0x100, 0x103, 0x104, 0x107):
+                        _run_call(f, "WallSel_Sub2", m8=False, x8=False, x=(obj - 0x100) * 2)
+                        self.assertEqual(
+                            f.cpu.a, 0x2000 + (obj - 0x100) * 2,
+                            f"world=${world:02X} room ${room:03X} obj ${obj:03X} must return vanilla offset",
+                        )
+
+            # 2. Eon Abyss ($7EF3CA == $40): ALL 7 shared rooms deliver exact simplified GBC wall words
+            f.ram[0x0F3CA] = 0x40
+            for room, pname in shared_expected:
                 f.ram[0xA0] = room & 0xFF
                 f.ram[0xA1] = (room >> 8) & 0xFF
-                for obj in (0x001, 0x002, 0x061, 0x062, 0x03B, 0x076, 0x00D):
+                expected_map = words_cache[pname]
+                for obj in (0x001, 0x002, 0x061, 0x062, 0x003, 0x03B, 0x076, 0x00D):
+                    _run_call(f, "WallSel_Sub1", m8=False, x8=False, x=obj * 2)
+                    self.assertEqual(
+                        f.cpu.a, WALLSEL_BUFFER_OFFSET,
+                        f"Abyss shared room ${room:03X} obj ${obj:03X} must redirect to WallSel_Buffer",
+                    )
+                    self.assertEqual(self._read_buffer(f, len(expected_map[obj])), expected_map[obj])
+                for obj in (0x100, 0x103, 0x104, 0x107, 0x108):
+                    _run_call(f, "WallSel_Sub2", m8=False, x8=False, x=(obj - 0x100) * 2)
+                    self.assertEqual(
+                        f.cpu.a, WALLSEL_BUFFER_OFFSET,
+                        f"Abyss shared room ${room:03X} obj ${obj:03X} must redirect to WallSel_Buffer",
+                    )
+                    self.assertEqual(self._read_buffer(f, len(expected_map[obj])), expected_map[obj])
+
+            # 3. Unstyled LW rooms (including relocated Archery $111) stay vanilla EVEN when $7EF3CA == $40
+            for room in (0x104, 0x111, 0x001, 0x0FF):
+                f.ram[0xA0] = room & 0xFF
+                f.ram[0xA1] = (room >> 8) & 0xFF
+                for obj in (0x001, 0x061):
                     _run_call(f, "WallSel_Sub1", m8=False, x8=False, x=obj * 2)
                     self.assertEqual(
                         f.cpu.a, 0x1000 + obj * 2,
-                        f"Shared/LW room ${room:03X} obj ${obj:03X} must return vanilla offset",
+                        f"Unstyled room ${room:03X} must stay vanilla even in Abyss",
                     )
-                for obj in (0x100, 0x103, 0x104, 0x107):
-                    _run_call(f, "WallSel_Sub2", m8=False, x8=False, x=(obj - 0x100) * 2)
-                    self.assertEqual(
-                        f.cpu.a, 0x2000 + (obj - 0x100) * 2,
-                        f"Shared/LW room ${room:03X} obj ${obj:03X} must return vanilla offset",
-                    )
+                _run_call(f, "WallSel_Sub2", m8=False, x8=False, x=0)
+                self.assertEqual(f.cpu.a, 0x2000)
         finally:
             f.close()
 
@@ -391,7 +456,8 @@ class AbyssGbcWallProfileCompiledCpuTests(unittest.TestCase):
             f.ram[0x0E] = 0x08
             f.ram[0x0F] = 0x7E
             f.ram[0x0802] = 0x0E
-            for room in (0x00C, 0x02D, 0x0C9, 0x01D):
+            for room in (0x00C, 0x02D, 0x0C9, 0x01D, 0x102, 0x10E, 0x122):
+                f.ram[0x0F3CA] = 0x40
                 f.ram[0xA0] = room & 0xFF
                 f.ram[0xA1] = (room >> 8) & 0xFF
                 f.ram[0x0AA2] = 0x00

@@ -597,6 +597,9 @@ def load_config() -> tuple[list[dict], list[dict], list[int], dict[int, str]]:
     for g in cfg["groups"]:
         if g["profile"] not in by_name:
             raise SystemExit(f"group {g['name']}: unknown profile {g['profile']}")
+        world = g.get("world")
+        if world not in (None, "abyss"):
+            raise SystemExit(f"group {g['name']}: unsupported world {world!r} (expected omitted or 'abyss')")
         pid = by_name[g["profile"]]["id"]
         for r in (int(x, 16) for x in g["rooms"]):
             if not 0 <= r < ROOM_COUNT:
@@ -604,8 +607,22 @@ def load_config() -> tuple[list[dict], list[dict], list[int], dict[int, str]]:
             if r in owner:
                 raise SystemExit(f"room {r:03X} is in both {owner[r]} and {g['name']}")
             owner[r] = g["name"]
-            room_profile[r] = pid
+            if world is None:
+                room_profile[r] = pid
     return profiles, cfg["groups"], room_profile, owner
+
+
+def load_abyss_only_rooms(profiles: list[dict], groups: list[dict]) -> list[tuple[int, int]]:
+    """Sorted (room_id, profile_id) pairs for groups gated on Eon Abyss ($7EF3CA == $40)."""
+    by_name = {p["name"]: p["id"] for p in profiles}
+    pairs: list[tuple[int, int]] = []
+    for g in groups:
+        if g.get("world") != "abyss":
+            continue
+        pid = by_name[g["profile"]]
+        for r in (int(x, 16) for x in g["rooms"]):
+            pairs.append((r, pid))
+    return sorted(pairs)
 
 
 def bind_kits(profiles: list[dict], kits: list[dict]) -> dict[str, dict]:
@@ -631,8 +648,12 @@ def bind_kits(profiles: list[dict], kits: list[dict]) -> dict[str, dict]:
 
 def render() -> str:
     profiles, groups, room_profile, _ = load_config()
+    abyss_rooms = load_abyss_only_rooms(profiles, groups)
     kits = load_kits()
     bound = bind_kits(profiles, kits)
+    for g in groups:
+        if g.get("world") == "abyss" and g["profile"] in bound:
+            raise SystemExit(f"group {g['name']}: world='abyss' groups must use a words-only profile (no kit)")
     routed = sorted((k for k in kits if k["_row"] is not None), key=lambda k: k["_row"])
     words_by_profile = []
     for p in profiles:
@@ -683,6 +704,13 @@ def render() -> str:
     E("WallSel_RoomProfile:")
     for i in range(0, ROOM_COUNT, 16):
         E("  db " + ", ".join(f"${v:02X}" for v in room_profile[i:i + 16]))
+    E("; Abyss-only ($7EF3CA == $40) shared-room bindings: (dw room, db profile), $FFFF end.")
+    E("; Kept outside WallSel_RoomProfile so WSR1/Yaze keeps shared LW rooms vanilla.")
+    E(f"!WALLSEL_ABYSS_SHARED_COUNT = {len(abyss_rooms)}")
+    E("WallSel_AbyssOnlyRooms:")
+    for r, pid in abyss_rooms:
+        E(f"  dw ${r:04X} : db ${pid:02X}")
+    E("  dw $FFFF")
     E("WallSel_ProfileBase:  ; (profile-1)*CLASS_COUNT*2")
     E("  dw " + ", ".join(f"${i * len(CLASSES) * 2:04X}" for i in range(len(profiles))))
     data: list[int] = []

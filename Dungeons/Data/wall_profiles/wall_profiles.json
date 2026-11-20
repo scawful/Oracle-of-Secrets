@@ -36,6 +36,12 @@
   {"name": "abyss_gbc_rites_boss", "kind": "room_group", "profile": "abyss_gbc_ec_p5",
    "rooms": ["00D"]},
   {"name": "abyss_gbc_rites_hall", "kind": "room_group", "profile": "abyss_gbc_ec_p3",
-   "rooms": ["01D"]}
+   "rooms": ["01D"]},
+  {"name": "abyss_gbc_shared_houses", "kind": "room_group", "world": "abyss", "profile": "abyss_gbc_ec_p5",
+   "rooms": ["102", "107"]},
+  {"name": "abyss_gbc_shared_fortune", "kind": "room_group", "world": "abyss", "profile": "abyss_gbc_ee_p3",
+   "rooms": ["122"]},
+  {"name": "abyss_gbc_shared_caves", "kind": "room_group", "world": "abyss", "profile": "abyss_gbc_ee_p5",
+   "rooms": ["10E", "114", "11E", "124"]}
  ]
 }

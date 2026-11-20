@@ -20,6 +20,9 @@
 ; group abyss_gbc_houses -> abyss_gbc_ec_p5: 0C9 00F 0F4 0F5 100 110 11C
 ; group abyss_gbc_rites_boss -> abyss_gbc_ec_p5: 00D
 ; group abyss_gbc_rites_hall -> abyss_gbc_ec_p3: 01D
+; group abyss_gbc_shared_houses -> abyss_gbc_ec_p5: 102 107
+; group abyss_gbc_shared_fortune -> abyss_gbc_ee_p3: 122
+; group abyss_gbc_shared_caves -> abyss_gbc_ee_p5: 10E 114 11E 124
 !WALLSEL_CLASS_COUNT = 42
 !WALLSEL_PROFILE_COUNT = 7
 
@@ -67,6 +70,18 @@ WallSel_RoomProfile:
   db $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $06, $00, $04, $00, $00, $00, $05, $04, $00, $00, $00, $00, $06, $00, $00, $00
   db $00, $00, $00, $04, $00, $04, $00, $00
+; Abyss-only ($7EF3CA == $40) shared-room bindings: (dw room, db profile), $FFFF end.
+; Kept outside WallSel_RoomProfile so WSR1/Yaze keeps shared LW rooms vanilla.
+!WALLSEL_ABYSS_SHARED_COUNT = 7
+WallSel_AbyssOnlyRooms:
+  dw $0102 : db $06
+  dw $0107 : db $06
+  dw $010E : db $04
+  dw $0114 : db $04
+  dw $011E : db $04
+  dw $0122 : db $05
+  dw $0124 : db $04
+  dw $FFFF
 WallSel_ProfileBase:  ; (profile-1)*CLASS_COUNT*2
   dw $0000, $0054, $00A8, $00FC, $0150, $01A4, $01F8
 WallSel_SlotSrc:  ; byte offset of LAST word in WallSel_Data, $FFFF = vanilla
