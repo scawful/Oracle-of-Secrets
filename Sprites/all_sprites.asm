@@ -430,6 +430,12 @@ incsrc "Sprites/Objects/dungeon_web.asm"
 incsrc "Sprites/Objects/lily_pad.asm"
 %log_end("lily_pad", !LOG_SPRITES)
 
+; Nighttime Lantern Poe ($B4, GameyFireBro EoW art): zero-lag ghost enemy for
+; nighttime Epona rides (Subtype 0) or always-on haunts (Subtype 1). Bank $32.
+%log_start("night_poe", !LOG_SPRITES)
+incsrc "Sprites/Enemies/night_poe.asm"
+%log_end("night_poe", !LOG_SPRITES)
+
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
 ; vanilla fortune teller at $0DC92E until 2026-09-26).

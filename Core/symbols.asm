@@ -250,8 +250,12 @@ Horse_OffOam   = $7F5405 ; word: $0800-$09E0 OAM base of sprite $2D this frame (
 endif
 
 ; Epona overhaul transient WRAM ($7F5670-$7F57FF inside UNUSED_7F5000,
-; leaving $7F5408-$7F5409 to AbyssGbc_LoadedStyle/PalStyle, $7F540A-$7F540F
-; free, $7F5410-$7F545F to HorseGame_*, and $7F5460-$7F5663 to KORL_Dock*).
+; leaving $7F5408-$7F5409 to AbyssGbc_LoadedStyle/PalStyle, $7F540A-$7F540C
+; to NightPoe_Vram*, $7F540D-$7F540F free, $7F5410-$7F545F to HorseGame_*,
+; and $7F5460-$7F5663 to KORL_Dock*).
+NightPoe_VramState      = $7F540A ; 0=idle, $80=pending NMI DMA, $01=live in VRAM $5EC0/$5EE0
+NightPoe_LastArea       = $7F540B ; cached $8A (OW) or $A0 low byte (UW)
+NightPoe_LastInd        = $7F540C ; cached $00 (OW) or $80|($A1&1) (UW)
 !Horse_OverhaulWramDefined = 1
 Horse_AnchorDir         = $7F5670 ; saved $2F facing (0=N, 2=S, 4=W, 6=E; $FF=unset)
 Horse_Carrots           = $7F5671 ; current stamina carrots (0..5)

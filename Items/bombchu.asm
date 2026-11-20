@@ -387,6 +387,9 @@ Bombchu_NmiUpload:
   .done
   REP #$10
   JSL GustJar_NmiUpload
+  if defined("NIGHT_POE_NMI_UPLOAD")
+    JSL NightPoe_NmiUpload
+  endif
   PLY : PLX : PLA : PLP
   LDX.w $0134 : STX.w $2116 ; displaced instructions
   RTL
