@@ -35,7 +35,7 @@
    "rooms": ["0C9", "00F", "0F4", "0F5", "100", "110", "11C"]},
   {"name": "abyss_gbc_rites_boss", "kind": "room_group", "profile": "abyss_gbc_ec_p5",
    "rooms": ["00D"]},
-  {"name": "abyss_gbc_rites_hall_archery", "kind": "room_group", "profile": "abyss_gbc_ec_p3",
-   "rooms": ["01D", "111"]}
+  {"name": "abyss_gbc_rites_hall", "kind": "room_group", "profile": "abyss_gbc_ec_p3",
+   "rooms": ["01D"]}
  ]
 }

@@ -19,7 +19,7 @@
 ; group abyss_gbc_fire_fairy -> abyss_gbc_ee_p3: 02D 03D 116
 ; group abyss_gbc_houses -> abyss_gbc_ec_p5: 0C9 00F 0F4 0F5 100 110 11C
 ; group abyss_gbc_rites_boss -> abyss_gbc_ec_p5: 00D
-; group abyss_gbc_rites_hall_archery -> abyss_gbc_ec_p3: 01D 111
+; group abyss_gbc_rites_hall -> abyss_gbc_ec_p3: 01D
 !WALLSEL_CLASS_COUNT = 42
 !WALLSEL_PROFILE_COUNT = 7
 
@@ -65,7 +65,7 @@ WallSel_RoomProfile:
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $06, $06, $04, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-  db $06, $07, $04, $00, $00, $00, $05, $04, $00, $00, $00, $00, $06, $00, $00, $00
+  db $06, $00, $04, $00, $00, $00, $05, $04, $00, $00, $00, $00, $06, $00, $00, $00
   db $00, $00, $00, $04, $00, $04, $00, $00
 WallSel_ProfileBase:  ; (profile-1)*CLASS_COUNT*2
   dw $0000, $0054, $00A8, $00FC, $0150, $01A4, $01F8

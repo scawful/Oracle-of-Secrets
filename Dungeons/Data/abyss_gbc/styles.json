@@ -90,7 +90,7 @@
     },
     {
       "name": "house",
-      "notes": "Abyss houses and shops: Windmill ($C9), Dream Hut ($0F), 7 b3 houses ($F4/$F5/$100/$102/$107/$110/$11C), and b17 interiors ($111/$122). Seasons indoors A ($2C) with warm tan wood floor.",
+      "notes": "Abyss houses and shops: Windmill ($C9), Dream Hut ($0F), 7 b3 houses ($F4/$F5/$100/$102/$107/$110/$11C), and b17 interior ($122; Archery $111 relocated to Light World Toadstool Woods). Seasons indoors A ($2C) with warm tan wood floor.",
       "donor": {
         "png": "donor_raw_house/seasons_gfx_tileset2c.png",
         "map": "donor_raw_house/seasons_tilesetMappings2c.bin",
@@ -114,7 +114,7 @@
       "rooms": ["0x0C9"],
       "more_rooms": [
         "0x00F", "0x0F4", "0x0F5", "0x100", "0x102", "0x107", "0x110", "0x11C",
-        "0x111", "0x122"
+        "0x122"
       ]
     },
     {

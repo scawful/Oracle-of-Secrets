@@ -727,7 +727,7 @@ pullpc
 ; 0x56 - OW
 ; 0x57 - OW
 ; 0x58 - OW
-; 0x59 - OW 1A - Archery Minigame
+; 0x59 - OW 18 - Archery Minigame (SW Log Cabin, Toadstool Woods)
 ; 0x5A - OW
 ; 0x5B - OW 0F - Hidden Grave
 ; 0x5C - OW 0F - Graveyard Waterfall
@@ -741,7 +741,7 @@ pullpc
 ; 0x64 - OW 22 - Smiths House
 ; 0x65 - OW Fortune Teller
 ; 0x66 - OW Fortune Teller
-; 0x67 - OW 18 - Chest Minigame
+; 0x67 - Unassigned (Chest Minigame, freed for Lyra Sea)
 ; 0x68 - OW 18 - Bonzai House
 ; 0x69 - OW
 ; 0x6A - OW

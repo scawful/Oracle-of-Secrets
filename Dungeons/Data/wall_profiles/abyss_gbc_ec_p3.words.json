@@ -3,7 +3,7 @@
  "source_rom_sha256": "78f4fa69e19afac746dcc64246b979398193cf1b262e598a2106c1c9a52b38ad",
  "base_rom_sha256": "78f4fa69e19afac746dcc64246b979398193cf1b262e598a2106c1c9a52b38ad",
  "reference_rom_sha256": null,
- "note": "Q-OOS-21 single-course GBC interior walls with pal-3 $0EC-$0FD floor base. For Abyss-exclusive rites hallway ($01D) and archery ($111).",
+ "note": "Q-OOS-21 single-course GBC interior walls with pal-3 $0EC-$0FD floor base. For Abyss-exclusive rites hallway ($01D); archery ($111) relocated to Light World Toadstool Woods.",
  "classes": {
   "061": [
    "$3C15",

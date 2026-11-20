@@ -1,6 +1,6 @@
 {
  "schema_version": 2,
- "styles_sha256": "e53528645e8697b6fd1b4dfc18bc786a7a868d9c53adf6511defd7a229b9f47b",
+ "styles_sha256": "9a338a17a284b2b9059f0dcf9de90ae97c75059bf309b3edaecadf52a296548d",
  "streams": [
   "onox.00",
   "onox.01",
@@ -1430,7 +1430,6 @@
     "107",
     "110",
     "11C",
-    "111",
     "122"
    ],
    "row_palettes": {

@@ -3,10 +3,10 @@
 
 Verifies:
 1. gen_wall_profiles.py build --check passes with zero drift.
-2. All 47 Abyss-exclusive rooms in Dungeons/Data/abyss_gbc/styles.json bind to
+2. All 46 Abyss-exclusive rooms in Dungeons/Data/abyss_gbc/styles.json bind to
    their floor-matched words-only single-course GBC wall profile (profiles 4-7),
    while all 7 shared Kalyxo/Abyss rooms ($102/$107/$10E/$114/$11E/$122/$124)
-   stay unbound (profile 0 = vanilla SNES walls in Light World).
+   and Light World Archery ($111) stay unbound (profile 0 = vanilla SNES walls).
 3. Zero corrupted Abyss GBC chars ($091 unremapped, $093/$09E corner-corrupted)
    appear in top walls or corners ($001/$002/$061/$062/$100-$107).
 4. Collision invariants hold for straight walls, corners, lower-wall ledges
@@ -198,7 +198,7 @@ class AbyssGbcWallProfileDataTests(unittest.TestCase):
         _, _, styles, _ = gag.load_styles_config(ABYSS_STYLES)
         all_styled = {r for s in styles for r in s["rooms"] + s["more_rooms"]}
         expected_abyss_excl = all_styled - set(SHARED_KALYXO_ABYSS_ROOMS)
-        self.assertEqual(len(expected_abyss_excl), 47)
+        self.assertEqual(len(expected_abyss_excl), 46)
 
         profiles, groups, room_profile, _ = gw.load_config()
         by_name = {p["name"]: p for p in profiles}
@@ -323,7 +323,6 @@ class AbyssGbcWallProfileCompiledCpuTests(unittest.TestCase):
             (0x00F, "abyss_gbc_ec_p5"),
             (0x00D, "abyss_gbc_ec_p5"),
             (0x01D, "abyss_gbc_ec_p3"),
-            (0x111, "abyss_gbc_ec_p3"),
         ]
         words_cache = {
             name: {
@@ -366,7 +365,7 @@ class AbyssGbcWallProfileCompiledCpuTests(unittest.TestCase):
     def test_shared_kalyxo_abyss_rooms_stay_vanilla(self) -> None:
         f = self._fixture()
         try:
-            for room in SHARED_KALYXO_ABYSS_ROOMS + (0x104, 0x001, 0x0FF):
+            for room in SHARED_KALYXO_ABYSS_ROOMS + (0x104, 0x111, 0x001, 0x0FF):
                 f.ram[0xA0] = room & 0xFF
                 f.ram[0xA1] = (room >> 8) & 0xFF
                 for obj in (0x001, 0x002, 0x061, 0x062, 0x03B, 0x076, 0x00D):

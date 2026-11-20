@@ -54,8 +54,8 @@ LIVE_ABYSS_ENTRANCE_TARGET_ROOMS = {
     0x005, 0x116,
     # Fortress entrance
     0x00C,
-    # Houses (b3 + b17)
-    0x00F, 0x0C9, 0x0F4, 0x0F5, 0x100, 0x102, 0x107, 0x110, 0x111, 0x11C, 0x122,
+    # Houses (b3 + b17; Archery $111 relocated to Light World Toadstool Woods)
+    0x00F, 0x0C9, 0x0F4, 0x0F5, 0x100, 0x102, 0x107, 0x110, 0x11C, 0x122,
     # Volcanic (b13)
     0x014, 0x015, 0x023, 0x024,
     # Caves (b6 + b20)
@@ -227,14 +227,15 @@ class AbyssGbcToolingTests(unittest.TestCase):
             for r in style["rooms"] + style["more_rooms"]:
                 room_to_style[r] = style["name"]
 
-        # Every one of the 31 live Abyss entrance/hole target rooms must be styled
+        # Every one of the 30 live Abyss entrance/hole target rooms must be styled
         missing = sorted(LIVE_ABYSS_ENTRANCE_TARGET_ROOMS - set(room_to_style))
         self.assertEqual(missing, [], f"Unstyled live Abyss entrance rooms: {[hex(r) for r in missing]}")
 
         # Spot-check exact style mapping for all newly added families
         self.assertEqual(room_to_style[0x002], "finale")
-        for r in (0x00F, 0x0C9, 0x0F4, 0x0F5, 0x100, 0x102, 0x107, 0x110, 0x11C, 0x111, 0x122):
+        for r in (0x00F, 0x0C9, 0x0F4, 0x0F5, 0x100, 0x102, 0x107, 0x110, 0x11C, 0x122):
             self.assertEqual(room_to_style[r], "house", f"Room 0x{r:03X} expected house")
+        self.assertNotIn(0x111, room_to_style, "Archery $111 relocated to Light World Toadstool Woods")
         for r in (0x004, 0x013, 0x014, 0x015, 0x023, 0x024):
             self.assertEqual(room_to_style[r], "volcanic", f"Room 0x{r:03X} expected volcanic")
         for r in (0x0D0, 0x0D1, 0x0D2, 0x0F6, 0x10E, 0x112, 0x114, 0x117, 0x11E, 0x123, 0x124, 0x125):
@@ -474,7 +475,7 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
     def test_unstyled_and_out_of_range_rooms_stay_vanilla_even_in_abyss(self) -> None:
         f = self._new_fixture()
         try:
-            for room in (0x001, 0x053, 0x073, 0x0CA, 0x128, 0x01FF):
+            for room in (0x001, 0x053, 0x073, 0x0CA, 0x111, 0x128, 0x01FF):
                 with self.subTest(room=f"0x{room:03X}"):
                     f.put(0x001B, 0x01)
                     f.put(0x7EF3CA, 0x40)
