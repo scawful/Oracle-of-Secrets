@@ -147,6 +147,7 @@ Sprite_Kydrog_Main:
       LDA.w SprMiscE, X : BNE .arrived
         INC.w SprMiscE, X
         LDA.b #$01 : STA.w $02E4 ; Link holds still for the arrival pan
+        STA.w $0FFC ; no menu/map while Link is hidden and $011C is shifted
         STZ.b $49
         LDA.b #$28 : STA.w SprTimerA, X
         %GotoAction(8)
@@ -341,6 +342,7 @@ Sprite_Kydrog_Main:
     .done
     STZ.b $4B
     STZ.w $02E4
+    STZ.w $0FFC
     STZ.w $011C : STZ.w $011D
     %GotoAction(0)
     RTS
@@ -613,7 +615,7 @@ KydrogLanding_Tick:
     PLP
     RTL
   .gameplay
-  LDA.b $8A : CMP.b #$40 : BNE .abort
+  LDA.b $8A : CMP.b #$40 : BNE .maybe_abort
   LDA.l AbyssLanding : CMP.b #$02 : BEQ .clear
   BCS .pan
     LDA.b $11 : BNE .out
@@ -622,14 +624,17 @@ KydrogLanding_Tick:
     LDA.w #$FF20 : STA.w $011C
     SEP #$20
     LDA.b #$01 : STA.w $02E4
+    STA.w $0FFC ; no menu/map while mosaic and camera pan own $95/$011C
     LDA.b #$0C : STA.b $4B ; Link invisible while the camera is away
     LDA.b #$F3 : STA.b $95 ; BG1/BG2 mosaic, largest size
     LDA.b #$02 : STA.l AbyssLanding
     BRA .out
   .clear
     LDA.b $1A : AND.b #$03 : BNE .out
-    LDA.b $95 : SEC : SBC.b #$10 : STA.b $95
+    LDA.b $95 : CMP.b #$10 : BCC .clear_done
+    SEC : SBC.b #$10 : STA.b $95
     CMP.b #$10 : BCS .out
+    .clear_done
       STZ.b $95
       LDA.b #$03 : STA.l AbyssLanding
       BRA .out
@@ -640,10 +645,15 @@ KydrogLanding_Tick:
     INC.w $011C
     SEP #$20
     BRA .out
+  .maybe_abort
+  ; If states 2-3 were active when leaving area $40, restore Link/camera/mosaic
+  ; before disarming; state 1 never touched them.
+  LDA.l AbyssLanding : CMP.b #$02 : BCC .abort
   .done
   STZ.b $4B
   STZ.b $95
   STZ.w $02E4
+  STZ.w $0FFC
   STZ.w $011C : STZ.w $011D
   .abort
   LDA.b #$00 : STA.l AbyssLanding

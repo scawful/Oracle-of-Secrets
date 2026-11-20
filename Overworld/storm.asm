@@ -23,11 +23,14 @@
 ;          Abyss and ends when Link is back on Kalyxo.
 ;
 ; The storm is Kalyxo weather: no rain overlay, rain sound or dim map in the
-; Abyss (areas $40-$7F). Readers check the current area ($8A bit 6).
+; Abyss (areas $40-$7F) or Special Overworld ($80-$BF). Readers check $8A < $40.
 ;
 ; Readers (all replace a "GameState < 2" check):
 ;   - Overworld_ReloadSubscreenOverlay, ActivateSubScreen
 ;     (Overworld/ZSCustomOverworld.asm): rain overlay $9F, SFX1 $01.
+;   - Overworld_ScrollTransition step 4 ($02AC12): skips
+;     Overworld_SetFixedColorAndScroll ($0BFE70) only while the Part 0 storm is
+;     active on Kalyxo, decoupling from GameState < 2.
 ;   - AdjustOverworldAmbiance ($02C4B6): every light world area gets the rain
 ;     ambience nibble, so area transitions, map exit and bird travel
 ;     (LoadAmbientSound) keep playing rain. The music nibble is unchanged.
@@ -42,7 +45,9 @@
 
 ; ---------------------------------------------------------
 ; Carry clear while the storm is active here, set otherwise.
-; Active = storm bit set and the current area is on Kalyxo ($8A bit 6 = 0).
+; Active = storm bit set and the current area is on Kalyxo Light World ($8A < $40).
+; Excludes both Eon Abyss ($40-$7F) and Special Overworld ($80-$BF) so Sky/Lyra
+; overlay reloads and ActivateSubScreen never inherit Kalyxo Part 0 rain.
 ; Ends the storm first if Link is back on Kalyxo after the Abyss.
 ; Replaces "LDA.l GameState : CMP.b #$02" in front of a vanilla BCS, so the
 ; storm takes the old "GameState < 2" path. Clobbers A (low byte).
@@ -54,7 +59,7 @@ Part0Storm_CarryClearIfStorm:
   PHX
   SEP #$20
   JSR Part0Storm_EndIfBackOnKalyxo
-  LDA.b $8A : AND.b #$40 : BNE .no_storm
+  LDA.b $8A : CMP.b #$40 : BCS .no_storm
   LDA.l StoryProgress2 : AND.b #!Story2_Part0Storm : BEQ .no_storm
     PLX
     PLP
@@ -114,6 +119,15 @@ Part0Storm_EndIfBackOnKalyxo:
 }
 
 pushpc
+
+; Overworld_ScrollTransition step 4: LDA.l $7EF3C5 : CMP.b #$02 (6 bytes),
+; BCS at $02AC18 kept. Decouples Overworld_SetFixedColorAndScroll ($0BFE70)
+; skip from GameState < 2 so Farore's GameState = 2 keeps the active storm
+; consistent while non-storm / Abyss / Special OW transitions run $0BFE70.
+assert read4($02AC12) == $7EF3C5AF && read2($02AC16) == $02C9, "Overworld_ScrollTransition storm skip moved"
+org $02AC12 ; @hook module=Overworld name=Part0Storm_ScrollSkip kind=jsl target=Part0Storm_CarryClearIfStorm expected_m=8 expected_x=8
+  JSL Part0Storm_CarryClearIfStorm : NOP #2
+assert pc() == $02AC18
 
 ; AdjustOverworldAmbiance: LDA.b $00 : STA.l !OverworldMusicCache+!OverworldMusicSpecialIndex (6 bytes).
 org $02C4B6 ; @hook module=Overworld name=Part0Storm_AdjustAmbience kind=jsl target=Part0Storm_AdjustAmbience expected_m=8 expected_x=16
