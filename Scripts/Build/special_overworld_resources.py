@@ -211,6 +211,11 @@ def selected_sky_overlay_contexts(value, graphics_root):
     pages = {page['map_id']: page for page in value['pages']}
     resident = {page for area in value['gameplay_areas'] if area['resident_required']
                 for page in area['maps']}
+    if not any(host in resident for host in SKY_RESIDENT_HOSTS):
+        # Sky hosts ($87, $8C-$8F) have migrated off resident-atlas to native
+        # v3 sheets + expanded global Tile16 + native palettes; Map $94 cloud
+        # overlay renders natively without resident donor packing.
+        return None
     _require(all(host in resident and host in pages
                  and pages[host]['source_profile']['subscreen_overlay'] == SKY_CLOUD_OVERLAY
                  for host in SKY_RESIDENT_HOSTS), 'SKY_SOURCE_HOST_SELECTION_MISMATCH')
@@ -408,20 +413,36 @@ def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_ti
 
 
 def _validate_address_overrides(source, overrides):
-    """Admit only Oracle's existing fixed aux-palette ABI, not relocations."""
+    """Admit only Oracle's fixed Bank $45 Main/Aux/Anim palette ABIs, not relocations."""
     _require(type(overrides) is dict, 'ADDRESS_OVERRIDES_UNSUPPORTED')
     if not overrides:
         return
-    # Overworld/aux_palette_extension.asm owns SNES45F900..45FE3F.
+    # Overworld/aux_palette_extension.asm owns:
+    #   Main ($06..$15): SNES $45F400..$45F85F (PC 0x22F400, 16 x 70B)
+    #   Aux  ($14..$33): SNES $45F900..$45FE3F (PC 0x22F900, 32 x 42B)
+    #   Anim ($0E..$1D): SNES $45FE40..$45FF1F (PC 0x22FE40, 16 x 14B)
     # These describe palette loading; sheet pointers still come from the ROM.
-    expected = dict(overworld_aux_palette_extension_pc=0x22F900,
-                    overworld_aux_palette_extension_count=32,
-                    overworld_aux_palette_extension_abi=1)
-    _require(overrides.keys() == expected.keys()
-             and all(type(value) is int for value in overrides.values())
-             and overrides == expected, 'ADDRESS_OVERRIDES_UNSUPPORTED')
+    aux_abi = dict(overworld_aux_palette_extension_pc=0x22F900,
+                   overworld_aux_palette_extension_count=32,
+                   overworld_aux_palette_extension_abi=1)
+    main_abi = dict(overworld_main_palette_extension_pc=0x22F400,
+                    overworld_main_palette_extension_count=16,
+                    overworld_main_palette_extension_abi=1)
+    anim_abi = dict(overworld_anim_palette_extension_pc=0x22FE40,
+                    overworld_anim_palette_extension_count=16,
+                    overworld_anim_palette_extension_abi=1)
+    admitted = (
+        aux_abi,
+        {**aux_abi, **main_abi, **anim_abi},
+    )
+    _require(all(type(value) is int for value in overrides.values())
+             and any(overrides == spec for spec in admitted),
+             'ADDRESS_OVERRIDES_UNSUPPORTED')
     _require(0x22F900 + 32 * 21 * 2 <= len(source),
              'AUX_PALETTE_EXTENSION_TRUNCATED')
+    if 'overworld_anim_palette_extension_pc' in overrides:
+        _require(0x22FE40 + 16 * 7 * 2 <= len(source),
+                 'AUX_PALETTE_EXTENSION_TRUNCATED')
 
 
 def _native_source(source, exported, *, experimental_page_tile16=False):

@@ -61,9 +61,11 @@ endif
 
   .sky
 if !ENABLE_SKY_OVERWORLD_ROUTE == 1
-  ; The selected tower approach has ordinary clouds even without Storms.
+  ; All 8 Sky maps ($84-$87, $8C-$8F) use the area overlay table (clouds $94
+  ; or $FF when unauthored) without requiring Song of Storms.
   ; Keep the special exit-room pictures ahead of the area-table selection.
-  LDA.b $8A : CMP.w #$0087 : BEQ .sky_host
+  LDA.b $8A : CMP.w #$0084 : BCC .weather
+  CMP.w #$0088 : BCC .sky_host
   CMP.w #$008C : BCC .weather
   CMP.w #$0090 : BCS .weather
   .sky_host

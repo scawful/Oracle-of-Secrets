@@ -127,20 +127,24 @@ SpecialPaletteOutdoors:
 ; Shared1BEBC6 has16 offsets, but animated records1BE604..1BE6C8 end after14;
 ; offsets14/15 alias main BG. Reject inheritedFF or malformed selectors.
 SpecialPaletteSelectors:
-  LDA.l $7E0AB3 : AND.w #$00FF : CMP.w #$0006 : BCS .no
 if defined("ENABLE_OW_AUX_EXTENSION")
 if !ENABLE_OW_AUX_EXTENSION == 1
+  LDA.l $7E0AB3 : AND.w #$00FF : CMP.w #$0016 : BCS .no
   LDA.l $7E0AB4 : AND.w #$00FF : CMP.w #$0034 : BCS .no
   LDA.l $7E0AB5 : AND.w #$00FF : CMP.w #$0034 : BCS .no
+  LDA.l $7E0AB8 : AND.w #$00FF : CMP.w #$001E : BCS .no
 else
+  LDA.l $7E0AB3 : AND.w #$00FF : CMP.w #$0006 : BCS .no
   LDA.l $7E0AB4 : AND.w #$00FF : CMP.w #$0014 : BCS .no
   LDA.l $7E0AB5 : AND.w #$00FF : CMP.w #$0014 : BCS .no
-endif
-else
-  LDA.l $7E0AB4 : AND.w #$00FF : CMP.w #$0014 : BCS .no
-  LDA.l $7E0AB5 : AND.w #$00FF : CMP.w #$0014 : BCS .no
-endif
   LDA.l $7E0AB8 : AND.w #$00FF : CMP.w #$000E : BCS .no
+endif
+else
+  LDA.l $7E0AB3 : AND.w #$00FF : CMP.w #$0006 : BCS .no
+  LDA.l $7E0AB4 : AND.w #$00FF : CMP.w #$0014 : BCS .no
+  LDA.l $7E0AB5 : AND.w #$00FF : CMP.w #$0014 : BCS .no
+  LDA.l $7E0AB8 : AND.w #$00FF : CMP.w #$000E : BCS .no
+endif
   SEC : RTS
 .no
   CLC : RTS

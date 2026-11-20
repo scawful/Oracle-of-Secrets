@@ -3655,7 +3655,12 @@ endif
 Palette_OverworldBgMain2:
 {
     REP #$21
-        
+if !ENABLE_OW_AUX_EXTENSION == 1
+    LDA.w $0AB3 : AND.w #$00FF
+    CMP.w #$0006 : BCC .vanilla
+        JML Oracle_MainPaletteBG2
+    .vanilla
+endif
     LDA.w $0AB3 : ASL : TAX
     LDA.l PaletteIDtoOffset_OW_Main, X : ADC.w #PaletteData_owmain : STA.b $00
         

@@ -1953,23 +1953,45 @@
     },
     {
       "id": "ow_aux_extension_code",
-      "owner": "Aux ABI 1 public loader hooks",
+      "owner": "Overworld Main/Aux/Anim palette extension loader hooks",
       "space": "snes_rom",
       "base": 4583424,
-      "size": 2048,
+      "size": 1024,
       "status": "shared",
       "condition": {
         "ENABLE_OW_AUX_EXTENSION": 1,
         "DISABLE_OVERWORLD": 0
       },
-      "lifetime": "ROM storage under the explicitly bound auxiliary palette ABI.",
-      "reset": "Code is assembled; palette table is initialized only in the private authoring input and retained by rebuilds.",
+      "lifetime": "ROM storage under the explicitly bound overworld palette extension ABI.",
+      "reset": "Code is assembled; palette tables are initialized only in the private authoring input and retained by rebuilds.",
       "save": "Palette edits persist in the authoring ROM; no SRAM format change.",
       "provenance": [
         "shared:Overworld/aux_palette_extension.asm"
       ],
       "aliases": [],
       "anchors": []
+    },
+    {
+      "id": "ow_main_palette_extension_table",
+      "owner": "Overworld Main palette extension records ($06-$15)",
+      "space": "snes_rom",
+      "base": 4584448,
+      "size": 1120,
+      "status": "shared",
+      "condition": {
+        "ENABLE_OW_AUX_EXTENSION": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage under the explicitly bound overworld palette extension ABI.",
+      "reset": "Table is authoring-owned in the base ROM and retained by rebuilds.",
+      "save": "Palette edits persist in the authoring ROM; no SRAM format change.",
+      "provenance": [
+        "shared:Overworld/aux_palette_extension.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "count": 16,
+      "stride": 70
     },
     {
       "id": "ow_aux_extension_table",
@@ -1992,6 +2014,28 @@
       "anchors": [],
       "count": 32,
       "stride": 42
+    },
+    {
+      "id": "ow_anim_palette_extension_table",
+      "owner": "Overworld Animated palette extension records ($0E-$1D)",
+      "space": "snes_rom",
+      "base": 4587072,
+      "size": 224,
+      "status": "shared",
+      "condition": {
+        "ENABLE_OW_AUX_EXTENSION": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage under the explicitly bound overworld palette extension ABI.",
+      "reset": "Table is authoring-owned in the base ROM and retained by rebuilds.",
+      "save": "Palette edits persist in the authoring ROM; no SRAM format change.",
+      "provenance": [
+        "shared:Overworld/aux_palette_extension.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "count": 16,
+      "stride": 14
     },
     {
       "id": "docks_bg_asset",

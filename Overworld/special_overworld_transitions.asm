@@ -629,9 +629,13 @@ SpecialOverworld_ShouldMosaic:
   PLA
   SEP #$30
 
-  ; Sky-to-Sky chain ($87, $8C-$8F): keep smooth scroll (handled by sky_overlay_transition.asm)
+if defined("SPECIAL_OVERWORLD_SKY_OVERLAY_RESIDENT_COUNT")
+if !SPECIAL_OVERWORLD_SKY_OVERLAY_RESIDENT_COUNT > 0
+  ; Legacy resident Sky-to-Sky chain ($87, $8C-$8F): keep smooth scroll (handled by sky_overlay_transition.asm)
   LDA $02,S : JSR .is_sky : BCC .not_both_sky
   LDA.b $8A : JSR .is_sky : BCS .ret_no
+endif
+endif
 
   .not_both_sky
   ; Check Main Palette mismatch
@@ -740,6 +744,8 @@ endif
   LDA.b #$01
   RTL
 
+if defined("SPECIAL_OVERWORLD_SKY_OVERLAY_RESIDENT_COUNT")
+if !SPECIAL_OVERWORLD_SKY_OVERLAY_RESIDENT_COUNT > 0
   ; Returns C set if A is a Sky route host ($87 or $8C-$8F), M=8.
   .is_sky
   CMP.b #$87 : BEQ .sky_yes
@@ -749,6 +755,8 @@ endif
   CLC : RTS
   .sky_yes
   SEC : RTS
+endif
+endif
 
   ; Opposite direction bit indexed by $0418 (0=Up->$04, 1=Down->$08, 2=Left->$01, 3=Right->$02)
   .OppDirBit:

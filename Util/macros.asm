@@ -58,7 +58,7 @@ endif
 !ENABLE_D3_PRISON_SEQUENCE           = 0
 !ENABLE_OCARINA_SONG_TINT            = 0
 ; Aux ABI 1 needs an explicitly bound authoring table; preserve ordinary ROMs.
-!ENABLE_OW_AUX_EXTENSION              = 0
+!ENABLE_OW_AUX_EXTENSION              = 1
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
 ; Native cached-exit ferry: Kalyxo Docks $30/$31 <-> Sea Zora Quay $99 (bound in
 ; Data/overworld/kalyxo_boat_placements.asm). Opening arrival is unchanged unless
