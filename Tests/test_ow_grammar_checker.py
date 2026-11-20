@@ -43,6 +43,9 @@ TID_DOOR_LEFT = 0x00FB  # DOOR_HALF_TILES
 TID_DOOR_RIGHT = 0x00FC
 TID_SIGN = 0x101  # SIGN_TILE16_IDS
 TID_SOIL = 0x3CD  # Walkable soil pad tile
+TID_LADDER_CAP = 0x046D  # LADDER_CAP_TILE16_IDS (TT 0x22)
+TID_LADDER_BODY = 0x0184  # LADDER_BODY_TILE16_IDS (TT 0x22)
+TID_STAIR = 0x07E1  # Biome stone step Tile16 (TT 0x22, not a ladder)
 TID_WALK_VAR_BASE = 0x010  # 32 varied walkable tiles (0x010..0x02F)
 
 
@@ -81,7 +84,7 @@ class SyntheticOwRomBuilder:
         self.rom[ctp.TILE16_EXP_FLAG_PC] = 0x3D
         self.rom[ctp.MAP32_EXP_FLAG_PC] = 0x00
 
-        # Character -> TileType defaults (chars 0..9)
+        # Character -> TileType defaults (chars 0..10)
         char_types = {
             0: 0x00,  # walkable
             1: 0x01,  # solid
@@ -93,6 +96,7 @@ class SyntheticOwRomBuilder:
             7: 0x2A,  # E ledge
             8: 0x2B,  # W ledge
             9: 0x27,  # dash tree
+            10: 0x22,  # ladder / stairs
         }
         for ch, tt in char_types.items():
             self.rom[sic.PC_TILETYPE + ch] = tt
@@ -111,6 +115,9 @@ class SyntheticOwRomBuilder:
         self._set_tile16(TID_DOOR_LEFT, (1, 1, 1, 1))
         self._set_tile16(TID_DOOR_RIGHT, (1, 1, 1, 1))
         self._set_tile16(TID_SOIL, (0, 0, 0, 0))
+        self._set_tile16(TID_LADDER_CAP, (10, 10, 10, 10))
+        self._set_tile16(TID_LADDER_BODY, (10, 10, 10, 10))
+        self._set_tile16(TID_STAIR, (10, 10, 10, 10))
         for offset in range(32):
             self._set_tile16(TID_WALK_VAR_BASE + offset, (0, 0, 0, 0))
 
@@ -702,6 +709,80 @@ class TestOwGrammarRules(unittest.TestCase):
         self.assertTrue(any(f["rule_id"] == "INT-001" for f in rep2["findings"]))
         self.assertTrue(any("vendor_missing" in f["finding_key"] for f in rep2["findings"]))
         self.assertTrue(any("soil_pad" in f["finding_key"] for f in rep2["findings"]))
+
+    def test_stair_001_short_vs_tall_ladders_and_stair_replacement(self) -> None:
+        b = SyntheticOwRomBuilder()
+
+        # 1. Kalyxo map 0x00: 1-tile short ladder at (6, 8) + 2-tile short 2x2 ladder at (14, 14)
+        g0 = b.make_varied_floor()
+        g0[8][6] = TID_LADDER_BODY
+        for x in (14, 15):
+            g0[14][x] = TID_LADDER_CAP
+            g0[15][x] = TID_LADDER_BODY
+        # Also a 1-tile trapped artifact inside solid wall at (24, 6) (no passable top/bot)
+        g0[5][24] = TID_SOLID
+        g0[6][24] = TID_LADDER_BODY
+        g0[7][24] = TID_SOLID
+        b.set_screen(0x00, g0)
+
+        # 2. Kalyxo map 0x01: 3-tile tall genuine climb (2x3) -> MUST pass clean
+        g1 = b.make_varied_floor()
+        for x in (10, 11):
+            g1[10][x] = TID_LADDER_CAP
+            g1[11][x] = TID_LADDER_BODY
+            g1[12][x] = TID_LADDER_BODY
+        b.set_screen(0x01, g1)
+
+        # 3. Eon Abyss 0x40: 2-tile ladder -> excluded from STAIR-001 scope
+        g40 = b.make_varied_floor()
+        g40[12][12] = TID_LADDER_CAP
+        g40[13][12] = TID_LADDER_BODY
+        b.set_screen(0x40, g40)
+
+        # 4. Special OW 0x81 + 0x89: 3-tile tall cross-seam ladder (0x81 y=31 + 0x89 y=0..1) -> MUST pass clean
+        g81 = b.make_varied_floor()
+        g89 = b.make_varied_floor()
+        g81[31][10] = TID_LADDER_CAP
+        g89[0][10] = TID_LADDER_BODY
+        g89[1][10] = TID_LADDER_BODY
+        # Plus a 2-tile short ladder on 0x81 at (20, 18) -> flagged on Special OW
+        g81[18][20] = TID_LADDER_CAP
+        g81[19][20] = TID_LADDER_BODY
+        b.set_screen(0x81, g81)
+        b.set_screen(0x89, g89)
+
+        rom_bytes = b.build()
+
+        rep_all = cog.audit_overworld_grammar(
+            rom_bytes, maps_spec="0x00,0x01,0x40,0x81,0x89", rule_prefixes={"STAIR-001"}, root=self.tmp_root
+        )
+        self.assertEqual([f["finding_key"] for f in rep_all["findings"]], [
+            "STAIR-001.map_0x00.short_ladder_14_14",
+            "STAIR-001.map_0x00.short_ladder_6_8",
+            "STAIR-001.map_0x81.short_ladder_20_18",
+        ])
+        self.assertTrue(all(f["severity"] == "WARN" for f in rep_all["findings"]))
+
+        # Filtering to the bottom seam screen 0x89 alone must still see 0x81(y=31) -> 0 warnings!
+        rep_seam = cog.audit_overworld_grammar(
+            rom_bytes, maps_spec="0x89", rule_prefixes={"STAIR-001"}, root=self.tmp_root
+        )
+        self.assertEqual(rep_seam["findings"], [])
+
+        # Replace short ladders on 0x00 & 0x81 with biome stair TID_STAIR -> clears STAIR-001
+        g0[8][6] = TID_STAIR
+        for x in (14, 15):
+            g0[14][x] = TID_STAIR
+            g0[15][x] = TID_STAIR
+        g81[18][20] = TID_STAIR
+        g81[19][20] = TID_STAIR
+        b.set_screen(0x00, g0)
+        b.set_screen(0x81, g81)
+
+        rep_clean = cog.audit_overworld_grammar(
+            b.build(), maps_spec="0x00,0x01,0x40,0x81,0x89", rule_prefixes={"STAIR-001"}, root=self.tmp_root
+        )
+        self.assertEqual(rep_clean["findings"], [])
 
 
 class TestOwGrammarCliAndRatchet(unittest.TestCase):

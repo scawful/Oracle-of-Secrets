@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deterministic 192-Map Scawful Overworld Design Grammar Checker (Read-Only).
 
-Audits rev5 OOSOW192 / ZSCustomOverworld ROMs across 8 formal grammar axes
+Audits rev5 OOSOW192 / ZSCustomOverworld ROMs across 9 formal grammar axes
 grounded in Scawful's hand-crafted Kalyxo ($00-$3F), Eon Abyss ($40-$7F), and
 Special Overworld ($80-$BF) maps:
 
@@ -18,6 +18,8 @@ Special Overworld ($80-$BF) maps:
   7. SPR-*  : Day/Night/Peacetime sprite-palette parity, sheet format/slots,
               aquatic-on-dry-land, persistent NPC phase parity, MainPal collisions
   8. INT-*  : Magic Bean 2x2 soil pad & flight landing affordances, ledge jumps
+  9. STAIR-*: Unnecessary short cliff ladders (<= 2 tiles tall) vs biome stairs
+              in Kalyxo ($00-$3F) and Special Overworld ($80-$BF)
 
 Reuses existing repo ROM decoders in Scripts/Build/ and Scripts/Tools/ without
 duplicating Tile16/Map32/sprite decoding logic.
@@ -75,6 +77,15 @@ DOOR_HALF_TILES = {
     0x05D8: 0x05D9, 0x05D9: 0x05D8,
     0x0B82: 0x0B83, 0x0B83: 0x0B82,
 }
+# Verified sheet 0x3C cliff-ladder Tile16s (chars 0x0A9/0x0B9, TileType 0x22)
+# across Kalyxo ($00-$3F) and Special OW ($80-$BF); excludes carved stone steps
+# (0x3F0-0x3F2, 0x4AA/0x4AE/0x4ED, 0x2E4, 0x530, 0x7E1), snow/wood bridges, and
+# ranch fence stiles (0x731).
+LADDER_CAP_TILE16_IDS = frozenset({
+    0x016F, 0x0174, 0x0434, 0x044D, 0x046D, 0x0AC8, 0x0AC9, 0x0AD4,
+})
+LADDER_BODY_TILE16_IDS = frozenset({0x017E, 0x0184, 0x0185, 0x03F6})
+LADDER_TILE16_IDS = LADDER_CAP_TILE16_IDS | LADDER_BODY_TILE16_IDS
 
 # Aerial, treetop, cliff-perched, or ambient/object sprites that legitimately
 # occupy solid tree/cliff/door coordinates without being stuck inside walls.
@@ -1619,6 +1630,152 @@ def _check_affordances(ctx: GrammarContext, selected: set[int]) -> list[dict[str
     return findings
 
 
+def _step_same_world_tile(
+    m: int, x: int, y: int, dx: int, dy: int, capacity: int
+) -> tuple[int, int, int] | None:
+    """Step 1 Tile16 cell across 8x8 world seams without leaving Kalyxo or playable Special OW."""
+    nx, ny = x + dx, y + dy
+    nm = m
+    world_base = 0x00 if m < 0x40 else 0x80
+    if nx < 0:
+        if (m % 8) == 0:
+            return None
+        nm, nx = m - 1, 31
+    elif nx >= 32:
+        if (m % 8) == 7:
+            return None
+        nm, nx = m + 1, 0
+    if ny < 0:
+        if (m - world_base) < 8:
+            return None
+        nm, ny = m - 8, 31
+    elif ny >= 32:
+        if (m - world_base) >= 56:
+            return None
+        nm, ny = m + 8, 0
+    if nm < 0 or nm >= capacity:
+        return None
+    if world_base == 0x00 and nm >= 0x40:
+        return None
+    if world_base == 0x80 and (nm < 0x80 or nm >= 0xC0 or nm in NON_PLAYABLE_SW_PAGES):
+        return None
+    return (nm, nx, ny)
+
+
+def _check_stair_affordances(ctx: GrammarContext, selected: set[int]) -> list[dict[str, Any]]:
+    """STAIR-001: Flag short cliff ladders (<= 2 Tile16s tall) that belong as biome stairs."""
+    findings: list[dict[str, Any]] = []
+    playable = sorted(
+        m for m in selected
+        if m < 0x40 or (0x80 <= m < 0xC0 and m not in NON_PLAYABLE_SW_PAGES)
+    )
+    if not playable:
+        return findings
+
+    visited: set[tuple[int, int, int]] = set()
+    ladder_cache: dict[int, list[list[bool]]] = {}
+
+    def is_ladder(cm: int, cx: int, cy: int) -> bool:
+        grid_mask = ladder_cache.get(cm)
+        if grid_mask is None:
+            g = ctx.screen_grid(cm)
+            grid_mask = [
+                [
+                    (tid in LADDER_TILE16_IDS and 0x22 in ctx.tile16_quadrant_types(cm, tid))
+                    for tid in row
+                ]
+                for row in g
+            ]
+            ladder_cache[cm] = grid_mask
+        return grid_mask[cy][cx]
+
+    for m in playable:
+        for y in range(32):
+            for x in range(32):
+                if (m, x, y) in visited or not is_ladder(m, x, y):
+                    continue
+                q: deque[tuple[int, int, int]] = deque([(m, x, y)])
+                visited.add((m, x, y))
+                comp: list[tuple[int, int, int]] = []
+                while q:
+                    cm, cx, cy = q.popleft()
+                    comp.append((cm, cx, cy))
+                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        nxt = _step_same_world_tile(cm, cx, cy, dx, dy, ctx.capacity)
+                        if nxt is not None and nxt not in visited and is_ladder(*nxt):
+                            visited.add(nxt)
+                            q.append(nxt)
+
+                # Group by global world (wx, wy) across horizontal/vertical seams
+                gpts = {
+                    ((cm % 8) * 32 + cx, ((cm % 64) // 8) * 32 + cy): (cm, cx, cy)
+                    for cm, cx, cy in comp
+                }
+                by_wx: dict[int, list[int]] = defaultdict(list)
+                for wx, wy in gpts:
+                    by_wx[wx].append(wy)
+
+                max_run_height = 0
+                has_passable_access = False
+                for wx, wys in by_wx.items():
+                    wys.sort()
+                    run = 1
+                    best_col = 1
+                    for a, b in zip(wys, wys[1:]):
+                        run = run + 1 if b == a + 1 else 1
+                        if run > best_col:
+                            best_col = run
+                    if best_col > max_run_height:
+                        max_run_height = best_col
+
+                    tm, tx, ty = gpts[(wx, wys[0])]
+                    bm, bx, by = gpts[(wx, wys[-1])]
+                    for adj in (
+                        _step_same_world_tile(tm, tx, ty, 0, -1, ctx.capacity),
+                        _step_same_world_tile(bm, bx, by, 0, 1, ctx.capacity),
+                    ):
+                        if adj is not None:
+                            am, ax, ay = adj
+                            if ctx.class_grid(am)[ay][ax] in ("walkable", "shallow_water", "deep_water"):
+                                has_passable_access = True
+
+                if max_run_height > 2 or not has_passable_access:
+                    continue
+
+                min_wy = min(wy for _, wy in gpts)
+                min_wx = min(wx for wx, wy in gpts if wy == min_wy)
+                owner_m, x0, y0 = gpts[(min_wx, min_wy)]
+                owner_par, _ = ctx.parent_and_size(owner_m)
+                width = max(wx for wx, _ in gpts) - min(wx for wx, _ in gpts) + 1
+                sample_tids = sorted({f"0x{ctx.screen_grid(cm)[cy][cx]:03X}" for cm, cx, cy in comp})
+                findings.append(_make_finding(
+                    rule_id="STAIR-001",
+                    category="affordances",
+                    severity="WARN",
+                    map_id=owner_m,
+                    parent_id=owner_par,
+                    key_suffix=f"short_ladder_{x0}_{y0}",
+                    location=f"({x0},{y0}) {width}x{max_run_height} ({len(comp)} tiles)",
+                    message=(
+                        f"Short cliff ladder ({width}w x {max_run_height}h, <= 2 tiles tall) "
+                        f"should use biome-native stair steps instead of rung ladders."
+                    ),
+                    fix_hint=(
+                        "Replace short <= 2-tile ladder runs with verified biome stair Tile16s "
+                        "(keeping >= 3-tile tall cliff climbs)."
+                    ),
+                    details={
+                        "width": width,
+                        "height": max_run_height,
+                        "tile_count": len(comp),
+                        "tile16_ids": sample_tids,
+                        "maps": sorted({f"0x{cm:02X}" for cm, _, _ in comp}),
+                    },
+                ))
+
+    return findings
+
+
 def classify_findings(findings: list[dict[str, Any]], baseline: dict[str, Any] | None) -> dict[str, Any]:
     ordered = sorted(findings, key=lambda item: (item["finding_key"], item["severity"]))
     if baseline is None:
@@ -1660,6 +1817,7 @@ def audit_overworld_grammar(
     raw_findings.extend(_check_edges_and_landmarks(ctx, selected, exits_by_map, ents_by_map))
     raw_findings.extend(_check_sprites_and_palettes(ctx, selected))
     raw_findings.extend(_check_affordances(ctx, selected))
+    raw_findings.extend(_check_stair_affordances(ctx, selected))
 
     min_rank = SEV_RANK[min_severity]
     filtered = []
