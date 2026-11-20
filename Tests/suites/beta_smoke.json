@@ -1,0 +1,159 @@
+{
+  "name": "beta_smoke",
+  "version": 1,
+  "checkpoints": "Data/debug/checkpoints.json",
+  "description": "Permanent beta runtime smoke. Addresses and rooms are the current checkpoints, warps, and File Select GBC rule (GameState < !GameState_FaroreRescued).",
+  "scenarios": [
+    {
+      "id": "sq_lw_link",
+      "kind": "save_quit_matrix",
+      "checkpoint": "loom-beach",
+      "spawn": {"via_room": 260, "area": 51},
+      "preserve": [
+        {"addr": "0x7EF3C5", "value": 1, "name": "GameState_LoomBeach"},
+        {"addr": "0x7EF3CA", "value": 0, "name": "SavedWorld"},
+        {"addr": "0x7E02B2", "value": 0, "name": "CurrentMask"}
+      ],
+      "expect": {"file_select_form": "link", "saved_world": 0, "game_state": 1},
+      "jump_target": {"kind": "overworld", "id": 51, "x": 1976, "y": 3448},
+      "note": "Light World Loom Beach $33 via room $0104 (warps.json). intro-bed leaves GameState $00, which cannot save; preserve forces !GameState_LoomBeach."
+    },
+    {
+      "id": "sq_abyss_pre_farore",
+      "kind": "save_quit_matrix",
+      "checkpoint": "abyss-arrival",
+      "spawn": {"via_room": 32, "area": 64},
+      "preserve": [
+        {"addr": "0x7EF3C5", "value": 2, "name": "GameState_KydrogComplete"},
+        {"addr": "0x7EF3CA", "value": 64, "name": "SavedWorld_Abyss"}
+      ],
+      "expect": {"file_select_form": "gbc", "saved_world": 64, "game_state": 2},
+      "jump_target": {"kind": "overworld", "id": 64, "x": 744, "y": 536},
+      "note": "Eon Abyss arrival $40 via room $0020. SavedWorld $40 and GameState $02 is FileSelect_IsSlotGbcEligible."
+    },
+    {
+      "id": "sq_abyss_post_farore",
+      "kind": "save_quit_matrix",
+      "checkpoint": "d8-entrance",
+      "spawn": {"via_room": 32, "area": 64},
+      "preserve": [
+        {"addr": "0x7EF3C5", "value": 3, "name": "GameState_FaroreRescued"},
+        {"addr": "0x7EF3CA", "value": 64, "name": "SavedWorld_Abyss"}
+      ],
+      "expect": {"file_select_form": "link", "saved_world": 64, "game_state": 3},
+      "jump_target": {"kind": "overworld", "id": 64, "x": 744, "y": 536},
+      "note": "d8-entrance sets GameState $03 (!GameState_FaroreRescued) while SavedWorld stays $40. File Select must show normal Link."
+    },
+    {
+      "id": "ent_d6_goron",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "d6-entrance",
+      "entrance": 39,
+      "room": 152,
+      "parent_map": 54,
+      "jump_target": {"kind": "dungeon", "id": 152, "x": 256, "y": 464},
+      "note": "Entrance $27 -> room $0098, door on Garo Desert $36 tile (256, 464) from warps.json."
+    },
+    {
+      "id": "ent_shrine_power",
+      "kind": "entrance_roundtrip",
+      "checkpoint": "jump-shrine-power",
+      "entrance": 9,
+      "room": 132,
+      "parent_map": 176,
+      "jump_target": {"kind": "dungeon", "id": 132, "x": 336, "y": 336},
+      "note": "Entrance $09 -> room $0084. Door table area $B0 (336, 336). Exit lands on special overworld module $0B."
+    },
+    {
+      "id": "warp_whirlpool_33_15",
+      "kind": "warp_landing",
+      "transport": "whirlpool",
+      "source_map": 51,
+      "dest_map": 21,
+      "via_room": 260,
+      "submodule": 46,
+      "jump_target": {"kind": "overworld", "id": 51, "x": 1976, "y": 3448},
+      "note": "Loom Beach $33 -> Mountainside $15. Submodule $2E is the whirlpool module (ZSCustomOverworld.asm, $11 == #$2E)."
+    },
+    {
+      "id": "vblank_epona_ranch",
+      "kind": "vblank_budget",
+      "mechanic": "epona",
+      "area": 0,
+      "via_room": 3,
+      "frames": 120,
+      "max_overruns": 0,
+      "max_black_scanlines": 0,
+      "buttons": "Right",
+      "after_land": [
+        {"addr": "0x7E02B2", "value": 9, "name": "CurrentMask_Horse"}
+      ],
+      "jump_target": {"kind": "overworld", "id": 0, "x": 456, "y": 649},
+      "retroid_card": {
+        "id": "vblank_epona_ranch",
+        "title": "Test Epona Ranch",
+        "badge": "NEW",
+        "summary": "Gallop across Toto Ranch $00 and confirm the horse upload stays inside VBlank."
+      },
+      "note": "Ranch $00 via room $0003 (warps.json, jump-horse-archery). Horse form is CurrentMask 9."
+    },
+    {
+      "id": "vblank_korl_quay",
+      "kind": "vblank_budget",
+      "mechanic": "korl",
+      "area": 48,
+      "via_room": 253,
+      "frames": 120,
+      "max_overruns": 0,
+      "max_black_scanlines": 0,
+      "buttons": "Right",
+      "after_land": [
+        {"addr": "0x7EF439", "value": 1, "name": "KORL_Unlocked"},
+        {"addr": "0x7FF3D4", "value": 1, "name": "KORL_Mounted"},
+        {"addr": "0x7E005D", "value": 4, "name": "LinkState_Swim"},
+        {"addr": "0x7E0345", "value": 1, "name": "Swimming"}
+      ],
+      "jump_target": {"kind": "overworld", "id": 48, "x": 552, "y": 3208},
+      "retroid_card": {
+        "id": "vblank_korl_quay",
+        "title": "Test King of Red Lions",
+        "badge": "NEW",
+        "summary": "Cruise the Kalyxo Docks quay on the King of Red Lions and confirm zero VBlank overruns."
+      },
+      "note": "Kalyxo Docks $30 via room $00FD (warps.json Beach Cave Route). KORL_Mounted is $7FF3D4; swim state is $5D=$04."
+    },
+    {
+      "id": "vblank_deku_hover",
+      "kind": "vblank_budget",
+      "mechanic": "deku",
+      "area": 35,
+      "via_room": 254,
+      "frames": 120,
+      "max_overruns": 0,
+      "max_black_scanlines": 0,
+      "buttons": "A",
+      "after_land": [
+        {"addr": "0x7E02B2", "value": 1, "name": "CurrentMask_Deku"},
+        {"addr": "0x7E00BC", "value": 53, "name": "LinkGraphics_Deku"}
+      ],
+      "jump_target": {"kind": "overworld", "id": 35, "x": 2360, "y": 2808},
+      "retroid_card": {
+        "id": "vblank_deku_hover",
+        "title": "Test Deku Hover",
+        "badge": "NEW",
+        "summary": "Hover over Wayward Village $23 in the Deku Mask and confirm the wing DMA stays inside VBlank."
+      },
+      "note": "Wayward Village $23 via room $00FE. Deku mask is CurrentMask 1 and Link graphics $35 (mask_routines.asm)."
+    },
+    {
+      "id": "dlg_boot_intro_box",
+      "kind": "dialogue_trigger",
+      "checkpoint": "intro-bed",
+      "entrance": 1,
+      "room": 260,
+      "message_id": 37,
+      "jump_target": {"kind": "message", "id": 37, "x": 0, "y": 0},
+      "note": "intro-bed warps into room $0104 (entrance $01) with GameState 0 so the plea can run. Message $0025 is Impa's Loom Beach line; the runner arms $1CF0 when the box is not already that id."
+    }
+  ]
+}
