@@ -418,6 +418,12 @@ incsrc "Sprites/NPCs/hook_swap_brothers.asm"
 incsrc "Sprites/Enemies/chain_chomp_opt.asm"
 %log_end("chain_chomp_opt", !LOG_SPRITES)
 
+; Burnable doorway web ($B7): main code + tiles own fixed bank $36 slot
+; $36F200-$36F7FF (pushpc/pullpc); Gust Jar helper emits into Bank $32.
+%log_start("dungeon_web", !LOG_SPRITES)
+incsrc "Sprites/Objects/dungeon_web.asm"
+%log_end("dungeon_web", !LOG_SPRITES)
+
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
 ; vanilla fortune teller at $0DC92E until 2026-09-26).
@@ -518,8 +524,3 @@ assert pc() <= $2CF800, "Bank $2C sprite stream overlaps thin ice slot"
 
 ; Default-off D8 Farore room graphics support.
 incsrc "Sprites/NPCs/farore_d8_graphics.asm"
-
-; Burnable doorway web ($B7): owns fixed bank $36 slot $36F200-$36F7FF and restores cursor.
-%log_start("dungeon_web", !LOG_SPRITES)
-incsrc "Sprites/Objects/dungeon_web.asm"
-%log_end("dungeon_web", !LOG_SPRITES)

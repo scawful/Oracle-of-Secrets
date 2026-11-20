@@ -4,6 +4,9 @@
 ; Subtypes:
 ;   0 = Horizontal doorway web (32x16 px: two 16x16 solid cells side-by-side)
 ;   1 = Vertical doorway web   (16x32 px: two 16x16 solid cells stacked)
+;   2 = Outdoor / D8 sky-web   (32x16 cobweb barrier; same solidity as subtype 0,
+;       wind-flutter draw, burnable and Gust-Jar shreddable). On the overworld
+;       its persistence bit is indexed by area $8A instead of room $A0.
 ;
 ; Behavior:
 ;   - Solid barrier to Link across full 32x16 / 16x32 doorway span.
@@ -13,6 +16,15 @@
 ;       1. Lit Deku Stick (held State=2, or lit swipe State=3 with bit 7 set)
 ;       2. Fire Rod shot ancilla ($02)
 ;       3. Lamp flame ancilla ($2F)
+;   - Gust Jar (Items/gust_jar.asm WRAM, read-only contract):
+;       !GustJarState=$0273 (1=inhale, 2=blast), !GustJarCharge=$0275,
+;       !GustJarTier=$0276, !GustJarDir=$0277 (0=U,2=D,4=L,6=R),
+;       !GustJarWaveXL/H=$027B/$027C, !GustJarWaveYL/H=$027D/$027E,
+;       !GustJarFlags=$027F bit 0 = wind signal.
+;     Inhale aimed at the web (forward 4..64 px, |perp| <= 24) shakes it
+;     (SprMiscB) and, once charge reaches $60, rips it away. A Tier 2/3
+;     blast whose wave center is within 20 px shreds it immediately.
+;     Both paths set the same DungeonWeb_BurnedMask bit as fire.
 ;   - Persistence: 16-bit per-room bitmask in WRAM DungeonWeb_BurnedMask
 ;     ($7ECA00-$7ECC7F, 320 rooms). Cleared on Overworld load ($0283EA) and
 ;     file load ($02816C), so burned webs stay gone for the entire dungeon
@@ -177,8 +189,13 @@ Sprite_DungeonWeb_Prep:
   ; Ignore arrows, Hookshot, bombs, boomerang, Ice Rod, Somaria, and Byrna
   LDA.b #$01 : STA.w SprBulletproof, X
 
-  ; Cache subtype (0 = 32x16 horiz, 1 = 16x32 vert) in transition-safe SprMiscC
-  LDA.w SprSubtype, X : AND.b #$01 : STA.w SprMiscC, X
+  ; Cache subtype (0 = 32x16, 1 = 16x32, 2 = 32x16 sky web) in SprMiscC.
+  ; Subtype 3+ collapses to a horizontal doorway so unknown values stay solid.
+  LDA.w SprSubtype, X : AND.b #$03
+  CMP.b #$03 : BCC .subtype_ok
+    LDA.b #$00
+.subtype_ok
+  STA.w SprMiscC, X
 
   ; Cache per-room persistence bit index (0..15) in transition-safe SprMiscA:
   ; Placed room sprites have $0BC0,X = 0..15; dynamic spawns fall back to 14|sub.
@@ -187,8 +204,10 @@ Sprite_DungeonWeb_Prep:
 .have_bit
   AND.b #$0F : STA.w SprMiscA, X
 
-  ; If in Underworld ($1B != 0) and already burned this dungeon visit, despawn
-  LDA.b $1B : BEQ .done
+  ; Underworld webs and overworld sky-webs (subtype 2) honor the burned mask.
+  LDA.b $1B : BNE .check_burned
+  LDA.w SprMiscC, X : CMP.b #$02 : BNE .done
+.check_burned
   JSR DungeonWeb_GetMaskAndRoomOffset : BCC .done
   REP #$20
   PHX
@@ -220,8 +239,19 @@ DungeonWeb_GetMaskAndRoomOffset:
 .mask_ready
   STA.b $00
 
-  REP #$10
-  LDA.b $A0 : CMP.w #$0140 : BCS .out_of_range
+  ; Index by room $A0 indoors, or by overworld area $8A for a sky-web.
+  SEP #$20
+  LDA.b $1B : BNE .use_room
+  LDA.w SprMiscC, X : CMP.b #$02 : BNE .use_room
+    LDA.b $8A : STA.b $02
+    STZ.b $03
+    BRA .range16
+.use_room
+  LDA.b $A0 : STA.b $02
+  LDA.b $A1 : STA.b $03
+.range16
+  REP #$30
+  LDA.b $02 : CMP.w #$0140 : BCS .out_of_range
   ASL A : TAY
   SEP #$20
   SEC
@@ -237,7 +267,9 @@ DungeonWeb_GetMaskAndRoomOffset:
 ; Entry/Exit: M=8, X=8; preserves X.
 DungeonWeb_MarkBurned:
 {
-  LDA.b $1B : BEQ .exit
+  LDA.b $1B : BNE .mark
+  LDA.w SprMiscC, X : CMP.b #$02 : BNE .exit
+.mark
   JSR DungeonWeb_GetMaskAndRoomOffset : BCC .exit
   REP #$20
   PHX
@@ -247,6 +279,16 @@ DungeonWeb_MarkBurned:
   SEP #$30
 .exit
   RTS
+}
+
+; Long entry so the Gust Jar helper (outside this $36F200 slot) can mark the
+; same burned bit without a cross-bank JSR.
+DungeonWeb_MarkBurnedLong:
+{
+  PHB : PHK : PLB
+  JSR DungeonWeb_MarkBurned
+  PLB
+  RTL
 }
 
 ; Entry: M=8, X=8, X = sprite slot (via NewSprTable)
@@ -276,6 +318,7 @@ Sprite_DungeonWeb_Main:
   JSR DungeonWeb_SolidBarrier
   JSR DungeonWeb_CheckSwordTink
   JSR DungeonWeb_CheckFireSources
+  JSL DungeonWeb_CheckGustJar
   RTS
 }
 
@@ -285,7 +328,7 @@ DungeonWeb_SolidBarrier:
   JSL Sprite_Get_16_bit_Coords
   JSL Sprite_PlayerCantPassThrough
 
-  LDA.w SprMiscC, X : BNE .vertical
+  LDA.w SprMiscC, X : CMP.b #$01 : BEQ .vertical
 
   REP #$20
   LDA.w SprCachedX : PHA
@@ -320,7 +363,7 @@ DungeonWeb_CheckSwordTink:
   JSL Sprite_CheckDamageFromPlayer
   LDA.b $46 : BNE .exit ; Cell 0 already triggered tink recoil
 
-  LDA.w SprMiscC, X : BNE .vertical
+  LDA.w SprMiscC, X : CMP.b #$01 : BEQ .vertical
   LDA.w SprX, X : PHA
   LDA.w SprXH, X : PHA
   LDA.w SprX, X : CLC : ADC.b #$10 : STA.w SprX, X
@@ -353,7 +396,7 @@ DungeonWeb_CheckFireSources:
   LDA.w SprY, X : STA.b $06
   LDA.w SprYH, X : STA.b $07
 
-  LDA.w SprMiscC, X : BNE .bounds_vert
+  LDA.w SprMiscC, X : CMP.b #$01 : BEQ .bounds_vert
   REP #$20
   LDA.b $04 : CLC : ADC.w #$0020 : STA.b $08
   LDA.b $06 : CLC : ADC.w #$0010 : STA.b $0A
@@ -509,9 +552,18 @@ Sprite_DungeonWeb_Draw:
   +
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  ; $06 = table base (0 for subtype 0, 8 for subtype 1)
-  ; $07 = burn stage (0 = intact, 1 = early burn >= $0A, 2 = late sparks < $0A)
-  LDA.w SprMiscC, X : ASL #3 : STA.b $06
+  ; $06 = table base (0 for subtype 0 and 2, 8 for subtype 1)
+  ; $05 = sky-web flutter, $0C = inhale shake, $07 = burn stage
+  STZ.b $05
+  LDA.w SprMiscB, X : STA.b $0C
+  LDA.w SprMiscC, X : CMP.b #$01 : BEQ .vert_base
+    STZ.b $06
+    CMP.b #$02 : BNE .base_done
+      INC.b $05
+      BRA .base_done
+.vert_base
+  LDA.b #$08 : STA.b $06
+.base_done
   STZ.b $07
   LDA.w SprAction, X : BEQ .draw_loop_init
     INC.b $07
@@ -528,6 +580,10 @@ Sprite_DungeonWeb_Draw:
   TXA : CLC : ADC.b $06 : TAX
 
   LDA.w .x_offsets, X : STA.b $08 : STZ.b $09
+  LDA.b $05 : ORA.b $0C : BEQ .no_wobble
+  LDA.b $1A : AND.b #$01 : BEQ .no_wobble
+    LDA.b $08 : INC A : STA.b $08
+.no_wobble
   LDA.w .y_offsets, X : STA.b $0A : STZ.b $0B
 
   REP #$20
@@ -635,3 +691,152 @@ DungeonWeb_CodeEnd:
 print "End of Sprites/Objects/dungeon_web.asm ", pc
 assert pc() <= $36F800, "DungeonWeb overflowed $36F200-$36F7FF slot into $36F800"
 pullpc
+
+; Gust Jar helper emitted into the caller's sprite bank (Bank $32 in
+; Sprites/all_sprites.asm). Bank-neutral (PHB/PHK/PLB, mirrors low WRAM
+; $0000-$1FFF, outward calls are JSL) so Bank $36 stays <= $36F800 and
+; Bank37NpcTail ($37F200-$37FFFF) stays untouched.
+DungeonWeb_GustCodeStart:
+
+!WebGustState  = $0273
+!WebGustCharge = $0275
+!WebGustTier   = $0276
+!WebGustDir    = $0277
+!WebGustWaveX  = $027B
+!WebGustWaveY  = $027D
+!WebGustFlags  = $027F
+
+; JSL from Sprite_DungeonWeb_Main. M=8, X=8. Caller bank (< $40) mirrors low WRAM.
+DungeonWeb_CheckGustJar:
+{
+  PHB : PHK : PLB
+  JSR .run
+  PLB
+  RTL
+.run
+  LDA.w SprAction, X : BNE .calm
+  LDA.w !WebGustState : BEQ .calm
+  CMP.b #$02 : BEQ .blast
+  CMP.b #$01 : BNE .calm
+  LDA.w !WebGustFlags : AND.b #$01 : BEQ .calm
+  JSR DungeonWeb_InGustCone : BCC .calm
+  LDA.w !WebGustCharge : CMP.b #$60 : BCS .rip
+  CMP.b #$08 : BCC .calm
+    LDA.b #$01 : STA.w SprMiscB, X
+    RTS
+.calm
+  STZ.w SprMiscB, X
+  RTS
+.blast
+  LDA.w !WebGustTier : CMP.b #$02 : BCC .calm
+  LDA.w !WebGustFlags : AND.b #$01 : BEQ .calm
+  JSR DungeonWeb_WaveHitsWeb : BCC .calm
+.rip
+  JSR DungeonWeb_RipAway
+  RTS
+}
+
+DungeonWeb_RipAway:
+{
+  STZ.w SprMiscB, X
+  STZ.w SprState, X
+  LDA.b #$15 : STA.w $012E
+  JSL DungeonWeb_MarkBurnedLong
+  RTS
+}
+
+DungeonWeb_LoadCenter:
+{
+  LDA.w SprX, X : STA.b $00
+  LDA.w SprXH, X : STA.b $01
+  LDA.w SprY, X : STA.b $02
+  LDA.w SprYH, X : STA.b $03
+  LDA.w SprMiscC, X : CMP.b #$01 : BEQ .tall
+  REP #$20
+  LDA.b $00 : CLC : ADC.w #$0010 : STA.b $00
+  LDA.b $02 : CLC : ADC.w #$0008 : STA.b $02
+  SEP #$20
+  RTS
+.tall
+  REP #$20
+  LDA.b $00 : CLC : ADC.w #$0008 : STA.b $00
+  LDA.b $02 : CLC : ADC.w #$0010 : STA.b $02
+  SEP #$20
+  RTS
+}
+
+; Forward 4..64 px and |perp| <= 24, using !GustJarDir (0=U, 2=D, 4=L, 6=R).
+DungeonWeb_InGustCone:
+{
+  JSR DungeonWeb_LoadCenter
+  REP #$20
+  LDA.b $22 : CLC : ADC.w #$0008 : STA.b $04
+  LDA.b $00 : SEC : SBC.b $04 : STA.b $08
+  LDA.b $20 : CLC : ADC.w #$000C : STA.b $04
+  LDA.b $02 : SEC : SBC.b $04 : STA.b $0A
+  SEP #$20
+  LDA.w !WebGustDir
+  BEQ .up
+  CMP.b #$02 : BEQ .down
+  CMP.b #$04 : BEQ .left
+  REP #$20
+  LDA.b $08 : STA.b $04
+  LDA.b $0A
+  BRA .axes
+.up
+  REP #$20
+  LDA.w #$0000 : SEC : SBC.b $0A : STA.b $04
+  LDA.b $08
+  BRA .axes
+.down
+  REP #$20
+  LDA.b $0A : STA.b $04
+  LDA.b $08
+  BRA .axes
+.left
+  REP #$20
+  LDA.w #$0000 : SEC : SBC.b $08 : STA.b $04
+  LDA.b $0A
+.axes
+  BPL .perp_pos
+    EOR.w #$FFFF : INC A
+.perp_pos
+  STA.b $0C
+  LDA.b $04 : BMI .outside
+  CMP.w #$0004 : BCC .outside
+  CMP.w #$0041 : BCS .outside
+  LDA.b $0C : CMP.w #$0019 : BCS .outside
+  SEP #$20
+  SEC
+  RTS
+.outside
+  SEP #$20
+  CLC
+  RTS
+}
+
+DungeonWeb_WaveHitsWeb:
+{
+  JSR DungeonWeb_LoadCenter
+  REP #$20
+  LDA.b $00 : SEC : SBC.w !WebGustWaveX
+  BPL .abs_x
+    EOR.w #$FFFF : INC A
+.abs_x
+  CMP.w #$0015 : BCS .miss
+  LDA.b $02 : SEC : SBC.w !WebGustWaveY
+  BPL .abs_y
+    EOR.w #$FFFF : INC A
+.abs_y
+  CMP.w #$0015 : BCS .miss
+  SEP #$20
+  SEC
+  RTS
+.miss
+  SEP #$20
+  CLC
+  RTS
+}
+
+DungeonWeb_GustCodeEnd:
+print "Dungeon web gust helper bytes ", dec(DungeonWeb_GustCodeEnd-DungeonWeb_GustCodeStart)
