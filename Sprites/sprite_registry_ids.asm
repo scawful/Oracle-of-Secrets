@@ -52,3 +52,5 @@ Sprite_HorseNPC = $2D ; Toto Ranch Epona; SprMiscA $F1 dispatches to the fishing
 Sprite_FishingFloater = $2D ; Shared sprite id $2D with Epona; floater sets SprMiscA to $F1
 Sprite_LilyPad = $AD ; Rideable Gust Jar lily pad (D4 Zora & Lyra Sea)
 Sprite_NightPoe = $B4 ; Nighttime EoW Lantern Poe (sub 0=night OW/always UW+Abyss; sub 1=always)
+Sprite_CheepCheep = $AB ; Lyra Sea leaping Cheep-Cheep (sub 0; GameyFireBro art)
+Sprite_Blooper = $AB ; Lyra Sea darting Blooper (sub 1; GameyFireBro art)

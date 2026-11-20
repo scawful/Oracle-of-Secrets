@@ -251,11 +251,14 @@ endif
 
 ; Epona overhaul transient WRAM ($7F5670-$7F57FF inside UNUSED_7F5000,
 ; leaving $7F5408-$7F5409 to AbyssGbc_LoadedStyle/PalStyle, $7F540A-$7F540C
-; to NightPoe_Vram*, $7F540D-$7F540F free, $7F5410-$7F545F to HorseGame_*,
-; and $7F5460-$7F5663 to KORL_Dock*).
+; to NightPoe_Vram*, $7F540D-$7F540F to LyraSea_Vram*, $7F5410-$7F545F to
+; HorseGame_*, and $7F5460-$7F5663 to KORL_Dock*).
 NightPoe_VramState      = $7F540A ; 0=idle, $80=pending NMI DMA, $01=live in VRAM $5EC0/$5EE0
 NightPoe_LastArea       = $7F540B ; cached $8A (OW) or $A0 low byte (UW)
 NightPoe_LastInd        = $7F540C ; cached $00 (OW) or $80|($A1&1) (UW)
+LyraSea_VramState       = $7F540D ; 0=idle, $80=stage1 Cheep, $81=stage2 Blooper, $01=live
+LyraSea_LastArea        = $7F540E ; cached $8A (OW) or $A0 low byte (UW)
+LyraSea_LastInd         = $7F540F ; cached $00 (OW) or $80|($A1&1) (UW)
 !Horse_OverhaulWramDefined = 1
 Horse_AnchorDir         = $7F5670 ; saved $2F facing (0=N, 2=S, 4=W, 6=E; $FF=unset)
 Horse_Carrots           = $7F5671 ; current stamina carrots (0..5)

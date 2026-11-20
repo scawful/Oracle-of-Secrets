@@ -430,6 +430,13 @@ incsrc "Sprites/Objects/dungeon_web.asm"
 incsrc "Sprites/Objects/lily_pad.asm"
 %log_end("lily_pad", !LOG_SPRITES)
 
+; Lyra Sea Cheep-Cheep (sub 0) & Blooper (sub 1) ($AB, GameyFireBro art).
+; Included before night_poe.asm so !LYRA_SEA_NMI_UPLOAD is defined for the
+; zero-Bank-$2B NMI tail-call from NightPoe_NmiUpload. Bank $32.
+%log_start("lyra_sea_enemies", !LOG_SPRITES)
+incsrc "Sprites/Enemies/lyra_sea_enemies.asm"
+%log_end("lyra_sea_enemies", !LOG_SPRITES)
+
 ; Nighttime Lantern Poe ($B4, GameyFireBro EoW art): zero-lag ghost enemy for
 ; nighttime Epona rides (Subtype 0) or always-on haunts (Subtype 1). Bank $32.
 %log_start("night_poe", !LOG_SPRITES)
