@@ -149,6 +149,44 @@ def _run_until_stop(f: Fixture, entry: str, stops: set[int] | None = None, long_
     raise AssertionError(f"Instruction ceiling reached in {entry}")
 
 
+class SramFixture(Fixture):
+    """Fixture with $70:0000-$70:1FFF battery SRAM mapped for File Select tests."""
+
+    def __init__(self, lib, rom, labels):
+        super().__init__(lib, rom, labels)
+        self.sram = bytearray(0x2000)
+
+    def read(self, a):
+        if (a >> 16) == 0x70 and (a & 0xFFFF) < len(self.sram):
+            return self.sram[a & 0xFFFF]
+        return super().read(a)
+
+    def write(self, a, v):
+        if (a >> 16) == 0x70 and (a & 0xFFFF) < len(self.sram):
+            self.sram[a & 0xFFFF] = v & 0xFF
+            self.writes.append((a, v & 0xFF))
+            return
+        super().write(a, v)
+
+    def seed_slot(
+        self,
+        slot: int,
+        *,
+        valid: bool = True,
+        saved_world: int = 0x00,
+        game_state: int = 0x00,
+        armor: int = 0x00,
+        sword_flags: int = 0x00,
+    ) -> int:
+        off = slot * 0x500
+        self.word(0x7003E5 + off, 0x55AA if valid else 0x0000)
+        self.put(0x7003CA + off, saved_world)
+        self.put(0x7003C5 + off, game_state)
+        self.put(0x70035B + off, armor)
+        self.put(0x7003BD + off, sword_flags)
+        return off
+
+
 class StartupGbcSpawnTests(unittest.TestCase):
     _tmpdir: tempfile.TemporaryDirectory[str]
     _lib: C.CDLL
@@ -158,6 +196,8 @@ class StartupGbcSpawnTests(unittest.TestCase):
     _spawn_labels: dict[str, int]
     _gbc_rom: bytes
     _gbc_labels: dict[str, int]
+    _savequit_rom: bytes
+    _savequit_labels: dict[str, int]
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -175,6 +215,36 @@ class StartupGbcSpawnTests(unittest.TestCase):
             "RefreshOverworldBackdrop = $018000\n"
             "org $2C8000\n"
             + cgram_body,
+        )
+
+        time_src = (ROOT / "Overworld" / "time_system.asm").read_text(encoding="utf-8")
+        structs_src = (ROOT / "Core" / "structs.asm").read_text(encoding="utf-8")
+        ts_start = structs_src.index("struct TimeState")
+        ts_end = structs_src.index("endstruct", ts_start) + len("endstruct")
+        ts_struct = structs_src[ts_start:ts_end] + "\n"
+        savequit_body = "\n".join([
+            _extract_block(mask_src, "ForceResetMask_SaveAndQuit"),
+            _extract_block(time_src, "FixSaveAndQuit"),
+        ])
+        cls._savequit_rom, cls._savequit_labels = _assemble(
+            base / "savequit",
+            "lorom\n"
+            "!ENABLE_HORSE_FORM = 1\n"
+            "!KORL_MOUNT_DEFINED = 1\n"
+            "!CurrentMask = $02B2\n"
+            "!LinkGraphics = $BC\n"
+            "!ZoraDiving = $0AAB\n"
+            "DekuFloating = $70\n"
+            "SpecialOverworld_VortexWorld = $7EC138\n"
+            "GameState = $7EF3C5\n"
+            "DekuStick_Drop = $018200\n"
+            "GaroMask_Clear = $018210\n"
+            "HorseForm_ClearState = $018220\n"
+            "KORL_ClearState = $018230\n"
+            "Palette_ArmorAndGloves = $018240\n"
+            + ts_struct
+            + "org $2C8000\n"
+            + savequit_body,
         )
 
         spawn_src = (ROOT / "Overworld" / "abyss_spawn_menu.asm").read_text(encoding="utf-8")
@@ -201,6 +271,9 @@ class StartupGbcSpawnTests(unittest.TestCase):
         tunic_macro_end = tunic_src.index("endmacro", tunic_macro_start) + len("endmacro")
         tunic_macro = tunic_src[tunic_macro_start:tunic_macro_end] + "\n"
         tunic_fn = _extract_block(tunic_src, "Tunic_GetWorn")
+        fs_tunic_start = tunic_src.index("Tunic_FileSelectSlot1:")
+        fs_tunic_end = tunic_src.index("RTL", tunic_src.index("Tunic_FileSelectReturn:")) + len("RTL")
+        fs_tunic_fns = tunic_src[fs_tunic_start:fs_tunic_end] + "\n"
 
         gbc_body = "\n".join([
             _extract_block(gbc_src, "UpdateGbcPalette"),
@@ -212,12 +285,19 @@ class StartupGbcSpawnTests(unittest.TestCase):
             _extract_block(gbc_src, "OverworldTransition_CheckForGbcLink"),
             _extract_block(gbc_src, "MirrorWarp_PearllessArrival"),
             _extract_block(gbc_src, "MirrorWarp_PearlArrival"),
+            _extract_block(gbc_src, "FileSelect_IsSlotGbcEligible"),
+            _extract_block(gbc_src, "FileSelect_LoadPalettes"),
+            _extract_block(gbc_src, "FileSelect_GetSlotTunic"),
+            _extract_data_table(gbc_src, "FileSelect_SlotSramOffsets"),
+            _extract_data_table(gbc_src, "FileSelect_SlotCgramOffsets"),
+            _extract_block(gbc_src, "FileSelect_SelectSlotLinkSprite"),
         ])
         cls._gbc_rom, cls._gbc_labels = _assemble(
             base / "gbc",
             "lorom\n"
             "!CurrentMask = $02B2\n"
             "!SwordSlot_TunicMask = $38\n"
+            "!GameState_FaroreRescued = $03\n"
             "SwordSlotFlags = $7EF3BD\n"
             "Armor = $7EF35B\n"
             "SavedWorld = $7EF3CA\n"
@@ -229,6 +309,8 @@ class StartupGbcSpawnTests(unittest.TestCase):
             "org $2C8000\n"
             + tunic_macro
             + tunic_fn
+            + "\n"
+            + fs_tunic_fns
             + "\n"
             + gbc_body,
         )
@@ -494,6 +576,214 @@ class StartupGbcSpawnTests(unittest.TestCase):
                     self.assertEqual(f.get(0x00BC), 0x3B)
                     self.assertEqual(bytes(f.get(0x7EC6E0 + i) for i in range(32)), expected)
                     self.assertEqual(bytes(f.get(0x7EC4E0 + i) for i in range(32)), expected)
+                finally:
+                    f.close()
+
+    # ------------------------------------------------------------------
+    # Save & Quit / File Select GBC Reset & Per-Slot Isolation Tests
+    # ------------------------------------------------------------------
+    def test_save_and_quit_unconditionally_resets_gbc_and_mask_form_even_in_dark_world(self) -> None:
+        for world in (0x00, 0x40):
+            for mask, bank in [(0x06, 0x3B), (0x01, 0x35), (0x05, 0x39), (0x08, 0x42), (0x00, 0x3B)]:
+                with self.subTest(world=hex(world), mask=hex(mask), bank=hex(bank)):
+                    f = Fixture(self._lib, self._savequit_rom, self._savequit_labels)
+                    f.stubs = {
+                        0x018200: "DekuStick_Drop",
+                        0x018210: "GaroMask_Clear",
+                        0x018220: "HorseForm_ClearState",
+                        0x018230: "KORL_ClearState",
+                        0x018240: "Palette_ArmorAndGloves",
+                    }
+                    try:
+                        f.cpu.db = 0x09  # Module17_SaveAndQuit runs in bank $09
+                        f.put(0x0FFF, world)
+                        f.put(0x02B2, mask)
+                        f.put(0x00BC, bank)
+                        f.put(0x0070, 0x01)   # DekuFloating
+                        f.put(0x0AAB, 0x01)   # ZoraDiving
+                        f.put(0x0095, 0x00)
+                        _run_until_stop(f, "ForceResetMask_SaveAndQuit")
+                        self.assertEqual(f.get(0x02B2), 0x00)
+                        self.assertEqual(f.get(0x00BC), 0x10)
+                        self.assertEqual(f.get(0x0070), 0x00)
+                        self.assertEqual(f.get(0x0AAB), 0x00)
+                        self.assertEqual(f.get(0x0095), 0x0F)
+                        self.assertIn("Palette_ArmorAndGloves", f.calls)
+                        self.assertTrue(f.cpu.mf and f.cpu.xf)
+                    finally:
+                        f.close()
+
+    def test_gameover_save_and_quit_hook_resets_gbc_and_preserves_gamestate_flags(self) -> None:
+        for game_state in (0x00, 0x02, 0x03):
+            with self.subTest(game_state=game_state):
+                f = Fixture(self._lib, self._savequit_rom, self._savequit_labels)
+                try:
+                    f.cpu.db = 0x09
+                    f.put(0x7EC138, 0x40)
+                    f.put(0x7EE000, 0x15)
+                    f.put(0x7EE007, 0x00)
+                    f.put(0x02B2, 0x06)
+                    f.put(0x00BC, 0x3B)
+                    f.put(0x7EF3C5, game_state)
+                    _run_until_stop(f, "FixSaveAndQuit")
+                    self.assertEqual(f.get(0x02B2), 0x00)
+                    self.assertEqual(f.get(0x00BC), 0x10)
+                    self.assertEqual(f.get(0x7EC138), 0x00)
+                    self.assertEqual(f.get(0x7EE000), 0x08)
+                    self.assertEqual(f.get(0x7EE007), 0x01)
+                    self.assertEqual(f.cpu.a & 0xFF, game_state)
+                    self.assertEqual(f.cpu.z, game_state == 0)
+                finally:
+                    f.close()
+
+    def test_abyss_spawn_menu_check_gates_post_intro_vs_intro_abyss_lock(self) -> None:
+        # GameState < 3 in Dark World -> vanilla Abyss load ($028196), Kalyxo not selectable
+        # GameState >= 3 outdoors in Dark World -> AbyssSpawnMenu ($0281ED), Kalyxo selectable
+        for game_state, expected_stop, expected_x in [
+            (0x02, 0x028196, 0x0000),
+            (0x03, 0x0281ED, 0x021B),
+        ]:
+            with self.subTest(game_state=game_state):
+                f = Fixture(self._lib, self._spawn_rom, self._spawn_labels)
+                try:
+                    f.put(0x7EF3CA, 0x40)
+                    f.put(0x7EF3C5, game_state)
+                    f.put(0x001B, 0x00)
+                    f.put(0x7EC011, 0x00)
+                    f.put(0x010A, 0x00)
+                    f.cpu.z = False  # SavedWorld != 0
+                    stop = _run_until_stop(f, "AbyssSpawnMenu_Check", stops={0x028196, 0x0281ED})
+                    self.assertEqual(stop, expected_stop)
+                    if expected_x:
+                        self.assertEqual(f.cpu.x, expected_x)
+                finally:
+                    f.close()
+
+    def test_file_select_slot_eligibility_oam_and_real_gbc_palettes_isolated(self) -> None:
+        # Slot 0: Light World Green Mail -> normal Link ($00/$02, N=0, $30/$70)
+        # Slot 1: Intro Abyss-locked (SavedWorld=$40, GameState=2, Blue Mail) -> GBC Link ($80/$82, N=1, $35/$75) + GameboyLinkBlueMail
+        # Slot 2: Post-intro Abyss (SavedWorld=$40, GameState=3, Green worn over Red Mail) -> normal Link ($00/$02, N=0, $38/$78)
+        f = SramFixture(self._lib, self._gbc_rom, self._gbc_labels)
+        f.stubs = {0x1BEF96: "Palettes_LoadForFileSelect"}
+        try:
+            off0 = f.seed_slot(0, valid=True, saved_world=0x00, game_state=0x03, armor=0x00, sword_flags=0x80)
+            off1 = f.seed_slot(1, valid=True, saved_world=0x40, game_state=0x02, armor=0x01, sword_flags=0x80)
+            off2 = f.seed_slot(2, valid=True, saved_world=0x40, game_state=0x03, armor=0x02, sword_flags=0x88)
+
+            # Seed sentinel normal-Link / sword-shield / fairy palettes in CGRAM buffers
+            for slot in range(3):
+                base_off = slot * 0x40
+                for c_idx in range(1, 16):
+                    sentinel = 0x1100 + slot * 0x20 + c_idx
+                    for buf in (0x7EC400, 0x7EC600):
+                        f.word(buf + base_off + c_idx * 2, sentinel)
+                for extra in range(0x20, 0x40, 2):
+                    val = 0x2200 + slot * 0x20 + extra
+                    for buf in (0x7EC400, 0x7EC600):
+                        f.word(buf + base_off + extra, val)
+
+            f.cpu.db = 0x0C
+            _run_until_stop(f, "FileSelect_LoadPalettes")
+            self.assertEqual(f.calls, ["Palettes_LoadForFileSelect"])
+            self.assertTrue(f.cpu.mf and f.cpu.xf)
+
+            # Slot 0 (LW): untouched normal sentinel palette
+            for c_idx in range(1, 16):
+                want = 0x1100 + c_idx
+                self.assertEqual(f.get(0x7EC600 + c_idx * 2) | (f.get(0x7EC601 + c_idx * 2) << 8), want)
+                self.assertEqual(f.get(0x7EC400 + c_idx * 2) | (f.get(0x7EC401 + c_idx * 2) << 8), want)
+
+            # Slot 1 (Intro Abyss-locked, Blue Mail): real GameboyLinkBlueMail (colors 1..15)
+            blue_bytes = _words_to_bytes(GBC_BLUE_WORDS)[2:]
+            self.assertEqual(bytes(f.get(0x7EC642 + i) for i in range(30)), blue_bytes)
+            self.assertEqual(bytes(f.get(0x7EC442 + i) for i in range(30)), blue_bytes)
+            # Slot 1 sword/shield palette ($7EC660..7F) untouched
+            for extra in range(0x20, 0x40, 2):
+                want = 0x2200 + 0x20 + extra
+                self.assertEqual(f.get(0x7EC640 + extra) | (f.get(0x7EC641 + extra) << 8), want)
+
+            # Slot 2 (Post-intro Abyss with Kalyxo spawn option): untouched normal sentinel palette
+            for c_idx in range(1, 16):
+                want = 0x1140 + c_idx
+                self.assertEqual(f.get(0x7EC680 + c_idx * 2) | (f.get(0x7EC681 + c_idx * 2) << 8), want)
+                self.assertEqual(f.get(0x7EC480 + c_idx * 2) | (f.get(0x7EC481 + c_idx * 2) << 8), want)
+
+            # Verify OAM tile & attribute selection for all 3 slots
+            expected_oam = [
+                (0, off0, 0x28, 0x00, 0x02, 0x30, 0x70),
+                (1, off1, 0x3C, 0x80, 0x82, 0x35, 0x75),
+                (2, off2, 0x50, 0x00, 0x02, 0x38, 0x78),
+            ]
+            for slot, sram_off, oam_off, t_head, t_body, attr_head, attr_body in expected_oam:
+                f.word(0x0E, sram_off)
+                f.cpu.db = 0x0C
+                f.cpu.mf = True
+                f.cpu.xf = True
+                f.cpu.x = oam_off
+                f.cpu.y = slot
+                _run_until_stop(f, "FileSelect_SelectSlotLinkSprite")
+                self.assertEqual(f.get(0x0802 + oam_off), t_head)
+                self.assertEqual(f.get(0x0806 + oam_off), t_body)
+                self.assertEqual(f.get(0x0803 + oam_off), attr_head)
+                self.assertEqual(f.get(0x0807 + oam_off), attr_body)
+                self.assertEqual(f.cpu.x, oam_off)
+                self.assertEqual(f.cpu.y, slot)
+                self.assertTrue(f.cpu.mf and f.cpu.xf)
+        finally:
+            f.close()
+
+    def test_file_select_gbc_worn_tunic_override_and_invalid_slot_guard(self) -> None:
+        # Invalid slot ($55AA missing) never receives GBC palette even with SavedWorld=$40, GameState=2
+        # Valid Abyss-locked slot with Red Mail owned (2) + worn Green ($88) uses GBC_GREEN_WORDS
+        # Valid Abyss-locked slot with Red Mail owned (2) + follow Armor ($80) uses GBC_RED_WORDS
+        f = SramFixture(self._lib, self._gbc_rom, self._gbc_labels)
+        f.stubs = {0x1BEF96: "Palettes_LoadForFileSelect"}
+        try:
+            f.seed_slot(0, valid=False, saved_world=0x40, game_state=0x02, armor=0x01, sword_flags=0x80)
+            f.seed_slot(1, valid=True, saved_world=0x40, game_state=0x02, armor=0x02, sword_flags=0x88)
+            f.seed_slot(2, valid=True, saved_world=0x40, game_state=0x02, armor=0x02, sword_flags=0x80)
+            f.word(0x7EC602, 0x4321)
+            f.word(0x7EC402, 0x4321)
+            f.cpu.db = 0x0C
+            _run_until_stop(f, "FileSelect_LoadPalettes")
+
+            # Slot 0 invalid -> untouched
+            self.assertEqual(f.get(0x7EC602) | (f.get(0x7EC603) << 8), 0x4321)
+            self.assertEqual(f.get(0x7EC402) | (f.get(0x7EC403) << 8), 0x4321)
+            # Slot 1 -> green GBC palette
+            self.assertEqual(bytes(f.get(0x7EC642 + i) for i in range(30)), _words_to_bytes(GBC_GREEN_WORDS)[2:])
+            # Slot 2 -> red GBC palette
+            self.assertEqual(bytes(f.get(0x7EC682 + i) for i in range(30)), _words_to_bytes(GBC_RED_WORDS)[2:])
+        finally:
+            f.close()
+
+    def test_dungeon_entrance_restores_normal_link_if_stale_gbc_in_light_world(self) -> None:
+        for mask, bank in [(0x06, 0x3B), (0x00, 0x3B), (0x06, 0x10)]:
+            with self.subTest(mask=hex(mask), bank=hex(bank)):
+                f = Fixture(self._lib, self._gbc_rom, self._gbc_labels)
+                f.stubs = {
+                    0x018110: "LinkGraphics_ApplyD8Base",
+                    0x1BEDF9: "Palette_ArmorAndGloves",
+                    0x018130: "ShieldWorld_SyncBoth",
+                    0x0AFE80: "Underworld_HandleLayerEffect",
+                }
+                try:
+                    f.put(0x7EF3CA, 0x00)  # Light World / Kalyxo
+                    f.put(0x02B2, mask)
+                    f.put(0x00BC, bank)
+                    f.cpu.c = 0
+                    _run_until_stop(f, "LinkState_GameboyInDungeonEntrance")
+                    self.assertEqual(f.get(0x02B2), 0x00)
+                    self.assertEqual(f.get(0x00BC), 0x10)
+                    self.assertEqual(
+                        f.calls,
+                        [
+                            "LinkGraphics_ApplyD8Base",
+                            "Palette_ArmorAndGloves",
+                            "ShieldWorld_SyncBoth",
+                            "Underworld_HandleLayerEffect",
+                        ],
+                    )
                 finally:
                     f.close()
 

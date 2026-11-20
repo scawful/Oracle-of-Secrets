@@ -92,11 +92,10 @@ org $388000
   incsrc "Masks/wolf_mask.asm"
 
 org $3B8000
+GbcLinkGraphics:
   incbin gfx/gbc_link.4bpp
   incsrc "Masks/gbc_form.asm"
-if !ENABLE_GLADE_AMBUSH == 1
-  assert pc() <= $3BF400, "GBC form reached the glade-ambush Kydrog block"
-endif
+assert pc() <= $3BF400, "GBC form reached the $3BF400 Bank $3B boundary"
 
 org $338000
   incbin gfx/moosh.4bpp

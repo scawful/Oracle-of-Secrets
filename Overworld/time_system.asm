@@ -783,6 +783,9 @@ FixSaveAndQuit:
   LDA.b #$00 : STA.l SpecialOverworld_VortexWorld
   LDA.b #$08 : STA.l TimeState.Hours
   LDA.b #$01 : STA.l TimeState.GfxDirty
+  ; Clear Dark World GBC / mask form across both Pause and Game Over Save & Quit.
+  LDA.b #$00 : STA.l $7E02B2
+  LDA.b #$10 : STA.l $7E00BC
   LDA.l GameState
   RTL
 }

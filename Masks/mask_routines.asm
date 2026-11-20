@@ -150,11 +150,21 @@ ForceResetMask_GameOver:
 
 ForceResetMask_SaveAndQuit:
 {
+  ; Always return to human Link ($02B2=0, $BC=$10) on Save & Quit so stale
+  ; Dark World GBC form or mask sheets never bleed into Title / File Select.
   JSL DekuStick_Drop
   STZ.w !ZoraDiving
-  LDA !CurrentMask : BEQ .still_link
-    JSL ResetToLinkGraphics
-  .still_link
+  STZ.b DekuFloating
+  JSL GaroMask_Clear
+if !ENABLE_HORSE_FORM == 1
+  JSL HorseForm_ClearState
+endif
+if defined("KORL_MOUNT_DEFINED")
+  JSL KORL_ClearState
+endif
+  STZ.w !CurrentMask
+  LDA.b #$10 : STA.w !LinkGraphics
+  JSL Palette_ArmorAndGloves
   LDA.b #$0F : STA.b $95
   RTL
 }
