@@ -221,6 +221,18 @@ HUD_NMIUpload:
     LDA.b #HUD_StripAndSunTiles>>16 : STA.w $4304
     LDY.w #$0020 : STY.w $4305                  ; 32 bytes ($014 strip + $015 icon)
     LDA.b #$01 : STA.w $420B
+if !ENABLE_HORSE_FORM == 1
+    LDA.l $7E02B2 : CMP.b #$09 : BNE .done
+      LDA.b #Horse_CarrotFullChr>>16 : STA.w $4304
+      LDY.w #Horse_CarrotFullChr&$FFFF : STY.w $4302
+      LDY.w #$7A48 : STY.w $2116                ; BG3 tile $0149 (full carrot)
+      LDY.w #$0010 : STY.w $4305
+      LDA.b #$01 : STA.w $420B
+      LDY.w #Horse_CarrotEmptyChr&$FFFF : STY.w $4302
+      LDY.w #$7B70 : STY.w $2116                ; BG3 tile $016E (empty carrot)
+      LDY.w #$0010 : STY.w $4305
+      STA.w $420B
+endif
   .done
   RTL
 }

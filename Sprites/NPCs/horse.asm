@@ -127,17 +127,15 @@ endif
   +
   SEP #$20
 
-  ; Both NPC IDs currently use the accepted standing source pose; no invented graze art.
   ; Uses SprMiscF (not SprTimerB, which the sprite engine auto-decrements every frame).
-  LDA.w SprMiscF, X : INC : STA.w SprMiscF, X
-  CMP.b #96 : BCC .show_idle
-  CMP.b #136 : BCC .show_graze
-    LDA.b #$00 : STA.w SprMiscF, X
-  .show_idle
-  LDA.b #14 : STA.l Horse_NpcFrame
-  BRA .anim_done
-  .show_graze
-  LDA.b #15 : STA.l Horse_NpcFrame
+  ; In-place idle + subtle graze/head-bob cycle (0..191); never modifies SprX/SprY.
+  LDA.w SprMiscF, X : INC
+  CMP.b #192 : BCC +
+    LDA.b #$00
+  +
+  STA.w SprMiscF, X
+  JSR HorseNPC_SelectNpcFrame
+  STA.l Horse_NpcFrame
   .anim_done
 
   ; Decay optional pre-unlock head-shake hop timer.
@@ -227,15 +225,46 @@ Sprite_HorseNPC_CheckPlayerDistance:
 }
 
 ; Draws the Ranch/group06-bound sparse horse in C2 first32 chars, page1/SP3.
+; ---------------------------------------------------------
+; Returns A = valid parked NPC facing (0=N, 2=S, 4=W, 6=E; defaults to 6=E).
+; M8 in/out, preserves X/Y.
+HorseNPC_GetFacing:
+{
+  LDA.l Horse_AnchorDir
+  CMP.b #$08 : BCC +
+    LDA.b #$06
+  +
+  AND.b #$06
+  RTS
+}
+
+; Returns A = NPC VRAM pose ID for current facing (12=N, 13=S, 14=Side E/W).
+HorseNPC_SelectNpcFrame:
+{
+  JSR HorseNPC_GetFacing
+  BEQ .north
+  CMP.b #$02 : BEQ .south
+    LDA.b #14
+    RTS
+  .north
+  LDA.b #12
+  RTS
+  .south
+  LDA.b #13
+  RTS
+}
+
+; =========================================================
+; Draw Routine (respects Horse_AnchorDir, 16-bit X/Y clip, in-place graze bob)
+; =========================================================
 Sprite_HorseNPC_Draw:
 {
-  JSL Sprite_PrepOamCoord             ; $00=X, $02=Y (relative to camera)
-  JSL Sprite_OAM_AllocateDeferToPlayer
-if !ENABLE_HORSE_PARK_ANYWHERE == 1
-  REP #$20
-  LDA.b $90 : STA.l Horse_OffOam      ; exact 8-slot OAM base [$90..$90+$1F] for HorseScanOam
-  SEP #$20
-endif
+  ; Keep persistent offscreen bit set so horizontal/vertical scroll never runs Sprite_KillSelf.
+  LDA.w $0CAA, X : ORA.b #$80 : STA.w $0CAA, X
+  JSL Sprite_PrepOamCoord             ; $00=X, $02=Y (relative to camera); C=1 if off-screen
+  BCC .coord_ok
+    BRL .offscreen_no_oam
+  .coord_ok
 
   ; Optional vertical hop feedback on pre-unlock gentle refusal.
   LDA.w SprTimerA, X : BEQ .no_hop
@@ -246,47 +275,220 @@ endif
     SEP #$20
   .no_hop
 
-  PHX
-  LDX.b #$07                          ; eight reserved OAM entries (seven visible)
+  ; Coarse 16-bit bounds check before reserving 8 OAM slots.
+  ; Even with !Persist = 01 (C=0), walking >256 px wraps 8-bit X; skip early if fully outside.
+  REP #$20
+  LDA.b $00 : CLC : ADC.w #$0030 : CMP.w #$0150 : BCC + : BRL .offscreen_m16 : +
+  LDA.b $02 : CLC : ADC.w #$0030 : CMP.w #$0130 : BCC + : BRL .offscreen_m16 : +
+  SEP #$20
+
+  JSL Sprite_OAM_AllocateDeferToPlayer
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  REP #$20
+  LDA.b $90 : STA.l Horse_OffOam      ; exact 8-slot OAM base [$90..$90+$1F] for HorseScanOam
+  SEP #$20
+endif
+
+  ; Compute graze/head-bob offsets from SprMiscF,X (0..191) without moving SprX/SprY:
+  ;   $06 = 16-bit head Y bob (0, 1, or 3; 2 for N/S)
+  ;   $08 = 16-bit head X nod (side graze only: +1 right / -1 left)
+  ;   $0A = 16-bit tail Y sway (side only: 0 or +1)
+  ;   $0C = facing (0=N, 2=S, 4=W, 6=E)
+  ;   $0D = visible tile counter (if 0, clear Horse_OffOam)
+  ;   $04 = tile props ($27 right/N/S, $67 left H-flip)
+  STZ.b $06 : STZ.b $07
+  STZ.b $08 : STZ.b $09
+  STZ.b $0A : STZ.b $0B
+  STZ.b $0D
+
+  JSR HorseNPC_GetFacing
+  STA.b $0C
+  LDA.w SprMiscF, X
+  CMP.b #32 : BCC .phase_done
+  CMP.b #64 : BCC .phase_breath
+  CMP.b #96 : BCC .phase_done
+  CMP.b #168 : BCC .phase_graze
+    LDA.b #$01 : STA.b $06            ; 168..191: gentle lift back up
+    BRA .phase_done
+  .phase_breath
+    LDA.b #$01 : STA.b $06            ; 32..63: +1px subtle breathing nod & tail sway
+    STA.b $0A
+    BRA .phase_done
+  .phase_graze
+    LDA.b #$03 : STA.b $06            ; 96..167: graze head dip
+    LDA.b #$01 : STA.b $08
+    LDA.w SprMiscF, X
+    CMP.b #112 : BCC .phase_done
+    CMP.b #144 : BCS .phase_done
+      LDA.b #$01 : STA.b $0A
+  .phase_done
+
+  LDA.b #$27 : STA.b $04              ; Pal 3, priority 2, page 1, no flip
+  LDA.b $0C
+  BEQ .setup_ns
+  CMP.b #$02 : BEQ .setup_ns
+  CMP.b #$04 : BNE .setup_loop        ; $06 Right keeps dx_head = +1, props = $27
+    LDA.b #$67 : STA.b $04            ; Left: H-flip bit $40
+    LDA.b $08 : BEQ .setup_loop
+      LDA.b #$FF : STA.b $08 : STA.b $09
+    BRA .setup_loop
+  .setup_ns
+    STZ.b $08 : STZ.b $09
+    STZ.b $0A
+    LDA.b $06 : CMP.b #$03 : BCC .setup_loop
+      LDA.b #$02 : STA.b $06
+
+  .setup_loop
+  PHX                                 ; save sprite slot X across OAM loop
+  LDX.b #$07                          ; eight reserved OAM entries
   LDY.b #$00
   .nextTile
     PHX
-    TXA : ASL : TAX
+    LDA.b $0C
+    BEQ .check_ns_limit
+    CMP.b #$02 : BNE .tile_coords
+    .check_ns_limit
+      TXA : CMP.b #$06 : BCC .tile_coords
+      JMP .hide_tile                  ; N/S only uses 6 tiles (0..5); hide 6..7
+
+    .tile_coords
+    TXA : ASL : TAX                   ; word index X*2
 
     REP #$20
-    LDA.b $00 : CLC : ADC.l .x_offsets, X : STA ($90), Y
-    AND.w #$0100 : STA.b $0E
-    INY
-    LDA.b $02 : CLC : ADC.l .y_offsets, X : STA ($90), Y
-    CLC : ADC.w #$0010 : CMP.w #$0100
-    SEP #$20
-    BCC .on_screen_y
-      LDA.b #$F0 : STA ($90), Y
-      STA.b $0E
-    .on_screen_y
+    LDA.b $0C : AND.w #$00FF
+    BEQ .load_x_ns
+    CMP.w #$0002 : BEQ .load_x_ns
+    CMP.w #$0004 : BEQ .load_x_left
+      LDA.l .x_offsets, X
+      BRA .add_x_nod
+    .load_x_left
+      LDA.l .x_offsets_left, X
+    .add_x_nod
+      CPX.b #$02 : BEQ .apply_x_nod
+      CPX.b #$08 : BNE .got_x_off
+      .apply_x_nod
+        CLC : ADC.b $08
+      BRA .got_x_off
+    .load_x_ns
+      LDA.l .x_offsets_ns, X
+    .got_x_off
+    CLC : ADC.b $00                   ; 16-bit screen X
+    PHA
+    CLC : ADC.w #$0010 : CMP.w #$0110
+    BCC .x_in_bounds
+      PLA
+      JMP .hide_tile
+    .x_in_bounds
+    PLA
+    STA ($90), Y
+    AND.w #$0100 : STA.b $0E          ; $0F = bit 8 of screen X
 
-    PLX                               ; 0..3 tile index
+    LDA.b $0C : AND.w #$00FF
+    BEQ .load_y_north
+    CMP.w #$0002 : BEQ .load_y_south
+      LDA.l .y_offsets, X
+      CPX.b #$00 : BEQ .add_y_head
+      CPX.b #$02 : BEQ .add_y_head
+      CPX.b #$08 : BEQ .add_y_head
+      CPX.b #$0E : BNE .no_y_mod
+        CLC : ADC.b $0A
+        BRA .no_y_mod
+      .add_y_head
+        CLC : ADC.b $06
+        BRA .no_y_mod
+    .load_y_north
+      LDA.l .y_offsets_n, X
+      CPX.b #$04 : BCS .no_y_mod
+        CLC : ADC.b $06
+        BRA .no_y_mod
+    .load_y_south
+      LDA.l .y_offsets_s, X
+      CPX.b #$04 : BCS .no_y_mod
+        CLC : ADC.b $06
+    .no_y_mod
+    CLC : ADC.b $02                   ; 16-bit screen Y
+    PHA
+    CLC : ADC.w #$0010 : CMP.w #$0100
+    BCC .y_in_bounds
+      PLA
+      BRA .hide_tile
+    .y_in_bounds
+    PLA
     INY
-    LDA.l .chr, X : STA ($90), Y
+    SEP #$20
+    STA ($90), Y
+
+    PLX                               ; 0..7 tile index
     INY
-    LDA.l .props, X : STA ($90), Y
+    LDA.b $0C
+    BEQ .chr_load_ns
+    CMP.b #$02 : BEQ .chr_load_ns
+      LDA.l .chr, X
+      BRA .store_chr
+    .chr_load_ns
+      LDA.l .chr_ns, X
+    .store_chr
+    STA ($90), Y
+    INY
+    LDA.b $04
+    STA ($90), Y
 
     PHY
     TYA : LSR #2 : TAY
     LDA.b #$02 : ORA.b $0F : STA ($92), Y
     PLY : INY
-    DEX : BPL .nextTile
+    INC.b $0D
+    BRA .tile_done
+
+    .hide_tile
+    SEP #$20
+    PLX
+    INY
+    LDA.b #$F0 : STA ($90), Y
+    INY #2
+    PHY
+    TYA : LSR #2 : TAY
+    LDA.b #$02 : STA ($92), Y
+    PLY : INY
+
+    .tile_done
+    DEX : BMI +
+      BRL .nextTile
+    +
 
   PLX
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  LDA.b $0D : BNE +
+    LDA.b #$00 : STA.l Horse_OffOam : STA.l Horse_OffOam+1
+  +
+endif
+  RTS
+
+  .offscreen_m16
+  SEP #$20
+  .offscreen_no_oam
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  LDA.b #$00 : STA.l Horse_OffOam : STA.l Horse_OffOam+1
+endif
   RTS
 
   ; Native source standing footprint; part7 is transparent padding.
   .x_offsets
   dw -3,13,-14,2,18,-11,5,-14
+  .x_offsets_left
+  dw 3,-13,14,-2,-18,11,-5,14
   .y_offsets
   dw -28,-28,-12,-12,-12,4,4,-21
+  .x_offsets_ns
+  dw -4,12,-4,12,-4,12,0,0
+  .y_offsets_n
+  dw -20,-20,-4,-4,12,12,0,0
+  .y_offsets_s
+  dw -26,-26,-10,-10,6,6,0,0
   .chr
   db $00,$02,$04,$06,$08,$0A,$0C,$0E
+  .chr_ns
+  db $00,$02,$04,$06,$08,$0A,$00,$00
   .props
   db $27,$27,$27,$27,$27,$27,$27,$27  ; OBJ priority 2: respects BG1 high tiles (arches/roofs)
 }

@@ -724,9 +724,9 @@ def main():
         case("all_19_frames_zero_dropable_vram_and_oam_overlap", verify_all_19_frames_vram_and_oam_dropable_safe)
 
         # =====================================================================
-        # 4. MOUNTED OVERWORLD HOSTILE-ENEMY THROTTLING & STRICT WHITELIST
+        # 4. ZERO MID-SCREEN HOSTILE-ENEMY DESPAWN WHILE MOUNTED
         # =====================================================================
-        def throttle_caps_hostiles_to_one(f):
+        def throttle_never_despawns_hostiles(f):
             f.put(0x10, 0x09); f.put(0x11, 0x00); f.put(0x02E4, 0x00)
             f.put(0x7F5410, 0x00)  # HorseGame_State = 0
             # Spawn 5 ordinary hostile overworld patrol enemies
@@ -734,8 +734,8 @@ def main():
                 f.set_sprite(slot, sid, state=9)
             f.run_jsr("HorseForm_ThrottleHostiles")
             alive = [s for s in range(5) if f.get(0x0DD0 + s) == 9]
-            assert len(alive) == 1, f"Expected 1 kept hostile, got {alive}"
-        case("throttle_caps_5_hostiles_to_1", throttle_caps_hostiles_to_one)
+            assert alive == [0, 1, 2, 3, 4], f"Mid-screen enemy despawn detected! alive={alive}"
+        case("throttle_never_despawns_hostiles_midscreen", throttle_never_despawns_hostiles)
 
         def throttle_strictly_preserves_all_protected_actors(f):
             f.put(0x10, 0x09); f.put(0x11, 0x00); f.put(0x02E4, 0x00)
@@ -765,7 +765,7 @@ def main():
             for slot, sid, _ in protected_batch_1:
                 assert f.get(0x0DD0 + slot) == 9, f"Protected actor ${sid:02X} (slot {slot}) was wrongly despawned!"
 
-            # Test batch 2: Bosses, property flags (Impervious, Persist/Target, Bulletproof, Boss), plus 3 hostiles
+            # Test batch 2: Bosses, property flags, plus 3 ordinary hostiles (none despawned)
             for s in range(16):
                 f.put(0x0DD0 + s, 0)
             protected_batch_2 = [
@@ -784,14 +784,13 @@ def main():
             ]
             for slot, sid, kw in protected_batch_2:
                 f.set_sprite(slot, sid, state=9, **kw)
-            # Add 3 ordinary hostiles in slots 12, 13, 14
             for slot in (12, 13, 14):
                 f.set_sprite(slot, 0x08, state=9)
             f.run_jsr("HorseForm_ThrottleHostiles")
             for slot, sid, _ in protected_batch_2:
                 assert f.get(0x0DD0 + slot) == 9, f"Protected batch2 ${sid:02X} (slot {slot}) was despawned!"
             alive_hostiles = [s for s in (12, 13, 14) if f.get(0x0DD0 + s) == 9]
-            assert len(alive_hostiles) == 1, f"Expected 1 kept hostile, got {alive_hostiles}"
+            assert alive_hostiles == [12, 13, 14], f"Expected all 3 hostiles preserved, got {alive_hostiles}"
         case("throttle_preserves_all_npcs_targets_pickups_bosses", throttle_strictly_preserves_all_protected_actors)
 
         def throttle_skips_minigame_and_non_overworld(f):

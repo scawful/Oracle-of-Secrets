@@ -20,12 +20,13 @@ HorseMounted_Chr:
 Horse_SlotsBusy:
 {
   PHP : PHB : REP #$30 : PHA : PHX
-  SEP #$20 : LDA.b #0 : PHA : PLB
+  SEP #$30
+  LDA.b #0 : PHA : PLB
   ; No $0AF4 test: vanilla never clears it after a bird flight, and its stale
   ; NMI upload targets VRAM $40E0/$41E0, which no horse slot uses. The live
   ; bird is an ancilla and the scan below still reports it.
   LDA.l InCutScene : BNE .busy
-  LDX.w #9
+  LDX.b #9
   .scan
     LDA.w $0C4A, X : BEQ .next_ancilla
     ; Ancilla $1D (dash tremor) is the long-jump landing shake: BG offsets
@@ -41,7 +42,7 @@ Horse_SlotsBusy:
     LDA.w !CurrentMask : CMP.b #!Horse_MaskId : BNE .busy
     .next_ancilla
     DEX : BPL .scan
-  LDX.w #15
+  LDX.b #15
   .receipt_sprites
     LDA.w $0DD0, X : BEQ .next_sprite
     LDA.w $0E20, X : CMP.b #$EA : BEQ .busy
@@ -436,8 +437,9 @@ endif
   CMP.b #$0E : BNE .restore_npc
   JSL Horse_IsSafeOverlay : BCC .restore_npc
   .ranch_mod_ok
-  LDA.w Horse_NpcFrame&$FFFF : CMP.b #14 : BEQ .ranch_scan
-  CMP.b #15 : BNE .restore_npc
+  LDA.w Horse_NpcFrame&$FFFF
+  CMP.b #12 : BCC .restore_npc
+  CMP.b #16 : BCS .restore_npc
 
   .ranch_scan
   ; Tight DBR=$00 ancilla check + DBR=$00 Horse_RanchActorsSafe (eliminates
@@ -465,8 +467,25 @@ endif
   ; first-four and last-four 256-byte rows; a second burst emits their bottoms.
   ; Hardware increments both source addresses and VRAM between bursts.
   LDA.b #HorseGraphics>>16 : STA.w $4304 : STA.w $4314
+if defined("HorseNpcNorthTail")
+  LDA.w Horse_NpcFrame&$FFFF
+  CMP.b #12 : BEQ .npc_north
+  CMP.b #13 : BEQ .npc_south
+    LDX.w #HorseGraphics+!Horse_NpcHeadOffset : STX.w $4302
+    LDX.w #HorseNpcTail : STX.w $4312
+    BRA .npc_dma
+  .npc_north
+    LDX.w #HorseGraphics : STX.w $4302
+    LDX.w #HorseNpcNorthTail : STX.w $4312
+    BRA .npc_dma
+  .npc_south
+    LDX.w #HorseGraphics+$0A80 : STX.w $4302
+    LDX.w #HorseNpcSouthTail : STX.w $4312
+  .npc_dma
+else
   LDX.w #HorseGraphics+!Horse_NpcHeadOffset : STX.w $4302
   LDX.w #HorseNpcTail : STX.w $4312
+endif
   LDX.w #$0100 : STX.w $4305 : STX.w $4315
   LDY.w #$5000 : STY.w $2116
   LDA.b #3 : STA.w $420B

@@ -26,7 +26,12 @@ HorseForm_ConstrainGroundInput:
   LDA.l .buttons, X : AND.b $F0 : BNE + : BRL .next_direction : +
   PHX
   TXA : ASL : STA.b $0E
+  JSR HorseGround_TryEdgeFast : BCC +
+    PLX : BRL .next_direction
+  +
+  STZ.b $03                           ; Tile8 walkable-cache valid flag (0 = miss)
   STZ.b $06                           ; blocked-point bitmask for corner-slide check
+  STZ.b $07                           ; per-direction .fence_ahead cache (0=untested, 1=clear, $80=blocked)
   LDY.b #$02
   CPX.b #$02 : BCC + : LDY.b #$03 : +
   .point
@@ -43,18 +48,45 @@ HorseForm_ConstrainGroundInput:
   .vertical_edge
     LDA.b $0A : CLC : ADC.b $08 : STA.b $0A
   .query
+  ; Fast Tile8 dedup: if (x8,y8) matches the previous edge point and was strictly
+  ; walkable ($03 == 1), skip .query_side / .gap_point / .solid completely.
+  LDA.b $0C : LSR #3 : AND.w #$00FF : STA.b $02
+  LDA.b $0A : AND.w #$07F8 : ASL #5 : ORA.b $02
+  LDX.b $03 : BEQ .cache_miss
+    CMP.b $00 : BNE .cache_miss
+    SEP #$20
+    BRA .clear_point
+  .cache_miss
+  STA.b $00
   JSR .query_side                     ; out-of-area probe reads clear (all 4 directions)
+  LDX.b $05 : BNE .not_fast_clear
+  CMP.b #$01 : BEQ .not_fast_clear_solid
+  CMP.b #$02 : BEQ .not_fast_clear_solid
+    LDA.b #$01 : STA.b $03
+    BRL .clear_point
+  .not_fast_clear
+  STZ.b $03
   ; A named water gap blocks like a wall unless a valid long jump crosses it
   ; from here (.gap_point: A = $00 clear, $FF block, else the attribute).
   JSR .gap_point : CMP.b #$FF : BEQ .point_blocked
   CMP.b #$01 : BEQ .solid
   CMP.b #$02 : BNE .clear_point
+  BRA .solid
+  .not_fast_clear_solid
+  STZ.b $03
   .solid
   ; A thin named fence is handled by CheckFenceJump, not this solid envelope.
   REP #$20
   JSR .is_fence : BCS .fence_clear
-  JSR .fence_ahead : BCS .fence_clear
   SEP #$20
+  LDA.b $07 : BNE .fence_cached
+    REP #$20
+    JSR .fence_ahead
+    SEP #$20
+    LDA.b #$80 : BCC + : LDA.b #$01 : +
+    STA.b $07
+  .fence_cached
+  BPL .clear_point
   .point_blocked
   ; Middle probe blocked -> dead-stop immediately (no corner-slide possible).
   ; Outer corner probe blocked -> record bit in $06 and finish checking the edge.
@@ -85,6 +117,7 @@ HorseForm_ConstrainGroundInput:
   DEX : BMI .restore
   BRL .direction
   .restore
+  LDA.b #$FF : STA.l Horse_FrameFenceCheckedDir
   REP #$30
   PLA : STA.b $0E : PLA : STA.b $0C : PLA : STA.b $0A
   PLA : STA.b $08 : PLA : STA.b $06 : PLA : STA.b $04
@@ -92,21 +125,24 @@ HorseForm_ConstrainGroundInput:
   PLY : PLX : PLA : PLP
   RTS
   ; A solid neighbour (e.g. a post beside a pit gap) does not block when a
-  ; fence Tile16 is ahead: either CheckFenceJump's own near/far probe for this
-  ; direction (so a blocked turn-around can still face the fence and jump), or
-  ; the probe line at this leading edge (body row y+11 sideways, centre column
-  ; x+8 vertically). Edge index/2 = Horse_JumpDir (U,D,L,R); CheckFenceJump
-  ; rewrites Horse_JumpDir before any read, so the store here is scratch.
-  ; In: A16/X8, $0A/$0C = edge point, $0E = edge index. Out: carry = fence.
-  ; X and $0A or $0C are clobbered; the caller recomputes them per point.
+  ; fence Tile16 or long-jump gap is ahead: probe each of the 3 ahead coords
+  ; (near, far, body-row/center) ONCE via fast Tile16 lookup, skipping pass 0/1
+  ; if CheckFenceJump already cleared them for this direction on this frame.
+  ; In: A16/X8, $0A/$0C = edge point, $0E = edge index. Out: M16/X8, carry = clear.
+  ; X, Y and $0A/$0C are clobbered; caller caches result in $07.
   .fence_ahead
-  PEI ($0A) : PEI ($0C)
   SEP #$20
   LDA.b $0E : LSR : STA.l Horse_JumpDir
-  LDA.b #$00 : JSR HorseForm_ProbeFence : BCS .probe_hit
-  LDA.b #$01 : JSR HorseForm_ProbeFence : BCS .probe_hit
+  CMP.l Horse_FrameFenceCheckedDir : BEQ .only_body_row
+  REP #$20 : PEI ($0A) : PEI ($0C) : SEP #$20
+  LDA.b #$00 : JSR .probe_pass : BCS .probe_hit
+  LDA.b #$01 : JSR .probe_pass : BCS .probe_hit
   REP #$20
   PLA : STA.b $0C : PLA : STA.b $0A
+  BRA .do_body_row
+  .only_body_row
+  REP #$20
+  .do_body_row
   LDA.b $0E : AND.w #$00FF : CMP.w #$0004 : BCS .probe_body_row
     LDA.b $22 : CLC : ADC.w #$0008 : STA.b $0C
     BRA .probe_query
@@ -115,40 +151,32 @@ HorseForm_ConstrainGroundInput:
   .probe_query
   SEP #$20
   JSR Horse_QueryTile16Only
+  REP #$20 : JSR .is_fence : SEP #$20 : BCS .pfg_hit_m16
+  JSR .check_gap_loaded
   REP #$20
-  ; Same rule for a solid neighbour beside a valid long-jump gap.
-  JSR .is_fence : BCS + : JMP .long_ahead : +
+  RTS
+  .pfg_hit_m16
+  REP #$20
   RTS
   .probe_hit
   REP #$20
   PLA : PLA
   SEC
   RTS
+  ; In: A = pass (0/1), M=8, X=8, Horse_JumpDir set. Out: M=8, C=1 if fence or gap.
+  .probe_pass
+  JSR HorseForm_ProbeFence : BCS .pfg_hit
+  .check_gap_loaded
+  LDA.b $05 : CMP.b #$02 : BCC .pfg_miss
+  REP #$20 : JSR HorseLong_IsGap : SEP #$20 : BCC .pfg_miss
+  JMP HorseLong_ScanGap
+  .pfg_miss
+  CLC
+  .pfg_hit
+  RTS
   ; In: A16/X8, $04 = Tile16. Out: carry set if jumpable fence (with map gate).
   .is_fence
   JMP Horse_IsFenceTile16
-  ; In: A16/X8, $0E = edge index. Out: carry = a valid long jump is ahead in
-  ; this direction (CheckFenceJump near/far probes, then the probe line at
-  ; this edge). X/Y, $04, $0A and $0C are clobbered; the caller restores them.
-  .long_ahead
-  SEP #$20
-  LDA.b $0E : LSR : STA.l Horse_JumpDir
-  JSR HorseLong_TryProbes : BCS .long_ahead_done
-  REP #$20
-  LDA.b $0E : AND.w #$00FF : CMP.w #$0004 : BCS .long_body_row
-    LDA.b $22 : CLC : ADC.w #$0008 : STA.b $0C
-    BRA .long_query
-  .long_body_row
-    LDA.b $20 : CLC : ADC.w #$000B : STA.b $0A
-  .long_query
-  SEP #$20
-  JSR Horse_QueryTileAt
-  REP #$20 : JSR HorseLong_IsGap : SEP #$20
-  BCC .long_ahead_done
-  JSR HorseLong_ScanGap
-  .long_ahead_done
-  REP #$20
-  RTS
   ; In: M8/X8, A = attribute of the edge point, $04 = its Tile16, $0E = edge
   ; index. Out: M8/X8; A = $00 (gap with a valid jump: clear), $FF (gap, no
   ; valid jump: block) or the attribute unchanged (not a gap). Clearing a
@@ -158,24 +186,19 @@ HorseForm_ConstrainGroundInput:
   ; in Horse_QueryTileAt) to the opposite edge of this area; treat it as clear for
   ; all 4 directions (N/S/W/E). Native Link collision, outer-world bounds and the
   ; area transition still own the seam itself.
-  ; In: A16/X8, $0A/$0C = probe point. Out: M8/X8, A = tile attribute and
-  ; $04 = Tile16, or A = $00 / $04 = $0000 (clear) when outside current area.
+  ; In: A16/X8, $0A/$0C = probe point, $0E = dir*2, Y = pt (0..3).
+  ; Out: M8/X8, A = tile attribute and $04 = Tile16, or A = $00 / $04 = $0000 when outside area.
   .query_side
-  JSR .point_outside_area : BCC +
-    STZ.b $04
-    SEP #$20 : LDA.b #$00
-    RTS
-  + SEP #$20
-  JMP Horse_QueryTileAt
+  JMP HorseCgi_QuerySideTile
   ; In: A16/X8, $0A/$0C = probe point. Out: carry set when the point lies
   ; outside the current area (bits above the $070E/$070A masks; the masks
   ; are contiguous low bits, sub-tile bits are don't-care). Clobbers $04.
   .point_outside_area
-  LDA.l $7E070E : EOR.w #$FFFF : STA.b $04
-  LDA.b $0C : LSR #3 : SEC : SBC.l $7E070C
+  LDA.w $070E : EOR.w #$FFFF : STA.b $04
+  LDA.b $0C : LSR #3 : SEC : SBC.w $070C
   AND.b $04 : AND.w #$FFFE : BNE .outside_area
-  LDA.l $7E070A : EOR.w #$FFFF : STA.b $04
-  LDA.b $0A : SEC : SBC.l $7E0708
+  LDA.w $070A : EOR.w #$FFFF : STA.b $04
+  LDA.b $0A : SEC : SBC.w $0708
   AND.b $04 : AND.w #$FFF0 : BNE .outside_area
   CLC
   RTS
@@ -246,10 +269,14 @@ HorseLongGapTile16s_End:
 ; In: A16/X8, $04 = Tile16. Out: carry set if $04 is a long-gap Tile16. X clobbered.
 HorseLong_IsGap:
 {
+  LDA.b $04
+  CMP.w #$02B8 : BEQ .hit
+  CMP.w #$0F90 : BCC .no
   LDX.b #$00
   .loop
   LDA.l HorseLongGapTile16s, X : CMP.b $04 : BEQ .hit
   INX #2 : CPX.b #HorseLongGapTile16s_End-HorseLongGapTile16s : BCC .loop
+  .no
   CLC
   RTS
   .hit
@@ -276,7 +303,7 @@ HorseLong_TryProbes:
   LDA.l HorseForm_ProbeFence_dy_table, X : CLC : ADC.b $20 : STA.b $0A
   SEP #$20
   PLA
-  JSR Horse_QueryTileAt
+  JSR Horse_QueryTile16Only
   REP #$20 : JSR HorseLong_IsGap : SEP #$20
   RTS
 }
@@ -299,7 +326,7 @@ HorseLong_ScanGap:
     LDA.b $0C : CLC : ADC.l .step_x, X : STA.b $0C
     LDA.b $0A : CLC : ADC.l .step_y, X : STA.b $0A
     SEP #$20
-    JSR Horse_QueryTileAt
+    JSR Horse_QueryTile16Only
     REP #$20 : JSR HorseLong_IsGap : SEP #$20
     BCC .found_land
     DEY : BNE .step
@@ -480,6 +507,13 @@ HorseLong_FitLanding:
 HorseLong_TryJump:
 {
   JSR HorseLong_TryProbes : BCC .done
+  JMP HorseLong_FinishSetup
+  .done
+  RTS
+}
+
+HorseLong_FinishSetup:
+{
   ; Frames = max(|dX|,|dY|)*5/16, clamped to 16..18: about 3.2 px per
   ; frame, about twice the measured riding speed (D2 54 px gap = 16 frames).
   REP #$20
@@ -494,7 +528,6 @@ HorseLong_TryJump:
   SEP #$20
   STA.l Horse_JumpTimer
   SEC
-  .done
   RTS
 }
 
@@ -575,30 +608,32 @@ HorseLong_Lerp:
 ; HorseOam_WriteSlot and HorseOam_HideAll relocated into Masks/horse_mounted_helpers.asm
 ; (same bank $53, $53D000-$53DFFF slice) to keep $53E000-$53E7FF roomy.
 
-; Fast Tile16 lookup without calling vanilla $00882E.
-; Inputs: DP $0A = 16-bit world Y px, DP $0C = 16-bit world X px (M/X=8).
-; Outputs: DP $04 = 16-bit Tile16 ID (M/X=8); X/Y/B/P and DP $06 preserved.
-Horse_QueryTile16Only:
-{
-  PHP : REP #$30 : PHX : PHA
-  LDA.b $06 : PHA
-  LDA.b $0A : SEC : SBC.l $7E0708 : AND.l $7E070A : ASL #3 : STA.b $06
-  LDA.b $0C : LSR #3 : SEC : SBC.l $7E070C : AND.l $7E070E : ORA.b $06 : TAX
-  LDA.l $7E2000, X : STA.b $04
-  PLA : STA.b $06
-  PLA : PLX : PLP
-  RTS
-}
+; Horse_QueryTile16Only lives in Masks/horse_mounted_helpers.asm ($53F000-$53F3FF same bank $53).
 
 ; In: M=16, X=8, DP $04 = Tile16. Out: C=1 if jumpable fence (A/X clobbered, M=16/X=8).
 ; Gate $010B specifically to Overworld map $25.
 Horse_IsFenceTile16:
 {
   LDA.b $04
-  CMP.w #$010B : BNE .scan
+  CMP.w #$002C : BCC .no
+  CMP.w #$007C : BCS .high
+    CMP.w #$002C : BEQ .hit
+    CMP.w #$003B : BEQ .hit
+    CMP.w #$0078 : BEQ .hit
+    CMP.w #$007B : BEQ .hit
+    .no
+    CLC
+    RTS
+  .high
+  CMP.w #$010B : BNE +
     LDA.b $8A : AND.w #$00FF : CMP.w #$0025 : BEQ .hit
     CLC
     RTS
+  +
+  CMP.w #$0267 : BCC .no
+  CMP.w #$0EF5 : BCS .no
+  CMP.w #$043B : BCC .scan
+  CMP.w #$0EF2 : BCC .no
   .scan
   LDX.b #$00
   .loop
@@ -615,11 +650,15 @@ Horse_IsFenceTile16:
 ; or rail tile $0333/$0335 promotes prio 3 so Epona's body stays above high-priority gaps.
 Horse_IsPriorityFenceTile16:
 {
+  LDA.b $04 : CMP.w #$002C : BCC .no
   JSR Horse_IsFenceTile16 : BCS .hit
-  JSR HorseLong_IsGap : BCS .hit
+  LDA.b $04 : CMP.w #$02B8 : BCC +
+    JSR HorseLong_IsGap : BCS .hit
+  +
   LDA.b $04
   CMP.w #$0333 : BEQ .hit
   CMP.w #$0335 : BEQ .hit
+  .no
   CLC
   RTS
   .hit
@@ -655,67 +694,55 @@ Horse_CheckNorthSolidBase:
 ; Verifies landing footprint around (Horse_JumpEndX, Horse_JumpEndY) is clear.
 HorseForm_CheckLandingWalkable:
 {
-  LDX.b #$02                          ; check 3 points: 2, 1, 0
-  .pt_loop
-    PHX
-    TXA : ASL : TAX
-    REP #$20
-    LDA.l Horse_JumpEndX : CLC : ADC.l .off_x, X : STA.b $0C
-    LDA.l Horse_JumpEndY : CLC : ADC.l .off_y, X : STA.b $0A
-    JSR .test_walkable : BCC .blocked_pop
-    PLX
-    DEX : BPL .pt_loop
+  JMP HorseForm_CheckLandingWalkable_Impl
+}
 
-  LDA.l Horse_JumpDir : BNE .not_north
-    LDX.b #$02                        ; North jump: also verify top half (4,2) & (11,2) walkable
-    .north_loop
-      PHX
-      REP #$20
-      LDA.l Horse_JumpEndX : CLC : ADC.l .off_x, X : STA.b $0C
-      LDA.l Horse_JumpEndY : CLC : ADC.w #$0002 : STA.b $0A
-      JSR .test_walkable : BCC .blocked_pop
-      PLX
-      DEX : DEX : BPL .north_loop
-    BRA .ok
-
-  .not_north
-  LDX.b #$02                          ; S/W/E jump: verify lower body (4,22) & (11,22) not $01/$02 solid
-  .south_loop
-    REP #$20
-    LDA.l Horse_JumpEndX : CLC : ADC.l .off_x, X : STA.b $0C
-    LDA.l Horse_JumpEndY : CLC : ADC.w #$0016 : STA.b $0A
-    SEP #$20
-    JSR Horse_QueryTileAt             ; M=8, X=8, X preserved
-    CMP.b #$01 : BEQ .blocked
-    CMP.b #$02 : BEQ .blocked
-    DEX : DEX : BPL .south_loop
-  .ok
-  SEC
-  RTS
-
-  .blocked_pop
-  PLX
-  .blocked
-  CLC
-  RTS
-
-  ; In: M=16, DP $0A/$0C set. Out: M=8, C=1 if walkable, clobbers X.
-  .test_walkable
+; Fast Overworld leading-edge clear check: proves both edge endpoints lie inside
+; the area on Tile16s whose 4 quadrants are all non-solid & non-gap & non-fence.
+; Entry: M=8, X=8, DBR=$00, $0E = dir*2. Exit: M=8, X=8, C=1 clear, C=0 fallback.
+HorseGround_TryEdgeFast:
+{
+  LDA.b $8A : BPL + : CLC : RTS : +
+  LDA.b $1B : BEQ + : CLC : RTS : +
+  REP #$20
+  LDA.l Horse_GetTileAttr : CMP.w #$30C2 : BEQ +
+    SEP #$20 : CLC : RTS
+  +
+  LDA.w #$FFFF : STA.b $02
+  LDA.b $0E : AND.w #$00FF : TAX
+  LDA.l HorseForm_ConstrainGroundInput_edge_x, X : CLC : ADC.b $22 : STA.b $0C
+  LDA.l HorseForm_ConstrainGroundInput_edge_y, X : CLC : ADC.b $20 : STA.b $0A
+  CPX.b #$04 : BCS .v0
+    LDA.b $0C : CLC : ADC.w #$0003 : STA.b $0C
+    JSR .check_pt : BCC .nope_m16
+    LDA.b $0C : CLC : ADC.w #$0009 : STA.b $0C
+    BRA .check_second
+  .v0
+    LDA.b $0A : CLC : ADC.w #$0003 : STA.b $0A
+    JSR .check_pt : BCC .nope_m16
+    LDA.b $0A : CLC : ADC.w #$000F : STA.b $0A
+  .check_second
+  JSR .check_pt : BCC .nope_m16
   SEP #$20
-  JSR Horse_QueryTileAt
-  CMP.b #$58 : BCS .not_walk
-  TAX
-  LDA.l HorseWalkableAttr, X : BEQ .not_walk
   SEC
   RTS
-  .not_walk
+  .nope_m16
+  SEP #$20
   CLC
   RTS
 
-  .off_x
-  dw 4, 11, 8
-  .off_y
-  dw 12, 12, 8
+  .check_pt
+  JSR HorseForm_ConstrainGroundInput_point_outside_area : BCS .pt_fail
+  SEP #$20 : JSR Horse_QueryTile16Only : REP #$20
+  LDA.b $04 : CMP.b $02 : BEQ .pt_ok
+  JSL Horse_CheckTile16Safe_Long : BCC .pt_fail
+  LDA.b $04 : STA.b $02
+  .pt_ok
+  SEC
+  RTS
+  .pt_fail
+  CLC
+  RTS
 }
 
 assert pc() <= $53E800, "Horse grounded clearance exceeded its bounded bank53 slice"

@@ -351,6 +351,9 @@ HUD_Update_Impl:
   LDA.b #$5A : STA.l HudCache_Init
 
   .exit
+if !ENABLE_HORSE_FORM == 1
+  JSL Horse_SyncCarrotHud
+endif
   PLP ; Restore caller's P register
   RTL
 }

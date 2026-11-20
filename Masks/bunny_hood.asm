@@ -70,8 +70,7 @@ LinkState_BunnyHoodRun:
   CPX.b #$11 : BCS .end    ; speed value upper bound check
 if !ENABLE_HORSE_FORM == 1
   LDA.w !CurrentMask : CMP.b #$09 : BNE +
-    LDA.l HorseSpeedTable, X
-    CLC
+    JSL HorseSpeed_GetSubVel
     RTL
   +
 endif

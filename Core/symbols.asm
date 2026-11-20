@@ -214,6 +214,54 @@ Horse_OffSheet = $7F5404 ; $7EC2FC when the copy was taken
 Horse_OffOam   = $7F5405 ; word: $0800-$09E0 OAM base of sprite $2D this frame (0 = none)
 endif
 
+; Epona overhaul transient WRAM ($7F5670-$7F57FF inside UNUSED_7F5000,
+; leaving $7F5408-$7F540F free, $7F5410-$7F545F to HorseGame_*, and
+; $7F5460-$7F5663 to KORL_Dock*).
+!Horse_OverhaulWramDefined = 1
+Horse_AnchorDir         = $7F5670 ; saved $2F facing (0=N, 2=S, 4=W, 6=E; $FF=unset)
+Horse_Carrots           = $7F5671 ; current stamina carrots (0..5)
+Horse_SpurTimer         = $7F5672 ; active spur decay frames (0 = base canter)
+Horse_RegenTimer        = $7F5673 ; frames until next carrot restores
+Horse_HudState          = $7F5674 ; cached HUD state ($FF=uninit, 0=cleared, $80|N=mounted)
+Horse_JumpPrevX         = $7F5675 ; word: pre-JumpTick Link X for camera delta $31
+Horse_JumpPrevY         = $7F5677 ; word: pre-JumpTick Link Y for camera delta $30
+Horse_JumpCamActive     = $7F5679 ; 1 when JumpTick updated coords needing camera scroll sync
+Horse_PrioCacheX        = $7F567A ; word: cached Link X for FencePriority fast skip
+Horse_PrioCacheY        = $7F567C ; word: cached Link Y for FencePriority fast skip
+Horse_PrioCacheDir      = $7F567E ; cached $2F for FencePriority fast skip
+Horse_PrioCacheArea     = $7F567F ; cached $8A for FencePriority fast skip
+Horse_PrioCacheState    = $7F5680 ; cached Horse_State for FencePriority fast skip
+Horse_PrioCacheResult   = $7F5681 ; cached priority result (0 or 1)
+Horse_PrioCacheValid    = $7F5682 ; 1 when FencePriority cache matches current frame
+Horse_TrampleCacheX     = $7F5683 ; word: cached (LinkX & $FFF8) for bush trample fast skip
+Horse_TrampleCacheY     = $7F5685 ; word: cached (LinkY & $FFF8) for bush trample fast skip
+Horse_TrampleCacheDir   = $7F5687 ; cached ($F0 & $0F) for bush trample fast skip
+Horse_TrampleCacheArea  = $7F5688 ; cached $8A for bush trample fast skip
+Horse_TrampleCacheValid = $7F5689 ; 1 when trample grid cell already cleared
+Horse_NpcLastDir        = $7F568A ; last NPC direction uploaded/drawn
+Horse_PalCachedColor    = $7F568B ; word: cached tinted HorsePalette+12
+Horse_PalCachedHour     = $7F568D ; cached TimeState.Hours for palette check
+Horse_PalCacheValid     = $7F568E ; 1 when palette cache populated
+Horse_NorthCacheValid   = $7F568F ; 1 when north solid base cache valid
+Horse_NorthCacheRes     = $7F5690 ; cached north solid base result (0/1)
+Horse_NorthCacheArea    = $7F5691 ; cached $8A for north solid base
+Horse_NorthCacheY8      = $7F5692 ; word: cached ($20-4)>>3
+Horse_NorthCacheXL      = $7F5694 ; word: cached ($22+2)>>3
+Horse_NorthCacheXR      = $7F5696 ; word: cached ($22+13)>>3
+Horse_NorthCacheT16L    = $7F5698 ; word: cached Tile16 at left north probe
+Horse_NorthCacheT16R    = $7F569A ; word: cached Tile16 at right north probe
+Horse_CgiCacheValid        = $7F569C ; 1 when 16-slot ConstrainGroundInput fallback cache initialized
+Horse_FrameFenceCheckedDir = $7F569D ; dir (0..3) cleared by CheckFenceJump this frame, or $FF
+Horse_CgiCache             = $7F56A0 ; 16 slots * 8 bytes ($7F56A0..$7F571F): x8,y8,tile16,area,attr
+Horse_SafeTile16Cache      = $7F5720 ; 32 slots * 4 bytes ($7F5720..$7F579F): tile16,area,clear
+Horse_SafeTile16Valid      = $7F57A0 ; 1 when SafeTile16Cache initialized
+Horse_PrioFenceCacheHdr    = $7F57A1 ; word: (valid<<8) | $8A for 2x3 PriorityFence cache
+Horse_PrioFenceCacheRes    = $7F57A3 ; cached 2x3 PriorityFence result (0=none, 1=hit)
+Horse_PrioFenceCacheXZ     = $7F57A4 ; word: ($22 & $FFF0) | x_zone
+Horse_PrioFenceCacheYZ     = $7F57A6 ; word: ($20 & $FFF0) | y_zone
+Horse_CgiCache_End         = $7F57A7 ; last byte used in UNUSED_7F5000
+assert Horse_CgiCache_End < $7F5800, "Epona transient WRAM exceeded $7F57FF UNUSED_7F5000 bound"
+
 ; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon
 ; order: Kydreeok, Song frees Kydrog, Ganon). Until that scene exists, Ganondorf waits this many
 ; door-gate frames (3 s) after the Kydreeok body is dismissed. Replace with the real beat's flag.

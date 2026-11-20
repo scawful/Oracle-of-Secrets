@@ -28,14 +28,61 @@
 ; Vanilla routines referenced long
 Horse_GetTileAttr    = $00882E  ; (DP $00=Ypx, $02=Xpx>>3) -> A=8x8 tiletype
 
+if not(defined("Horse_OverhaulWramDefined"))
+  !Horse_OverhaulWramDefined = 1
+  Horse_AnchorDir         = $7F5670
+  Horse_Carrots           = $7F5671
+  Horse_SpurTimer         = $7F5672
+  Horse_RegenTimer        = $7F5673
+  Horse_HudState          = $7F5674
+  Horse_JumpPrevX         = $7F5675
+  Horse_JumpPrevY         = $7F5677
+  Horse_JumpCamActive     = $7F5679
+  Horse_PrioCacheX        = $7F567A
+  Horse_PrioCacheY        = $7F567C
+  Horse_PrioCacheDir      = $7F567E
+  Horse_PrioCacheArea     = $7F567F
+  Horse_PrioCacheState    = $7F5680
+  Horse_PrioCacheResult   = $7F5681
+  Horse_PrioCacheValid    = $7F5682
+  Horse_TrampleCacheX     = $7F5683
+  Horse_TrampleCacheY     = $7F5685
+  Horse_TrampleCacheDir   = $7F5687
+  Horse_TrampleCacheArea  = $7F5688
+  Horse_TrampleCacheValid = $7F5689
+  Horse_NpcLastDir        = $7F568A
+  Horse_PalCachedColor    = $7F568B
+  Horse_PalCachedHour     = $7F568D
+  Horse_PalCacheValid     = $7F568E
+  Horse_NorthCacheValid   = $7F568F
+  Horse_NorthCacheRes     = $7F5690
+  Horse_NorthCacheArea    = $7F5691
+  Horse_NorthCacheY8      = $7F5692
+  Horse_NorthCacheXL      = $7F5694
+  Horse_NorthCacheXR      = $7F5696
+  Horse_NorthCacheT16L    = $7F5698
+  Horse_NorthCacheT16R    = $7F569A
+  Horse_CgiCacheValid     = $7F569C
+  Horse_FrameFenceCheckedDir = $7F569D
+  Horse_CgiCache          = $7F56A0
+  Horse_SafeTile16Cache   = $7F5720
+  Horse_SafeTile16Valid   = $7F57A0
+  Horse_PrioFenceCacheHdr = $7F57A1
+  Horse_PrioFenceCacheRes = $7F57A3
+  Horse_PrioFenceCacheXZ  = $7F57A4
+  Horse_PrioFenceCacheYZ  = $7F57A6
+endif
+!Horse_TimeHours          = $7EE000
+
 ; ---------------------------------------------------------
 ; Speed table indexed cleanly matching BunnySpeedTable ($00..$10)
+; Base canter ($22 cardinal, $1C diagonal); A spur boosts up to $32/$29.
 ; ---------------------------------------------------------
 HorseSpeedTable:
-  db $2C ; 0x00 - ground cardinal (Bunny = $20, vanilla = $18)
-  db $1F ; 0x01 - ground diagonal (Bunny = $12, vanilla = $10)
+  db $22 ; 0x00 - ground canter cardinal (spur burst decays from $32)
+  db $1C ; 0x01 - ground canter diagonal (spur burst decays from $29)
   db $0E ; 0x02 - stairs
-  db $18 ; 0x03 - stairs diagonal
+  db $14 ; 0x03 - stairs diagonal
   db $14 ; 0x04 - soft slipping
   db $0C ; 0x05 - soft slipping diagonal
   db $0A ; 0x06 - hard slipping
@@ -43,11 +90,11 @@ HorseSpeedTable:
   db $0E ; 0x08 - pushing
   db $12 ; 0x09 - pushing diagonal
   db $0C ; 0x0A - intraroom stairs
-  db $1E ; 0x0B - slope / ledge run
-  db $24 ; 0x0C - heavy grass / shallow water cardinal
-  db $18 ; 0x0D - heavy grass / shallow water diagonal
-  db $18 ; 0x0E
-  db $12 ; 0x0F
+  db $1B ; 0x0B - slope / ledge run
+  db $1C ; 0x0C - heavy grass / shallow water cardinal
+  db $1A ; 0x0D - heavy grass / shallow water diagonal
+  db $16 ; 0x0E
+  db $10 ; 0x0F
   db $40 ; 0x10 - Pegasus cap
 
 ; Sparse frame offsets/pointers are generated in gfx/horse_sparse_tables.asm.
@@ -90,6 +137,11 @@ org $008056 ; @hook module=Masks name=Horse_FrameEndScan kind=jsl target=Horse_F
   assert read1($008056) == $22 && read3($008057) == $0080B5, "Expected JSL Module_MainRouting at $008056"
   JSL Horse_FrameEndScan
 endif
+
+org $02BB90 ; @hook module=Masks name=Horse_SyncJumpCamera kind=jsl target=Horse_SyncJumpCamera expected_m=8 expected_x=8
+  PHB
+  JSL Horse_SyncJumpCamera
+assert pc() == $02BB95
 pullpc
 
 incsrc "Masks/horse_sparse_runtime.asm"
@@ -168,6 +220,18 @@ HorseForm_EnsureInit:
     LDA.b #$FF
     STA.l Horse_UploadedFrame
     STA.l Horse_NpcUploadedFrame
+    STA.l Horse_AnchorDir
+    STA.l Horse_HudState
+    LDA.b #$05 : STA.l Horse_Carrots
+    LDA.b #$00
+    STA.l Horse_SpurTimer : STA.l Horse_RegenTimer
+    STA.l Horse_JumpCamActive
+    STA.l Horse_PrioCacheValid : STA.l Horse_TrampleCacheValid
+    STA.l Horse_PalCacheValid : STA.l Horse_NorthCacheValid
+    STA.l Horse_CgiCacheValid
+    STA.l Horse_SafeTile16Valid
+    STA.l Horse_PrioFenceCacheHdr : STA.l Horse_PrioFenceCacheHdr+1
+    LDA.b #$06 : STA.l Horse_NpcLastDir
 if !ENABLE_HORSE_PARK_ANYWHERE == 1
     LDA.b #$00 : STA.l Horse_OffState : STA.l Horse_OffClear
 endif
@@ -190,6 +254,15 @@ HorseForm_ClearState:
   STA.l Horse_PushTimer
   STA.l Horse_AnimTimer
   STA.l Horse_PalLoaded
+  STA.l Horse_SpurTimer
+  STA.l Horse_RegenTimer
+  STA.l Horse_JumpCamActive
+  STA.l Horse_PrioCacheValid
+  STA.l Horse_TrampleCacheValid
+  STA.l Horse_PalCacheValid
+  STA.l Horse_NorthCacheValid
+  STA.l Horse_CgiCacheValid
+  LDA.b #$FF : STA.l Horse_FrameFenceCheckedDir
   PLP
   RTL
 }
@@ -215,14 +288,28 @@ HorseForm_Mount:
   LDA.b #!Horse_MaskId : STA.w !CurrentMask
   LDA.b #$10 : STA.b $BC
   LDA.b #$FF : STA.l Horse_UploadedFrame
-  LDA.b #$06 : STA.l Horse_Frame
-  LDA.b #$06 : STA.b $2F             ; Start facing Right to match NPC mount cleanly
+  ; Restore dismounted facing direction ($00=N, $02=S, $04=W, $06=E; default $06=Right)
+  LDA.l Horse_AnchorDir
+  CMP.b #$08 : BCC +
+    LDA.b #$06
+  +
+  AND.b #$06 : STA.b $2F
+  LSR A : TAX
+  LDA.l .mount_idle_frames, X : STA.l Horse_Frame
+  LDA.l Horse_Carrots : CMP.b #6 : BCC +
+    LDA.b #$05 : STA.l Horse_Carrots
+  +
   STZ.b $5D : STZ.b $3C : STZ.b $3A
+  STZ.w $0376
+  LDA.b #$01 : TRB.b $50              ; clear any pre-mount Link_PerformGrab dir lock
   JSL Palette_ArmorAndGloves
   LDA.b #$01 : STA.l Horse_PalLoaded
   LDA.b #$0C : STA.l Horse_InteractDelay
+  JSL Horse_SyncCarrotHud
   PLB : REP #$30 : PLY : PLX : PLA : PLP
   RTL
+  .mount_idle_frames
+  db 3, 0, 6, 6
 }
 
 ; User-initiated or water/pit dismount (saves outdoor/Ranch anchor; no mask transform puff).
@@ -232,6 +319,9 @@ HorseForm_Dismount:
   PHP : REP #$30 : PHA : PHX : PHY
   SEP #$30 : PHB
   LDA.b #$00 : PHA : PLB
+  LDA.b $1B : BNE +
+    LDA.b $2F : AND.b #$06 : STA.l Horse_AnchorDir
+  +
 if !ENABLE_HORSE_PARK_ANYWHERE == 1
   ; Any outdoor OW area ($09/$0B): park here. Pit/water prefers last FrameTick refresh.
   ; Restore SP-3 immediately if no park anchor remains on the current area.
@@ -264,6 +354,7 @@ endif
 
   JSL ResetToLinkGraphics
   JSL HorseForm_ClearState
+  JSL Horse_SyncCarrotHud
   LDA.b #$18 : STA.l Horse_DismountCooldown
   LDA.b #$18 : STA.l Horse_InteractDelay
   PLB : REP #$30 : PLY : PLX : PLA : PLP
@@ -277,6 +368,9 @@ HorseForm_SilentDismount:
   PHP : REP #$30 : PHA : PHX : PHY
   SEP #$30 : PHB
   LDA.b #$00 : PHA : PLB
+  LDA.b $1B : BNE +
+    LDA.b $2F : AND.b #$06 : STA.l Horse_AnchorDir
+  +
 if !ENABLE_HORSE_PARK_ANYWHERE == 1
   ; Keep last outdoor safe park anchor from FrameTick / prior dismount.
 else
@@ -285,6 +379,7 @@ endif
   JSL Horse_RestoreSp3Palette
   JSL ResetToLinkGraphics
   JSL HorseForm_ClearState
+  JSL Horse_SyncCarrotHud
   LDA.b #$10 : STA.l Horse_DismountCooldown
   PLB : REP #$30 : PLY : PLX : PLA : PLP
   RTL
@@ -324,6 +419,9 @@ HorseForm_FrameTick:
     LDA.l Horse_State : BEQ +
       JSL HorseForm_ClearState
     +
+    LDA.l Horse_HudState : BEQ +
+      JSL Horse_SyncCarrotHud
+    +
     JSR HorseForm_MaintainRanchNpc
     PLB : PLP
     RTL
@@ -348,18 +446,33 @@ if !ENABLE_HORSE_PARK_ANYWHERE == 1
   JSL HorseForm_SaveOutdoorAnchor_Long
 endif
 
+  JSR Horse_TryBDismount : BCC +
+    PLB : PLP
+    RTL
+  +
   JSR HorseForm_SuppressMountedButtons
-  JSR HorseForm_ThrottleHostiles
   JSL HorseGame_KidStartCheck
+  JSR Horse_PreMoveControlTick
 
   ; Refresh SP-3[9..15] + SP-7 whenever SP-3[15] ($7EC67E) no longer matches
   ; Epona's day/night-tinted HorsePalette[6] ($239F) at full brightness.
   ; Catches BOTH LW uniform $14A5 fills AND non-uniform SW/DW palettes ($B0).
   LDA.b $13 : CMP.b #$0F : BNE .pal_ok
+  LDA.l Horse_PalCacheValid : BEQ .pal_recompute
+  LDA.l !Horse_TimeHours : CMP.l Horse_PalCachedHour : BNE .pal_recompute
+  REP #$20
+  LDA.l $7EC67E : CMP.l Horse_PalCachedColor : BEQ .pal_ok
+  .pal_recompute
   REP #$30
   LDA.l HorsePalette+12 : LDX.w #$017E
   JSL LoadDayNightPaletteEffect
   REP #$30
+  STA.l Horse_PalCachedColor
+  SEP #$20
+  LDA.l !Horse_TimeHours : STA.l Horse_PalCachedHour
+  LDA.b #$01 : STA.l Horse_PalCacheValid
+  REP #$20
+  LDA.l Horse_PalCachedColor
   CMP.l $7EC67E : BEQ .pal_ok
     SEP #$30
     JSL Palette_ArmorAndGloves
@@ -369,6 +482,7 @@ endif
   ; Handle mid-jump physics or check ground triggers.
   LDA.l Horse_State : BEQ .grounded
     JSR HorseForm_JumpTick
+    JSR Horse_PostMoveDecayTick
     JSR HorseForm_UpdateAnimFrame
     PLB : PLP
     RTL
@@ -388,6 +502,7 @@ if !ENABLE_HORSE_CROWD_CHARGE == 1
     JSL HorseCharge_Tick_Long
 endif
   .skip_triggers
+  JSR Horse_PostMoveDecayTick
   JSR HorseForm_UpdateAnimFrame
   PLB : PLP
   RTL
@@ -495,25 +610,40 @@ HorseForm_PlayHoofBeat:
 ; ---------------------------------------------------------
 HorseForm_CheckFenceJump:
 {
+  LDA.b #$FF : STA.l Horse_FrameFenceCheckedDir
   LDA.l Horse_JumpCooldown : BNE .reset_push
 
   ; Convert facing $2F (0=U, 2=D, 4=L, 6=R) -> dir bit ($08,$04,$02,$01).
   LDA.b $2F : AND.b #$06 : LSR A : TAX
-  LDA.b $F0 : AND.l .dir_bits, X : BEQ .reset_push
+  LDA.b $F0 : AND.l .dir_bits, X : BNE +
+  .reset_push
+    LDA.b #$00 : STA.l Horse_PushTimer
+    RTS
+  +
 
   ; Require 2 consecutive frames pushing toward the fence for crisp response.
   LDA.l Horse_PushTimer : INC : STA.l Horse_PushTimer
-  CMP.b #$02 : BCC .done
+  CMP.b #$02 : BCS + : BRL .done : +
 
   PHX : PHY
   TXA : STA.l Horse_JumpDir           ; 0=U, 1=D, 2=L, 3=R
 
-  ; Probe distance 1 then distance 2 ahead for wooden fence Tile16s.
+  ; Probe distance 1 then distance 2 ahead ONCE each for fence OR water gap.
   LDA.b #$00 : JSR HorseForm_ProbeFence : BCS .hit_fence
+  JSR .try_gap_from_probe : BCS .launch
   LDA.b #$01 : JSR HorseForm_ProbeFence : BCS .hit_fence
-  ; No fence ahead: try a named water gap (sets Horse_JumpEnd and JumpTimer).
-  JSR HorseLong_TryJump : BCC .no_fence
-  BRA .launch
+  JSR .try_gap_from_probe : BCS .launch
+  LDA.l Horse_JumpDir : STA.l Horse_FrameFenceCheckedDir
+  BRA .no_fence
+
+  .try_gap_from_probe
+  LDA.b $05 : CMP.b #$02 : BCC .gap_miss
+  REP #$20 : JSR HorseLong_IsGap : SEP #$20 : BCC .gap_miss
+  JSR HorseLong_ScanGap : BCC .gap_miss
+  JMP HorseLong_FinishSetup
+  .gap_miss
+  CLC
+  RTS
 
   .hit_fence
   ; Candidate landing stored in Horse_JumpEndX / Horse_JumpEndY (16-bit).
@@ -539,10 +669,6 @@ HorseForm_CheckFenceJump:
   .done
   RTS
 
-  .reset_push
-  LDA.b #$00 : STA.l Horse_PushTimer
-  RTS
-
   .dir_bits
   db $08, $04, $02, $01               ; Up, Down, Left, Right
 }
@@ -556,15 +682,16 @@ HorseForm_ProbeFence:
   REP #$20
   LDA.l .dx_table, X : CLC : ADC.b $22 : STA.b $0C ; FX candidate X
   LDA.l .dy_table, X : CLC : ADC.b $20 : STA.b $0A ; FY candidate Y
+  LDA.b $06 : PHA
+  LDA.b $0A : SEC : SBC.l $7E0708 : AND.l $7E070A : ASL #3 : STA.b $06
+  LDA.b $0C : LSR #3 : SEC : SBC.l $7E070C : AND.l $7E070E : ORA.b $06
+  REP #$10 : TAX : LDA.l $7E2000, X : STA.b $04 : SEP #$10
+  PLA : STA.b $06
+  LDA.b $04 : CMP.w #$002C : BCC .miss_m16
+  JSR Horse_IsFenceTile16 : BCS .matched
+  .miss_m16
   SEP #$20
-  PLA                                 ; balance stack
-
-  ; Query Map16 Tile16 at ($0A=Y, $0C=X) without calling $00882E
-  JSR Horse_QueryTile16Only           ; outputs DP $04 = 16-bit Tile16
-  REP #$20
-  JSR Horse_IsFenceTile16
-  BCS .matched
-  SEP #$20
+  PLA
   CLC
   RTS
 
@@ -573,6 +700,7 @@ HorseForm_ProbeFence:
   LDA.b $0C : AND.w #$FFF0 : STA.b $0C
   LDA.b $0A : AND.w #$FFF0 : STA.b $0A
   SEP #$20
+  PLA
   SEC
   RTS
 
@@ -663,8 +791,16 @@ Horse_QueryTileAt:
 }
 
 ; Advance 16-frame jump interpolation and freeze vanilla d-pad movement.
+; Captures pre-jump coordinates so Overworld_OperateCameraScroll tracks every jump frame smoothly.
 HorseForm_JumpTick:
 {
+  LDA.b $1B : BNE +
+    REP #$20
+    LDA.b $22 : STA.l Horse_JumpPrevX
+    LDA.b $20 : STA.l Horse_JumpPrevY
+    SEP #$20
+    LDA.b #$01 : STA.l Horse_JumpCamActive
+  +
   ; Nonzero Horse_JumpTimer = total frames of an active long jump.
   LDA.l Horse_JumpTimer : BEQ + : JMP HorseLong_JumpTick : +
   LDA.b #$0F : TRB.b $F0 : TRB.b $F2  ; mask directional buttons mid-flight
@@ -741,83 +877,7 @@ Horse_Lerp16:
 ; ---------------------------------------------------------
 HorseForm_UpdateAnimFrame:
 {
-  ; Preserve one already-visible pose while its hidden NPC graphics restore.
-  ; No movement, facing, health, input or inventory writes. Transition paths
-  ; never use this hold; they force a fresh mounted upload instead.
-  LDA.b $10 : CMP.b #9 : BNE .select_frame
-  LDA.b $11 : BNE .select_frame
-  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BEQ .select_frame
-  LDA.l Horse_UploadedFrame : CMP.b #!Horse_FrameCount : BCS .select_frame
-  STA.l Horse_Frame
-  RTS
-  .select_frame
-  ; Check airborne jump state first (custom fence jump OR vanilla ledge hop $24/$25).
-  LDA.l Horse_State : BEQ + : BRL .in_jump : +
-  LDA.b $25 : BMI .chk_neg_z
-    LDA.b $24 : BEQ .check_walk
-    BRL .in_jump
-  .chk_neg_z
-  LDA.b $24 : CMP.b #$F0 : BCS .check_walk
-    BRL .in_jump
-
-  .check_walk
-  ; Moving if any D-pad held and Link isn't locked ($2E or $F0&$0F)
-  LDA.b $F0 : AND.b #$0F : BEQ .idle
-  LDA.l Horse_AnimTimer : INC : STA.l Horse_AnimTimer
-  LDA.b $2F : AND.b #$06 : TAX        ; 0=U, 2=D, 4=L, 6=R -> dw table index
-  JMP (.walk_dir, X)
-
-  .walk_dir
-  dw .walk_up, .walk_down, .walk_left_right, .walk_left_right
-
-  .walk_up
-  LDA.l Horse_AnimTimer : LSR #3 : AND.b #$01 : CLC : ADC.b #$04 ; frames 4, 5
-  STA.l Horse_Frame
-  RTS
-
-  .walk_down
-  LDA.l Horse_AnimTimer : LSR #3 : AND.b #$01 : CLC : ADC.b #$01 ; frames 1, 2
-  STA.l Horse_Frame
-  RTS
-
-  .walk_left_right
-  LDA.l Horse_AnimTimer : CMP.b #24 : BCC +
-    LDA.b #$00 : STA.l Horse_AnimTimer
-  +
-  LSR #2 : TAX
-  LDA.l .gallop_cycle, X : STA.l Horse_Frame
-  RTS
-  .gallop_cycle
-  db 7, 8, 9, 16, 17, 18              ; all six original source run poses
-
-  .idle
-  LDA.b #$00 : STA.l Horse_AnimTimer
-  LDA.b $2F : AND.b #$06 : LSR A : TAX
-  LDA.l .idle_frames, X : STA.l Horse_Frame
-  RTS
-  .idle_frames
-  db 3, 0, 6, 6                       ; N Idle, S Idle, L/R Idle
-
-  .in_jump
-  LDA.b $2F : AND.b #$06 : LSR A : TAX
-  CPX.b #$00 : BEQ .jump_n
-  CPX.b #$01 : BEQ .jump_s
-    ; Side jump: ascending step < 8 -> 10, descending >= 8 -> 11
-    LDA.l Horse_State : BEQ .jump_side_dn
-    ; Half of the flight: JumpTimer/2 for a long jump, 8 for a fence jump.
-    LDA.l Horse_JumpTimer : LSR : BNE + : LDA.b #$08 : +
-    CMP.l Horse_JumpStep : BEQ .jump_side_dn : BCC .jump_side_dn
-      LDA.b #$0A : STA.l Horse_Frame
-      RTS
-    .jump_side_dn
-    LDA.b #$0B : STA.l Horse_Frame
-    RTS
-  .jump_s
-  LDA.b #$0C : STA.l Horse_Frame
-  RTS
-  .jump_n
-  LDA.b #$0D : STA.l Horse_Frame
-  RTS
+  JMP HorseForm_UpdateAnimFrame_Impl
 }
 
 ; ---------------------------------------------------------
@@ -944,6 +1004,9 @@ Horse_DrawPlayerOam_Long:
   ; Slot 0: Rider Head ($08, SP-7, highest priority).
   JSR Horse_EmitRiderHead
 
+  ; Vanilla-style tall grass / shallow water hoof reaction OAM ($0351) layered in front of hooves.
+  JSL Horse_EmitFootReaction_Long
+
   ; South ($2F=2) places Epona head/forelock in front of rider lap while shoulders
   ; frame behind Epona's ears; other directions place Rider Body in front of Epona.
   SEP #$20
@@ -991,13 +1054,17 @@ Horse_DrawPlayerOam_Long:
 
   ; Clear only unused entries; an eight-part horse consumes all twelve slots.
   REP #$30
-  TYA : SEC : SBC.w $0352 : CMP.w #48 : BCS .exit
+  LDA.w $0352 : CLC : ADC.w #48 : LSR #2 : STA.b $08
+  TYA : LSR #2 : TAX
+  CPX.b $08 : BCS .exit
+  SEP #$20
   .clear_rest
-    LDA.w #$F000 : STA.w $0800, Y
-    TYA : LSR #2 : TAX
-    SEP #$20 : LDA.b #$01 : STA.w $0A20, X : REP #$20
+    LDA.b #$00 : STA.w $0800, Y
+    LDA.b #$F0 : STA.w $0801, Y
+    LDA.b #$01 : STA.w $0A20, X
     INY #4
-    TYA : SEC : SBC.w $0352 : CMP.w #48 : BCC .clear_rest
+    INX
+    CPX.b $08 : BCC .clear_rest
 
   .exit
   PLP : PLB
@@ -1009,47 +1076,7 @@ Horse_DrawPlayerOam_Long:
 ; hits a solid base ($01/$02). Preserves DP $04-$0F, P and registers.
 Horse_ApplyFencePriority:
 {
-  PHP
-  REP #$30
-  PHX : PHY
-  LDA.b $04 : PHA : LDA.b $08 : PHA : LDA.b $0A : PHA
-  LDA.b $0C : PHA : LDA.b $0E : PHA
-  SEP #$30
-  LDX.b #10
-  .sample
-    PHX
-    REP #$20
-    LDA.l .dx, X : CLC : ADC.b $22 : STA.b $0C
-    LDA.l .dy, X : CLC : ADC.b $20 : STA.b $0A
-    SEP #$20
-    JSR Horse_QueryTile16Only           ; M/X=8; DP $04 = Tile16
-    REP #$20
-    JSR Horse_IsPriorityFenceTile16 : BCS .hit
-    SEP #$20
-    PLX
-    DEX : DEX : BPL .sample
-  JSR Horse_CheckNorthSolidBase : BCC .restore
-    SEP #$20
-    LDA.b $64 : ORA.b #$30 : STA.b $64
-    BRA .restore
-  .hit
-  SEP #$20
-  PLX
-  LDA.b $64 : ORA.b #$30 : STA.b $64
-  LDA.b $65 : ORA.b #$30 : STA.b $65
-  .restore
-  REP #$20
-  PLA : STA.b $0E : PLA : STA.b $0C : PLA : STA.b $0A
-  PLA : STA.b $08 : PLA : STA.b $04
-  REP #$30
-  PLY : PLX : PLP
-  RTS
-
-  ; Offsets from Link ($22,$20): three columns across the body, rider and hooves rows.
-  .dx
-  dw -6, 8, 22, -6, 8, 22
-  .dy
-  dw  6, 6,  6, 22, 22, 22
+  JMP Horse_ApplyFencePriority_Impl
 }
 
 ; Emits 16x16 Rider Head ($08) or Body ($0C) on SP-7 using DP $0D=frame. Returns M=16, X=16.
@@ -1085,17 +1112,13 @@ Horse_EmitRiderCommon:
   ORA.b $64 : STA.b $0A                     ; DP $0A = rider OAM attr
   LDA.b #$02 : STA.b $0C                    ; DP $0C = 16x16 size
 
-  ; Compute signed Y ($0E/$0F) before overwriting $08/$09 with Screen X.
-  LDA.b $09 : PHA
+  ; Compute signed Y ($0E/$0F) before overwriting $09 with Screen X high byte.
+  LDA.b $09 : STA.b $0E
+  BMI + : LDA.b #$00 : BRA ++ : + : LDA.b #$FF : ++ : STA.b $0F
+  BIT.b $08 : BMI + : LDA.b #$00 : BRA ++ : + : LDA.b #$FF : ++ : STA.b $09
   REP #$20
-  LDA.b $08 : AND.w #$00FF
-  BIT.w #$0080 : BEQ + : ORA.w #$FF00 : +
-  CLC : ADC.b $04 : STA.b $08
-  SEP #$20 : PLA : REP #$20 : AND.w #$00FF
-  BIT.w #$0080 : BEQ +
-    ORA.w #$FF00
-  +
-  CLC : ADC.b $06 : STA.b $0E
+  LDA.b $08 : CLC : ADC.b $04 : STA.b $08
+  LDA.b $0E : CLC : ADC.b $06 : STA.b $0E
   JSR HorseOam_WriteSlot
   INY #4
   RTS

@@ -5,7 +5,23 @@
 !HorsePark_DefaultNpcX = $01C0
 !HorsePark_DefaultNpcY = $0294
 
-; Write Link outdoor XY + $8A into the park anchor only on settled dry ground.
+; Returns NPC VRAM frame ID matching Horse_AnchorDir (12=N, 13=S, 14=Side E/W).
+HorsePark_NpcFrameFromDir:
+{
+  LDA.l Horse_AnchorDir
+  CMP.b #$08 : BCS .side
+  AND.b #$06
+  BEQ .north
+  CMP.b #$02 : BEQ .south
+  .side
+  LDA.b #14 : RTS
+  .north
+  LDA.b #12 : RTS
+  .south
+  LDA.b #13 : RTS
+}
+
+; Write Link outdoor XY + $8A + facing $2F into the park anchor only on settled dry ground.
 ; M=8,X=8,DBR=$00 (enforces M=8 internally; preserves caller P/X/Y/DBR).
 HorseForm_SaveOutdoorAnchor_Long:
 {
@@ -30,6 +46,7 @@ HorseForm_SaveOutdoorAnchor_Long:
   LDA.b $20 : STA.l Horse_AnchorY
   SEP #$20
   LDA.b $8A : STA.l Horse_AnchorArea
+  LDA.b $2F : AND.b #$06 : STA.l Horse_AnchorDir
   LDA.b #$01 : STA.l Horse_HasAnchor
   .skip
   PLP
@@ -102,7 +119,7 @@ HorseForm_MaintainParkedNpc_Long:
   STA.w $0E30, Y : STA.w $0E80, Y
   STA.w SprAction, Y : STA.w SprFrame, Y
   LDA.b #$01 : STA.l Horse_NpcActive : STA.w SprBulletproof, Y
-  LDA.b #14  : STA.l Horse_NpcFrame
+  JSR HorsePark_NpcFrameFromDir : STA.l Horse_NpcFrame
   LDA.b #$FF : STA.l Horse_NpcUploadedFrame
   JSL Horse_LoadNpcPalette
   BRA .done_scan
@@ -198,7 +215,10 @@ Horse_FrameEndScan:
   ; Hide Epona's 8 OAM slots before NMI so garbled native tiles never flash!
   .leaving
   LDA.l Horse_OffState : CMP.b #$A2 : BEQ .leaving_hide
-  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BEQ .reset
+  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BNE .leaving_hide
+    LDA.l Horse_OffClear : ORA.l Horse_OffOam : ORA.l Horse_OffOam+1
+    BEQ .done
+    BRA .reset
   .leaving_hide
   JSR .hide_epona
   BRA .reset
@@ -343,9 +363,9 @@ Horse_OffRanchNpc:
   LDA.b $8A : CMP.l Horse_AnchorArea : BNE .unwant
   JSL Horse_ParkedBusy : BCS .unwant
   LDA.l Horse_OffClear : CMP.b #$02 : BCC .unwant
-  LDA.l Horse_NpcFrame : CMP.b #14 : BEQ +
-    CMP.b #15 : BNE .unwant
-  +
+  LDA.l Horse_NpcFrame
+  CMP.b #12 : BCC .unwant
+  CMP.b #16 : BCS .unwant
   LDA.l $7EC2FC : CMP.l Horse_OffSheet : BNE .save
   LDA.l Horse_OffState : CMP.b #$A2 : BEQ .uploaded
   CMP.b #$A1 : BNE .save
@@ -490,6 +510,8 @@ endif
   LDA.b $0E : STA.l Horse_AnchorY
   SEP #$20
   LDA.b $8A : STA.l Horse_AnchorArea
+  LDA.b $2F : AND.b #$06 : STA.l Horse_AnchorDir
+  LDA.b #$05 : STA.l Horse_Carrots
   LDA.b #$01 : STA.l Horse_HasAnchor
   LDX.b #$0F
   .drop
