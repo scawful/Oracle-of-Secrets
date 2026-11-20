@@ -467,7 +467,7 @@ endif
   ; first-four and last-four 256-byte rows; a second burst emits their bottoms.
   ; Hardware increments both source addresses and VRAM between bursts.
   LDA.b #HorseGraphics>>16 : STA.w $4304 : STA.w $4314
-if defined("HorseNpcNorthTail")
+if defined("HORSE_NPC_NS_TAILS")
   LDA.w Horse_NpcFrame&$FFFF
   CMP.b #12 : BEQ .npc_north
   CMP.b #13 : BEQ .npc_south
@@ -475,11 +475,11 @@ if defined("HorseNpcNorthTail")
     LDX.w #HorseNpcTail : STX.w $4312
     BRA .npc_dma
   .npc_north
-    LDX.w #HorseGraphics : STX.w $4302
+    LDX.w #HorseGraphics+$0A80 : STX.w $4302
     LDX.w #HorseNpcNorthTail : STX.w $4312
     BRA .npc_dma
   .npc_south
-    LDX.w #HorseGraphics+$0A80 : STX.w $4302
+    LDX.w #HorseGraphics : STX.w $4302
     LDX.w #HorseNpcSouthTail : STX.w $4312
   .npc_dma
 else

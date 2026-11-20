@@ -69,7 +69,7 @@ STUB_COLOR_SUB_EFFECT = 0x07D100
 STUB_LINK_TRANSFORM_MASK = 0x07D110
 STUB_ANCILLA_SET_COORDS = 0x0990FC
 
-# New Epona WRAM symbols in $7F5670..$7F568A
+# New Epona WRAM symbols in $7F5670..$7F57AB
 HORSE_ANCHOR_DIR = 0x7F5670
 HORSE_CARROTS = 0x7F5671
 HORSE_SPUR_TIMER = 0x7F5672
@@ -79,6 +79,11 @@ HORSE_JUMP_PREV_X = 0x7F5675
 HORSE_JUMP_PREV_Y = 0x7F5677
 HORSE_JUMP_CAM_ACTIVE = 0x7F5679
 HORSE_NPC_LAST_DIR = 0x7F568A
+HORSE_MOMENTUM = 0x7F57A8
+HORSE_PREV_MOVE_DIR = 0x7F57A9
+HORSE_PREV_DPAD = 0x7F57AA
+HUD_CARROT_TOP = 0x7EC866
+HUD_CARROT_BOT = 0x7EC870
 
 
 def _extract_horse_table_header() -> str:
@@ -269,8 +274,15 @@ Horse_PrioFenceCacheHdr = $7F57A1
 Horse_PrioFenceCacheRes = $7F57A3
 Horse_PrioFenceCacheXZ = $7F57A4
 Horse_PrioFenceCacheYZ = $7F57A6
-Horse_CgiCache_End     = $7F57A7
+!Horse_PolishWramDefined   = 1
+Horse_Momentum         = $7F57A8
+Horse_PrevMoveDir      = $7F57A9
+Horse_PrevDpad         = $7F57AA
+Horse_CgiCache_End     = $7F57AB
 assert Horse_CgiCache_End < $7F5800
+!Horse_CarrotHudWramDefined = 1
+HudCarrotTopBuffer     = $7EC866
+HudCarrotBotBuffer     = $7EC870
 
 ; External routines & vanilla hooks (HorseGame_*, Horse_HandleItemTileAction_Overworld defined by real ASM)
 LoadDayNightPaletteEffect = ${STUB_LOAD_DAYNIGHT:06X}
@@ -682,6 +694,7 @@ class TestHorseOverhaul(unittest.TestCase):
         self.assertLess(self._labels["Horse_SyncJumpCamera"], 0x53E000)
         self.assertLess(self._labels["HorseForm_UpdateAnimFrame_Impl"], 0x53EFF0)
         self.assertLess(self._labels["Horse_EmitFootReaction_Long"], 0x540000)
+        self.assertLessEqual(self._labels["HorseBank5EHelpers_End"], 0x5F0000)
 
         # WRAM invariants: $7F5670..$7F568A < $7F5800, KORL $7FF3D4 untouched, MenuMapTravel_Pending $7E1EFF untouched
         self.assertEqual(self._labels["Horse_AnchorDir"], 0x7F5670)
@@ -872,7 +885,7 @@ class TestHorseOverhaul(unittest.TestCase):
         self.assertEqual(fx.get(0xF4) & 0x80, 0x00)
         self.assertEqual(fx.get(0x02B2), 0x09)
 
-        # Grounded B dismounts, saves facing, and clears HUD carrots!
+        # Grounded B dismounts, saves facing, and clears HUD carrots above clock!
         fx.put(0x7E1EE0, 0x00)
         fx.put(0x002F, 0x04)
         fx.put(0xF4, 0x80)
@@ -881,23 +894,33 @@ class TestHorseOverhaul(unittest.TestCase):
         self.assertTrue(fx.cpu.c)
         self.assertEqual(fx.get(0x02B2), 0x00)
         self.assertEqual(fx.get(HORSE_ANCHOR_DIR), 0x04)
+        self.assertEqual(fx.get(HORSE_HUD_STATE), 0x01)
         for i in range(5):
-            self.assertEqual(fx.get16(0x7EC7C4 + i * 2), 0x207F)
+            self.assertEqual(fx.get16(HUD_CARROT_TOP + i * 2), 0x207F)
+            self.assertEqual(fx.get16(HUD_CARROT_BOT + i * 2), 0x207F)
+            self.assertEqual(fx.get16(0x7EC7C4 + i * 2), 0x0000)
 
     def test_a_spur_decay_regen_and_lift_suppression_and_y_bow(self):
         fx = self.make_fixture()
         fx.mount_link(6)
         self.assertEqual(fx.get(HORSE_CARROTS), 5)
 
-        # Base canter speed from BunnyHoodRun hook (X=0 cardinal, X=1 diag, X=13 grass diag)
-        fx.run_jsl("HorseSpeed_GetSubVel", x=0)
-        self.assertEqual(fx.cpu.a & 0xFF, 0x22)
-        fx.run_jsl("HorseSpeed_GetSubVel", x=1)
-        self.assertEqual(fx.cpu.a & 0xFF, 0x1C)
+        # 7-tier acceleration pickup curve across Horse_Momentum 0..24 ($1A..$24 card, $14..$1E diag)
+        expected_card = [(0, 0x1A), (4, 0x1C), (8, 0x1E), (12, 0x20), (16, 0x22), (20, 0x23), (24, 0x24)]
+        expected_diag = [(0, 0x14), (4, 0x16), (8, 0x18), (12, 0x19), (16, 0x1B), (20, 0x1C), (24, 0x1E)]
+        for mom, want_c in expected_card:
+            fx.put(HORSE_MOMENTUM, mom)
+            fx.run_jsl("HorseSpeed_GetSubVel", x=0)
+            self.assertEqual(fx.cpu.a & 0xFF, want_c)
+        for mom, want_d in expected_diag:
+            fx.put(HORSE_MOMENTUM, mom)
+            fx.run_jsl("HorseSpeed_GetSubVel", x=1)
+            self.assertEqual(fx.cpu.a & 0xFF, want_d)
         fx.run_jsl("HorseSpeed_GetSubVel", x=13)
         self.assertEqual(fx.cpu.a & 0xFF, 0x1A)
+        fx.put(HORSE_MOMENTUM, 0)
 
-        # A spur spends 1 carrot, suppresses A lift/grab ($F6/$F2/$3B/$3C/$5D==$11), preserves Y Bow
+        # A spur spends 1 carrot, pops Momentum=24, suppresses A lift/grab, preserves Y Bow
         fx.put(0xF6, 0xC0)   # A + Y pressed
         fx.put(0xF2, 0xC0)   # A + Y held
         fx.put(0x3B, 0x80)   # A latch
@@ -922,9 +945,10 @@ class TestHorseOverhaul(unittest.TestCase):
         fx.put(0x02EC, 0x04)
         fx.put(0x50, 0x01)
         fx.put(0x3A, 0x00)
-        fx.run_jsr("Horse_PreMoveControlTick")
+        fx.run_jsl("Horse_PreMoveControlTick")
         self.assertEqual(fx.get(HORSE_CARROTS), 4)
         self.assertEqual(fx.get(HORSE_SPUR_TIMER), 48)
+        self.assertEqual(fx.get(HORSE_MOMENTUM), 24)
         self.assertEqual(fx.get(0x012E), 0x20)
         self.assertEqual(fx.get(0xF6) & 0x80, 0x00)
         self.assertEqual(fx.get(0xF2) & 0x80, 0x00)
@@ -939,43 +963,77 @@ class TestHorseOverhaul(unittest.TestCase):
         fx.put(0x50, 0x01)
         fx.put(0x3A, 0x40)
         fx.put(0xF6, 0x00)
-        fx.run_jsr("Horse_PreMoveControlTick")
+        fx.run_jsl("Horse_PreMoveControlTick")
         self.assertEqual(fx.get(0x50) & 0x01, 0x01)
         fx.put(0x3A, 0x00)
 
         # $5D == $11 is also force-exited
         fx.put(0x5D, 0x11)
         fx.put(0xF6, 0x00)
-        fx.run_jsr("Horse_PreMoveControlTick")
+        fx.run_jsl("Horse_PreMoveControlTick")
         self.assertEqual(fx.get(0x5D), 0x00)
 
-        # Peak burst speed ($32 cardinal, $29 diagonal), smooth decay, then return to $22/$1C
+        # Peak burst speed ($32 cardinal, $29 diagonal), smooth decay down to sustained $24/$1E
         fx.run_jsl("HorseSpeed_GetSubVel", x=0)
         self.assertEqual(fx.cpu.a & 0xFF, 0x32)
         fx.run_jsl("HorseSpeed_GetSubVel", x=1)
         self.assertEqual(fx.cpu.a & 0xFF, 0x29)
 
-        fx.put(0xF0, 0x01)  # holding Right
+        fx.put(0x2F, 6)      # Right
+        fx.put(0xF0, 0x01)   # holding Right
         speeds = []
         for _ in range(48):
             fx.run_jsr("Horse_PostMoveDecayTick")
             fx.run_jsl("HorseSpeed_GetSubVel", x=0)
             speeds.append(fx.cpu.a & 0xFF)
         self.assertEqual(fx.get(HORSE_SPUR_TIMER), 0)
-        self.assertEqual(speeds[-1], 0x22)
+        self.assertEqual(speeds[-1], 0x24)
         self.assertTrue(all(speeds[i] >= speeds[i + 1] for i in range(len(speeds) - 1)))
 
-        # Stop resets burst immediately
+        # Cornering physics: diagonal-assisted bank caps momentum at 18+1=19; sharp 90 snap caps at 10+1=11 & scrubs spur 12
+        fx.put(HORSE_MOMENTUM, 24); fx.put(HORSE_PREV_MOVE_DIR, 6); fx.put(HORSE_PREV_DPAD, 0x09)  # Right+Up
+        fx.put(0x2F, 0); fx.put(0xF0, 0x08)  # finish banking to Up
+        fx.run_jsr("Horse_PostMoveDecayTick")
+        self.assertEqual(fx.get(HORSE_MOMENTUM), 19)
+
+        fx.put(HORSE_MOMENTUM, 24); fx.put(HORSE_SPUR_TIMER, 30)
+        fx.put(HORSE_PREV_MOVE_DIR, 6); fx.put(HORSE_PREV_DPAD, 0x01)  # pure Right
+        fx.put(0x2F, 0); fx.put(0xF0, 0x08)  # snap 90 to pure Up
+        fx.run_jsr("Horse_PostMoveDecayTick")
+        self.assertEqual(fx.get(HORSE_MOMENTUM), 11)
+        self.assertEqual(fx.get(HORSE_SPUR_TIMER), 17)  # 30 - 1 tick - 12 snap scrub
+
+        # 180-degree reversal resets momentum & spur cleanly (starts +1 from 0 -> 1)
+        fx.put(HORSE_MOMENTUM, 24); fx.put(HORSE_SPUR_TIMER, 25)
+        fx.put(HORSE_PREV_MOVE_DIR, 6); fx.put(HORSE_PREV_DPAD, 0x01)
+        fx.put(0x2F, 4); fx.put(0xF0, 0x02)  # Right -> Left
+        fx.run_jsr("Horse_PostMoveDecayTick")
+        self.assertEqual(fx.get(HORSE_MOMENTUM), 1)
+        self.assertEqual(fx.get(HORSE_SPUR_TIMER), 0)
+
+        # Shallow water / tall grass caps unspurred momentum at 12, unless spurring
+        fx.put(HORSE_MOMENTUM, 24); fx.put(HORSE_SPUR_TIMER, 0); fx.put(0x0351, 1)
+        fx.put(HORSE_PREV_MOVE_DIR, 4); fx.put(0x2F, 4); fx.put(0xF0, 0x02)
+        fx.run_jsr("Horse_PostMoveDecayTick")
+        self.assertEqual(fx.get(HORSE_MOMENTUM), 12)
+        fx.put(HORSE_MOMENTUM, 24); fx.put(HORSE_SPUR_TIMER, 20)
+        fx.run_jsr("Horse_PostMoveDecayTick")
+        self.assertEqual(fx.get(HORSE_MOMENTUM), 24)
+        fx.put(0x0351, 0)
+
+        # Stop resets burst immediately and decays Momentum by -3/frame
         fx.put(HORSE_SPUR_TIMER, 40)
+        fx.put(HORSE_MOMENTUM, 9)
         fx.put(0xF0, 0x00)  # D-pad released
         fx.run_jsr("Horse_PostMoveDecayTick")
         self.assertEqual(fx.get(HORSE_SPUR_TIMER), 0)
+        self.assertEqual(fx.get(HORSE_MOMENTUM), 6)
 
         # Spend down to 0 carrots -> empty penalty delay (135 frames) -> regenerates
         fx.put(HORSE_CARROTS, 1)
         fx.put(HORSE_REGEN_TIMER, 0)
         fx.put(0xF6, 0x80)
-        fx.run_jsr("Horse_PreMoveControlTick")
+        fx.run_jsl("Horse_PreMoveControlTick")
         self.assertEqual(fx.get(HORSE_CARROTS), 0)
         self.assertEqual(fx.get(HORSE_REGEN_TIMER), 135)
         fx.put(HORSE_SPUR_TIMER, 0)
@@ -994,28 +1052,54 @@ class TestHorseOverhaul(unittest.TestCase):
 
         fx.run_jsl("Horse_SyncCarrotHud")
         self.assertEqual(fx.get(0x16), 1)
+        self.assertEqual(fx.get(HORSE_HUD_STATE), 0x83)
         self.assertEqual(
-            [fx.get16(0x7EC7C4 + i * 2) for i in range(5)],
-            [0x3549, 0x3549, 0x3549, 0x316E, 0x316E],
+            [fx.get16(HUD_CARROT_TOP + i * 2) for i in range(5)],
+            [0x3D49, 0x3D49, 0x3D49, 0x3142, 0x3142],
         )
+        self.assertEqual(
+            [fx.get16(HUD_CARROT_BOT + i * 2) for i in range(5)],
+            [0x294A, 0x294A, 0x294A, 0x3143, 0x3143],
+        )
+        self.assertEqual([fx.get16(0x7EC7C4 + i * 2) for i in range(5)], [0x0000] * 5,
+                         "Legacy below-hearts $7EC7C4..$7EC7CC must stay untouched")
 
         # Steady state: zero $16 NMI queue
         fx.put(0x16, 0)
         fx.run_jsl("Horse_SyncCarrotHud")
         self.assertEqual(fx.get(0x16), 0, "HUD steady state must not re-queue $16")
 
-        # Indoor or Menu ($0E) clears HUD cleanly to $207F
+        # Indoor queues a one-shot clear (Horse_HudState = $01) and blanks buffers to $207F
         fx.put(0x1B, 1)
         fx.run_jsl("Horse_SyncCarrotHud")
-        self.assertEqual([fx.get16(0x7EC7C4 + i * 2) for i in range(5)], [0x207F] * 5)
+        self.assertEqual(fx.get(HORSE_HUD_STATE), 0x01)
+        self.assertEqual(fx.get(0x16), 1)
+        self.assertEqual([fx.get16(HUD_CARROT_TOP + i * 2) for i in range(5)], [0x207F] * 5)
+        self.assertEqual([fx.get16(HUD_CARROT_BOT + i * 2) for i in range(5)], [0x207F] * 5)
+        fx.put(0x16, 0)
+        fx.run_jsl("Horse_SyncCarrotHud")
+        self.assertEqual(fx.get(0x16), 0, "Pending blank must not re-queue $16 every frame")
 
         # Restores back on return outdoors
         fx.put(0x1B, 0)
         fx.run_jsl("Horse_SyncCarrotHud")
+        self.assertEqual(fx.get(0x16), 1)
+        self.assertEqual(fx.get(HORSE_HUD_STATE), 0x83)
         self.assertEqual(
-            [fx.get16(0x7EC7C4 + i * 2) for i in range(5)],
-            [0x3549, 0x3549, 0x3549, 0x316E, 0x316E],
+            [fx.get16(HUD_CARROT_BOT + i * 2) for i in range(5)],
+            [0x294A, 0x294A, 0x294A, 0x3143, 0x3143],
         )
+
+        # Menu / Dialogue ($10 == $0E) clears state cleanly WITHOUT queuing $16
+        fx.put(0x16, 0)
+        fx.put(0x10, 0x0E)
+        fx.run_jsl("Horse_SyncCarrotHud")
+        self.assertEqual(fx.get(0x16), 0)
+        self.assertEqual(fx.get(HORSE_HUD_STATE), 0x00)
+        fx.put(0x10, 0x09)
+        fx.run_jsl("Horse_SyncCarrotHud")
+        self.assertEqual(fx.get(0x16), 1)
+        self.assertEqual(fx.get(HORSE_HUD_STATE), 0x83)
 
     # === 5. DELIVERABLE 5: FACING PRESERVATION + LEFT H-FLIP + N/S 6-TILE + IN-PLACE GRAZE ===
     def test_facing_direction_preserved_across_dismount_and_remount(self):
@@ -1099,27 +1183,60 @@ class TestHorseOverhaul(unittest.TestCase):
         self.assertEqual((nx, ny), (0x01C0, 0x0294))
 
     def test_up_down_stride_cadence_and_tall_grass_water_foot_oam(self):
-        # 1. Up ($2F=0 -> frames 4/5) & Down ($2F=2 -> frames 1/2) toggle every 4 frames (LSR #2)
+        # 1. Up ($2F=0 -> [4,3,5,3]) & Down ($2F=2 -> [1,0,2,0]) 4-beat gallop synced to 24 ticks
         fx = self.make_fixture()
         fx.mount_link(0)
-        fx.put(0x2F, 0)  # North (EnsureInit defaults first mount to $06)
+        fx.put(0x2F, 0)  # North
         fx.put(0xF0, 0x08)  # North
         up_frames = []
-        for _ in range(10):
+        for _ in range(26):
             fx.run_jsr("HorseForm_UpdateAnimFrame")
             up_frames.append(fx.get(0x7E1EE6))
-        self.assertEqual(up_frames[:8], [4, 4, 4, 5, 5, 5, 5, 4])
+            self.assertLess(fx.get(0x7E1EE5), 24, "N/S AnimTimer must wrap at 24")
+        # Ticks 1..23, 0, 1, 2
+        self.assertEqual(up_frames[:24], [4]*5 + [3]*6 + [5]*6 + [3]*6 + [4])
 
         fx.put(0x2F, 2)
         fx.put(0x7E1EE5, 0)
         fx.put(0xF0, 0x04)  # South
         dn_frames = []
-        for _ in range(8):
+        for _ in range(25):
             fx.run_jsr("HorseForm_UpdateAnimFrame")
             dn_frames.append(fx.get(0x7E1EE6))
-        self.assertEqual(dn_frames, [1, 1, 1, 2, 2, 2, 2, 1])
+            self.assertLess(fx.get(0x7E1EE5), 24, "N/S AnimTimer must wrap at 24")
+        self.assertEqual(dn_frames[:24], [1]*5 + [0]*6 + [2]*6 + [0]*6 + [1])
 
-        # 2. Grounded tall grass ($0351=2) emits mirrored $C8..$CA Pal1 OAM within 12 slots
+        # Symmetric -2px vertical suspension bob on N/S walk frames (1&2 vs 0, 4&5 vs 3)
+        head_y = {}
+        for facing, fids in [(2, (0, 1, 2)), (0, (3, 4, 5))]:
+            for fid in fids:
+                fx.put(0x2F, facing)
+                fx.put(0x7E1EE0, 0)
+                fx.put(0x7E1EE6, fid)
+                fx.put(0x7E1EE7, 0xFF)
+                fx.put(0x0351, 0)
+                fx.put16(0x22, 0x0140); fx.put16(0x20, 0x0140)
+                fx.put16(0xE2, 0x0100); fx.put16(0xE8, 0x0100)
+                fx.run_jsl("Horse_DrawPlayerOam_Long")
+                head_y[fid] = fx.read_oam_entries(1)[0]["y"]
+        self.assertEqual(head_y[1], head_y[0] - 2)
+        self.assertEqual(head_y[2], head_y[0] - 2)
+        self.assertEqual(head_y[4], head_y[3] - 2)
+        self.assertEqual(head_y[5], head_y[3] - 2)
+
+        # N/S tall grass never overflows $C8..$CA for ANY AnimTimer 0..255
+        for sample_timer in (0, 4, 24, 63, 128, 255):
+            fx.put(0x2F, 2)
+            fx.put(0x7E1EE6, 1)
+            fx.put(0x7E1EE7, 0xFF)
+            fx.put(0x0351, 2)
+            fx.put(0x7E1EE5, sample_timer)
+            fx.run_jsl("Horse_DrawPlayerOam_Long")
+            oam_ns = fx.read_oam_entries(12)
+            g = [e for e in oam_ns if 0xC8 <= e["chr"] <= 0xCA]
+            self.assertEqual(len(g), 2, f"Grass glitch for AnimTimer={sample_timer}: {oam_ns}")
+
+        # 2. East/West 6/7-part tall grass ($0351=2) emits wide rear/front hoof spread ($C8..$CA Pal1)
         fx_g = self.make_fixture()
         fx_g.mount_link(6)
         fx_g.put16(0x22, 0x0140); fx_g.put16(0x20, 0x0140)
@@ -1134,9 +1251,10 @@ class TestHorseOverhaul(unittest.TestCase):
         self.assertEqual(len(grass_tiles), 2)
         self.assertTrue(all(e["chr"] == 0xC9 for e in grass_tiles))
         self.assertEqual([e["props"] for e in grass_tiles], [0x22, 0x62])
+        self.assertEqual([e["x"] for e in grass_tiles], [0x3C, 0x4C])  # SX16-4 ($40-4), SX16+12 ($40+12)
         self.assertEqual(sum(1 for e in oam_g if e["y"] != 0xF0), 11)  # 1+2+7+1=11 <= 12
 
-        # 3. 8-part gallop frame (frame 8) emits 1 centered water splash ($D8..$DA Pal2), total 12 slots
+        # 3. 8-part gallop frame (frame 8) emits 1 shallow water splash ($D8..$DA Pal2) driven continuously by $1A
         fx_w = self.make_fixture()
         fx_w.mount_link(6)
         fx_w.put16(0x22, 0x0140); fx_w.put16(0x20, 0x0140)
@@ -1144,7 +1262,8 @@ class TestHorseOverhaul(unittest.TestCase):
         fx_w.put(0x7E1EE6, 8)    # 8-part gallop frame (uses 11 slots for rider+Epona)
         fx_w.put(0x7E1EE7, 0xFF)
         fx_w.put(0x0351, 1)      # shallow water
-        fx_w.put(0x7E1EE5, 8)    # AnimTimer=8 -> step 2 -> tile $DA
+        fx_w.put(0xF0, 0x01)     # moving -> $1A >> 2 = 2 -> tile $DA
+        fx_w.put(0x1A, 8)
         fx_w.run_jsl("Horse_DrawPlayerOam_Long")
         oam_w = fx_w.read_oam_entries(12)
         water_tiles = [e for e in oam_w if e["chr"] in (0xD8, 0xD9, 0xDA)]
@@ -1152,6 +1271,24 @@ class TestHorseOverhaul(unittest.TestCase):
         self.assertEqual(water_tiles[0]["chr"], 0xDA)
         self.assertEqual(water_tiles[0]["props"], 0x24)
         self.assertEqual(sum(1 for e in oam_w if e["y"] != 0xF0), 12)  # exact 12-slot cap
+
+        # Standing still in shallow water still animates continuously via $1A >> 3 (1 -> $D9)
+        fx_w.put(0xF0, 0x00)
+        fx_w.put(0x1A, 8)
+        fx_w.run_jsl("Horse_DrawPlayerOam_Long")
+        water_idle = [e for e in fx_w.read_oam_entries(12) if e["chr"] in (0xD8, 0xD9, 0xDA)]
+        self.assertEqual(water_idle[0]["chr"], 0xD9)
+
+        # Dual-beat hoof SFX by terrain ($0351=1 -> $1C water, 2 -> $1A grass, 0 -> $23 dry)
+        for terrain, want_sfx in [(0, 0x23), (1, 0x1C), (2, 0x1A)]:
+            for tick in (4, 16):
+                fx_s = self.make_fixture()
+                fx_s.put(0xF0, 0x01)
+                fx_s.put(0x0351, terrain)
+                fx_s.put(0x7E1EE5, tick)
+                fx_s.put(0x012E, 0x00)
+                fx_s.run_jsl("HorseForm_PlayHoofBeat")
+                self.assertEqual(fx_s.get(0x012E), want_sfx)
 
         # 4. Airborne (Horse_State != 0) suppresses $0351 grass/water and draws hoof shadow $6C
         fx_w.put(0x7E1EE0, 1)
@@ -1161,6 +1298,36 @@ class TestHorseOverhaul(unittest.TestCase):
         oam_air = fx_w.read_oam_entries(12)
         self.assertFalse(any(e["chr"] in (0xC8, 0xC9, 0xCA, 0xD8, 0xD9, 0xDA) for e in oam_air))
         self.assertEqual(sum(1 for e in oam_air if e["chr"] == 0x6C), 2)
+
+    def test_parked_npc_nmi_uploads_north_south_and_side_vram_exact(self):
+        gfx = (ROOT / "Masks/gfx/horse_sparse.4bpp").read_bytes()
+        npc_tail = (ROOT / "Masks/gfx/horse_npc_rows.4bpp").read_bytes()
+        north_tail = gfx[0x0D80:0x0DC0] + gfx[0x0E00:0x0E40] + bytes(128) + gfx[0x0DC0:0x0E00] + gfx[0x0E40:0x0E80] + bytes(128)
+        south_tail = gfx[0x0300:0x0340] + gfx[0x0380:0x03C0] + bytes(128) + gfx[0x0340:0x0380] + gfx[0x03C0:0x0400] + bytes(128)
+
+        cases = [
+            (12, gfx[0x0A80:0x0C80], north_tail),   # North parked
+            (13, gfx[0x0000:0x0200], south_tail),   # South parked
+            (14, gfx[0x1480:0x1680], npc_tail),     # East/West parked
+        ]
+        for frame_id, ch0, ch1 in cases:
+            with self.subTest(npc_frame=frame_id):
+                fx = self.make_fixture()
+                fx.put16(0x7E1EDE, 0x4852)  # Horse_Marker = !Horse_MagicMarker
+                fx.put(0x7E0AA3, 6)         # Ranch sprite group 06
+                fx.put(0x7EC2FC, 0x4F); fx.put(0x7EC2FD, 0x49)
+                fx.put(0x7EC2FE, 0x4A); fx.put(0x7EC2FF, 0x50)  # RanchProfileReady = true
+                fx.put(0x10, 0x09)
+                fx.put(0x7E1EE8, 1)         # Horse_NpcActive = 1
+                fx.put(0x7E1EE9, frame_id)  # Horse_NpcFrame
+                fx.put(0x7E1EE7, 0xFF)      # Horse_UploadedFrame = none
+                fx.put(0x7E1EEA, 0xFF)      # Horse_NpcUploadedFrame = none
+                fx.put(0x7E1EED, 1)         # skip unrelated trailing BG replay
+                fx.run_jsl("Horse_NmiUpload", mf=True, xf=False, db=0x00)
+                expected_vram = ch0[:256] + ch1[:256] + ch0[256:512] + ch1[256:512]
+                actual_vram = bytes(fx.vram[0xA000:0xA400])
+                self.assertEqual(actual_vram, expected_vram, f"VRAM $5000 mismatch for NpcFrame={frame_id}")
+                self.assertEqual(fx.get(0x7E1EEA), frame_id)
 
 
 if __name__ == "__main__":

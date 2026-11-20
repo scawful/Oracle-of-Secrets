@@ -169,7 +169,16 @@ HudClockLastHours   = HudClockBuffer+12  ; $7EC864
 HudClockLastMinutes = HudClockBuffer+13  ; $7EC865
 HudClockBufferEnd   = HudClockBuffer+14  ; $7EC866
 assert HudClockBuffer == $7EC858 && HudClockBufferEnd == $7EC866
-assert HudClockBufferEnd <= $7EC880
+
+; Epona carrot stamina meter buffers centered above the bottom clock
+; (BG3 rows 24-25, cols 14-18 -> VRAM $630E/$632E). Contiguous after
+; HudClockBufferEnd inside the unused $7EC84A-$7EC87F gap.
+!Horse_CarrotHudWramDefined = 1
+HudCarrotTopBuffer  = HudClockBufferEnd      ; $7EC866..$7EC86F (5 tiles = 10 bytes)
+HudCarrotBotBuffer  = HudCarrotTopBuffer+10  ; $7EC870..$7EC879 (5 tiles = 10 bytes)
+HudCarrotBufferEnd  = HudCarrotBotBuffer+10  ; $7EC87A
+assert HudCarrotTopBuffer == $7EC866 && HudCarrotBotBuffer == $7EC870
+assert HudCarrotBufferEnd <= $7EC880
 
 ; Burnable doorway webs (Sprites/Objects/dungeon_web.asm). 16-bit per-room
 ; mask across all 320 underworld rooms ($000-$13F) in vanilla-free UNUSED_7EC900
@@ -259,7 +268,11 @@ Horse_PrioFenceCacheHdr    = $7F57A1 ; word: (valid<<8) | $8A for 2x3 PriorityFe
 Horse_PrioFenceCacheRes    = $7F57A3 ; cached 2x3 PriorityFence result (0=none, 1=hit)
 Horse_PrioFenceCacheXZ     = $7F57A4 ; word: ($22 & $FFF0) | x_zone
 Horse_PrioFenceCacheYZ     = $7F57A6 ; word: ($20 & $FFF0) | y_zone
-Horse_CgiCache_End         = $7F57A7 ; last byte used in UNUSED_7F5000
+!Horse_PolishWramDefined   = 1
+Horse_Momentum             = $7F57A8 ; gallop acceleration ramp 0..24 (0=standstill, 24=full stride)
+Horse_PrevMoveDir          = $7F57A9 ; previous frame cardinal facing ($2F: 0,2,4,6; $FF=unset)
+Horse_PrevDpad             = $7F57AA ; previous frame D-pad nibble ($F0 & $0F) for smooth diagonal banking
+Horse_CgiCache_End         = $7F57AB ; last byte used in UNUSED_7F5000
 assert Horse_CgiCache_End < $7F5800, "Epona transient WRAM exceeded $7F57FF UNUSED_7F5000 bound"
 
 ; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon

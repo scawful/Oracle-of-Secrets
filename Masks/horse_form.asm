@@ -21,6 +21,7 @@
 !Horse_MaskId        = $09
 !Horse_SpriteId      = $2D
 !Horse_JumpFrames    = $10      ; 16-frame fence vault
+!HORSE_NPC_NS_TAILS  = 1        ; defined macro for asar check in horse_sparse_runtime.asm
 
 !Horse_DefaultNpcX   = $01C0    ; Toto Ranch clear grass X (448px; avoids the adjacent east hay bale)
 !Horse_DefaultNpcY   = $0294    ; Toto Ranch clear grass Y (660px; rider clears hay, feet remain north of fence)
@@ -71,6 +72,12 @@ if not(defined("Horse_OverhaulWramDefined"))
   Horse_PrioFenceCacheRes = $7F57A3
   Horse_PrioFenceCacheXZ  = $7F57A4
   Horse_PrioFenceCacheYZ  = $7F57A6
+endif
+if not(defined("Horse_PolishWramDefined"))
+  !Horse_PolishWramDefined = 1
+  Horse_Momentum          = $7F57A8
+  Horse_PrevMoveDir       = $7F57A9
+  Horse_PrevDpad          = $7F57AA
 endif
 !Horse_TimeHours          = $7EE000
 
@@ -150,6 +157,7 @@ incsrc "Masks/horse_sparse_runtime.asm"
 ; Palette Helpers (M/X=8 ABI)
 ; Writes Epona's 7 colors into unused Light World SP-3[9..15]
 ; ($7EC472/$7EC672) through TimeSystem's Day/Night tinting.
+; (Horse_RestoreSp3Palette lives in Masks/horse_mounted_helpers.asm $5EF000 Bank $5E tail.)
 ; ---------------------------------------------------------
 UpdateHorsePalette:
 Horse_LoadNpcPalette:
@@ -165,31 +173,6 @@ Horse_LoadNpcPalette:
     TYX : LDA.l HorsePalette, X : PHA
     TYA : CLC : ADC.w #$0172 : TAX    ; $7EC300 + $0172..$017E = $7EC472..$7EC47E
     PLA
-    JSL LoadDayNightPaletteEffect
-    REP #$30
-    PLX
-    STA.l $7EC672, X
-    TXY
-    DEY : DEY : BPL .loop
-  PLY : PLX
-  SEP #$20
-  INC.b $15
-  PLB : PLP
-  RTL
-}
-
-Horse_RestoreSp3Palette:
-{
-  PHP : PHB
-  SEP #$30
-  LDA.b #$00 : PHA : PLB
-  REP #$30
-  PHX : PHY
-  LDY.w #$000C
-  .loop
-    PHY
-    TYA : CLC : ADC.w #$0172 : TAX
-    LDA.w #$14A5                      ; MainSpr SP-3[9..15] uniform fill
     JSL LoadDayNightPaletteEffect
     REP #$30
     PLX
@@ -222,6 +205,7 @@ HorseForm_EnsureInit:
     STA.l Horse_NpcUploadedFrame
     STA.l Horse_AnchorDir
     STA.l Horse_HudState
+    STA.l Horse_PrevMoveDir
     LDA.b #$05 : STA.l Horse_Carrots
     LDA.b #$00
     STA.l Horse_SpurTimer : STA.l Horse_RegenTimer
@@ -231,6 +215,7 @@ HorseForm_EnsureInit:
     STA.l Horse_CgiCacheValid
     STA.l Horse_SafeTile16Valid
     STA.l Horse_PrioFenceCacheHdr : STA.l Horse_PrioFenceCacheHdr+1
+    STA.l Horse_Momentum : STA.l Horse_PrevDpad
     LDA.b #$06 : STA.l Horse_NpcLastDir
 if !ENABLE_HORSE_PARK_ANYWHERE == 1
     LDA.b #$00 : STA.l Horse_OffState : STA.l Horse_OffClear
@@ -262,7 +247,10 @@ HorseForm_ClearState:
   STA.l Horse_PalCacheValid
   STA.l Horse_NorthCacheValid
   STA.l Horse_CgiCacheValid
+  STA.l Horse_Momentum
+  STA.l Horse_PrevDpad
   LDA.b #$FF : STA.l Horse_FrameFenceCheckedDir
+  STA.l Horse_PrevMoveDir
   PLP
   RTL
 }
@@ -452,7 +440,7 @@ endif
   +
   JSR HorseForm_SuppressMountedButtons
   JSL HorseGame_KidStartCheck
-  JSR Horse_PreMoveControlTick
+  JSL Horse_PreMoveControlTick
 
   ; Refresh SP-3[9..15] + SP-7 whenever SP-3[15] ($7EC67E) no longer matches
   ; Epona's day/night-tinted HorsePalette[6] ($239F) at full brightness.
@@ -497,7 +485,7 @@ endif
     JSR HorseForm_CheckFenceJump
     JSR HorseForm_ConstrainGroundInput
     JSR HorseForm_TrampleBushes
-    JSR HorseForm_PlayHoofBeat
+    JSL HorseForm_PlayHoofBeat_Impl
 if !ENABLE_HORSE_CROWD_CHARGE == 1
     JSL HorseCharge_Tick_Long
 endif
@@ -594,16 +582,7 @@ else
 endif
 }
 
-; Play soft boot-dust hoof thud periodically while galloping.
-HorseForm_PlayHoofBeat:
-{
-  LDA.b $F0 : AND.b #$0F : BEQ .done
-  LDA.l Horse_AnimTimer : AND.b #$0F : CMP.b #$04 : BNE .done
-  LDA.w $012E : BNE .done
-    LDA.b #$23 : STA.w $012E          ; SFX2.23 soft hoof beat
-  .done
-  RTS
-}
+; (HorseForm_PlayHoofBeat lives in Masks/horse_mounted_helpers.asm $5EF000 Bank $5E tail.)
 
 ; ---------------------------------------------------------
 ; Fence Jump Detection & Execution
@@ -997,7 +976,9 @@ Horse_DrawPlayerOam_Long:
   REP #$20 : AND.w #$00FF : TAX
   LDA.l HorseFrame_Width, X : AND.w #$00FF : LSR : STA.b $08
   LDA.b $00 : CLC : ADC.w #8 : SEC : SBC.b $08 : STA.b $04
-  LDA.l HorseFrame_Height, X : AND.w #$00FF : STA.b $08
+  LDA.l HorseFrame_Height, X : AND.w #$00FF
+  JSL Horse_AdjustNsStrideHeight
+  STA.b $08
   LDA.b $02 : CLC : ADC.w #16 : SEC : SBC.b $08 : SEC : SBC.b $0E : STA.b $06
   LDY.w $0352
 

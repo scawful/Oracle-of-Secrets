@@ -11,6 +11,11 @@
 
 !HORSE_CROWD_LIMIT = 5              ; refuse the call at this many enemies
 
+if not(defined("Horse_OverhaulWramDefined"))
+  Horse_SpurTimer = $7F5672
+  Horse_Momentum  = $7F57A8
+endif
+
 ; In: M/X 8-bit, DBR $00-$3F. Out: C=1 crowded. A/X/Y preserved.
 HorseCrowd_Check:
 {
@@ -51,6 +56,10 @@ HorseCharge_Tick_Long:
   LDA.b $F0 : AND.b #$0F : BNE +      ; d-pad held = charging
     RTL
   +
+  LDA.l Horse_SpurTimer : BNE +       ; carrot spur always charges
+    LDA.l Horse_Momentum : CMP.b #16 : BCS +
+      RTL
+  +
   REP #$20
   LDA.b $0C : PHA : LDA.b $0E : PHA
   LDA.b $22 : SEC : SBC.w #48 : STA.b $0C
@@ -69,10 +78,10 @@ HorseCharge_Tick_Long:
     LDA.w $0D00,X : SEC : SBC.b $0E : TAY
     LDA.w $0D20,X : SBC.b $0F : BNE .next_near
     CPY.b #$80 : BCS .next_near
-    LDA.w $0EF0,X : BNE .next       ; already flashing from a hit
-    LDA.w $0BA0,X : BNE .next       ; bulletproof
-    LDA.w $0E60,X : AND.b #$40 : BNE .next  ; impervious
-    LDA.w $0B6B,X : AND.b #$02 : BNE .next  ; !Boss property
+    LDA.w $0EF0,X : BNE .next_near  ; already flashing from a hit
+    LDA.w $0BA0,X : BNE .next_near  ; bulletproof
+    LDA.w $0E60,X : AND.b #$40 : BNE .next_near  ; impervious
+    LDA.w $0B6B,X : AND.b #$02 : BNE .next_near  ; !Boss property
     LDA.w $0F70,X : CMP.b #$10 : BCC +      ; airborne above the horse
     .next_near
       BRA .next
@@ -94,6 +103,11 @@ HorseCharge_Tick_Long:
     LDA.b #$01                      ; class 1 = level-1 sword slash
     JSL $06ED25                     ; Ancilla_CheckDamageToSprite_preset.apply
     PLX
+    LDA.l Horse_SpurTimer : BNE .after_hit_momentum
+      LDA.l Horse_Momentum : SEC : SBC.b #8
+      BCS + : LDA.b #$00 : +
+      STA.l Horse_Momentum
+    .after_hit_momentum
     REP #$20
     LDA.b $22 : SEC : SBC.w #48 : STA.b $0C
     LDA.b $20 : SEC : SBC.w #48 : STA.b $0E

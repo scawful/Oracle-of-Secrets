@@ -128,14 +128,16 @@ def main():
         case('crowd_counts_stunned_enemy', at_limit_counts_stunned)
 
         # --- Charge hit ---
-        def charge(facing, ex, ey, sid=0x08, pad=0x01, prep=None):
+        def charge(facing, ex, ey, sid=0x08, pad=0x01, momentum=24, spur=0, prep=None):
             f_hits = {}
             def fn(f):
                 f.put(0xF0, pad); f.put(0x2F, facing)
+                f.put(0x7F57A8, momentum); f.put(0x7F5672, spur)
                 f.enemy(5, ex, ey, sid=sid)
                 if prep: prep(f)
                 f.run('HorseCharge_Tick_Long')
                 f_hits['hits'] = f.hits
+                f_hits['momentum'] = f.get(0x7F57A8)
             return fn, f_hits
         def expect(facing, ex, ey, want, **kw):
             fn, out = charge(facing, ex, ey, **kw)
@@ -150,6 +152,7 @@ def main():
         case('down_front_hit_knocks_down', expect(2, 100, 112, dict(ry=0x40, rx=0x00)))
         case('behind_enemy_not_hit', expect(6, 60, 96, None))
         case('standing_still_no_hit', expect(6, 122, 96, None, pad=0x00))
+        case('low_momentum_no_hit', expect(6, 122, 96, None, momentum=12, spur=0))
         case('armos_immune', expect(6, 122, 96, None, sid=0x51))
         case('chain_chomp_immune', expect(6, 122, 96, None, sid=0xCA))
         case('boss_property_immune', expect(6, 122, 96, None, prep=lambda f: f.put(0xB6B+5, 0x02)))
@@ -159,8 +162,20 @@ def main():
         case('harmless_npc_not_hit', expect(6, 122, 96, None,
                                             prep=lambda f: f.put(0xE40+5, 0x80)))
 
+        def hit_scrubs_momentum(f):
+            f.put(0xF0, 0x01); f.put(0x2F, 6); f.put(0x7F57A8, 20); f.put(0x7F5672, 0)
+            f.enemy(5, 122, 96); f.run('HorseCharge_Tick_Long')
+            assert len(f.hits) == 1 and f.get(0x7F57A8) == 12, (f.hits, f.get(0x7F57A8))
+        case('hit_scrubs_momentum_by_8', hit_scrubs_momentum)
+
+        def spur_bypasses(f):
+            f.put(0xF0, 0x01); f.put(0x2F, 6); f.put(0x7F57A8, 0); f.put(0x7F5672, 20)
+            f.enemy(5, 122, 96); f.run('HorseCharge_Tick_Long')
+            assert len(f.hits) == 1 and f.get(0x7F57A8) == 0, (f.hits, f.get(0x7F57A8))
+        case('spur_bypasses_momentum_gate_and_scrub', spur_bypasses)
+
         def once_per_flash(f):
-            f.put(0xF0, 0x01); f.put(0x2F, 6); f.enemy(5, 122, 96)
+            f.put(0xF0, 0x01); f.put(0x2F, 6); f.put(0x7F57A8, 24); f.enemy(5, 122, 96)
             f.run('HorseCharge_Tick_Long'); f.run('HorseCharge_Tick_Long')
             assert len(f.hits) == 1, f.hits
         case('one_hit_per_damage_flash', once_per_flash)

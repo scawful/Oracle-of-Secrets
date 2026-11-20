@@ -15,6 +15,15 @@
 !HorseHelpers_CurrentMask = $02B2
 !HorseHelpers_MaskId      = $09
 Horse_HandleItemTileAction_Overworld = $1BBD7A
+!Horse_MaxCarrots         = 5
+!Horse_SpurDuration       = 48
+!Horse_NormalRegen        = 75
+!Horse_EmptyRegen         = 135
+!Horse_HudCarrotFullTop   = $3D49 ; Pal 7 ($3C00) | Tile $0149
+!Horse_HudCarrotFullBot   = $294A ; Pal 2 ($2800) | Tile $014A
+!Horse_HudCarrotEmptyTop  = $3142 ; Pal 4 ($3000) | Tile $0142
+!Horse_HudCarrotEmptyBot  = $3143 ; Pal 4 ($3000) | Tile $0143
+!Horse_HudBlankCell       = $207F
 
 if not(defined("Horse_OverhaulWramDefined"))
   !Horse_OverhaulWramDefined = 1
@@ -59,6 +68,17 @@ if not(defined("Horse_OverhaulWramDefined"))
   Horse_PrioFenceCacheRes = $7F57A3
   Horse_PrioFenceCacheXZ  = $7F57A4
   Horse_PrioFenceCacheYZ  = $7F57A6
+endif
+if not(defined("Horse_PolishWramDefined"))
+  !Horse_PolishWramDefined = 1
+  Horse_Momentum          = $7F57A8
+  Horse_PrevMoveDir       = $7F57A9
+  Horse_PrevDpad          = $7F57AA
+endif
+if not(defined("Horse_CarrotHudWramDefined"))
+  !Horse_CarrotHudWramDefined = 1
+  HudCarrotTopBuffer      = $7EC866
+  HudCarrotBotBuffer      = $7EC870
 endif
 
 ; Entry: M8/X16, DBR=$00, X = HorseGraphics offset of Rider group (256B:
@@ -266,27 +286,6 @@ HorseForm_ThrottleHostiles:
 {
   RTS
 }
-
-; Contiguous 32-byte 2bpp BG3 HUD carrot tiles ($0149 full, $016E depleted outline).
-; Uploaded only while mounted during HUD NMI ($16). Relocated to $53DExx for tail headroom.
-Horse_CarrotFullChr:
-  db $02,$07, $09,$0F, $1E,$12, $2E,$32, $3C,$24, $58,$68, $70,$50, $E0,$E0
-Horse_CarrotEmptyChr:
-  db $07,$02, $09,$09, $12,$12, $22,$22, $24,$24, $48,$48, $50,$50, $E0,$E0
-assert pc()-Horse_CarrotFullChr == 32
-
-; Linear 49-entry speed decay offsets (frames 0..48) -> cardinal $22..$32, diag $1C..$29.
-Horse_SpurCardinalBonus:
-  db  0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5
-  db  6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9,10,10,10,11
-  db 11,11,12,12,12,13,13,13,14,14,14,15,15,15,16,16,16
-assert pc()-Horse_SpurCardinalBonus == 49
-
-Horse_SpurDiagBonus:
-  db  0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4
-  db  4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 8, 8, 8, 8
-  db  9, 9, 9, 9,10,10,10,11,11,11,11,12,12,12,12,13,13
-assert pc()-Horse_SpurDiagBonus == 49
 
 ; Hooked at Overworld_OperateCameraScroll ($02BB90) right after PHB.
 ; Feeds exact jump-frame displacement ($20 - PrevY, $22 - PrevX) into $30/$31.
@@ -661,227 +660,99 @@ org $53F400
 
 ; North & South parked Epona NPC tail rows (pieces 4..5, 512B each -> VRAM $5080/$5180)
 ; Sliced verbatim from existing Masks/gfx/horse_sparse.4bpp; no new 4bpp art invented.
+; Frame 3 North ($0A80..$0C80 head rows, parts 4-5 at $0D80/$0E00).
 HorseNpcNorthTail:
-  incbin "gfx/horse_sparse.4bpp":$0300..$0340
-  incbin "gfx/horse_sparse.4bpp":$0380..$03C0
-  fillbyte $00 : fill 128
-  incbin "gfx/horse_sparse.4bpp":$0340..$0380
-  incbin "gfx/horse_sparse.4bpp":$03C0..$0400
-  fillbyte $00 : fill 128
-assert pc()-HorseNpcNorthTail == 512
-
-HorseNpcSouthTail:
   incbin "gfx/horse_sparse.4bpp":$0D80..$0DC0
   incbin "gfx/horse_sparse.4bpp":$0E00..$0E40
   fillbyte $00 : fill 128
   incbin "gfx/horse_sparse.4bpp":$0DC0..$0E00
   incbin "gfx/horse_sparse.4bpp":$0E40..$0E80
   fillbyte $00 : fill 128
+assert pc()-HorseNpcNorthTail == 512
+
+; Frame 0 South ($0000..$0200 head rows, parts 4-5 at $0300/$0380).
+HorseNpcSouthTail:
+  incbin "gfx/horse_sparse.4bpp":$0300..$0340
+  incbin "gfx/horse_sparse.4bpp":$0380..$03C0
+  fillbyte $00 : fill 128
+  incbin "gfx/horse_sparse.4bpp":$0340..$0380
+  incbin "gfx/horse_sparse.4bpp":$03C0..$0400
+  fillbyte $00 : fill 128
 assert pc()-HorseNpcSouthTail == 512
 
-!Horse_MaxCarrots      = 5
-!Horse_SpurDuration    = 48
-!Horse_NormalRegen     = 75
-!Horse_EmptyRegen      = 135
-!Horse_HudCarrotFull   = $3549 ; Pal 5 ($3400) | Tile $0149
-!Horse_HudCarrotEmpty  = $316E ; Pal 4 ($3000) | Tile $016E
-!Horse_HudBlankCell    = $207F
-
-; Called via JSL from LinkState_BunnyHoodRun ($20AF20) when !CurrentMask == #$09.
-; In:  M=8, any X width, X = SubVelocityValues index (0..$10).
-; Out: A = effective sub-velocity, C=0, caller X width preserved.
-HorseSpeed_GetSubVel:
-{
-  PHP : PHB
-  PHK : PLB                           ; DBR = $53 for local ,Y table indexing
-  SEP #$30
-  PHX : PHY
-  LDA.w HorseSpeedTable, X
-  PHA                                 ; preserve base speed
-  LDA.l Horse_SpurTimer : BEQ .done_pop
-    CMP.b #49 : BCC +
-      LDA.b #48
-    +
-    TAY
-    CPX.b #$00 : BEQ .cardinal
-    CPX.b #$0C : BEQ .cardinal
-    CPX.b #$01 : BEQ .diag
-    CPX.b #$0D : BNE .done_pop
-  .diag
-    PLA : CLC : ADC.w Horse_SpurDiagBonus, Y
-    BRA .done
-  .cardinal
-    PLA : CLC : ADC.w Horse_SpurCardinalBonus, Y
-    BRA .done
-  .done_pop
-    PLA
-  .done
-  PLY : PLX
-  PLB : PLP
-  CLC
-  RTL
-}
-
-; Renders 5 carrot pips on BG3 HUD Row 3 cols 2-6 ($7EC7C4..$7EC7CC) ONLY while
-; mounted outdoors with active HUD; clears cleanly to $207F otherwise.
-; Queues $16 ONLY when state/pip changes or $7EC7C4 mismatches (zero steady-state overhead).
-; Safe from any M/X width, any DBR; preserves A/X/Y/P/DBR.
-Horse_SyncCarrotHud:
-{
-  PHP : PHB
-  REP #$30
-  PHA : PHX : PHY
-  SEP #$20
-  LDA.b #$00 : PHA : PLB
-
-  ; Determine whether HUD carrots should be visible
-  LDA.w !HorseHelpers_CurrentMask : CMP.b #!HorseHelpers_MaskId : BNE .want_blank
-  LDA.b $1B : BNE .want_blank
-  LDA.b $10 : CMP.b #$0E : BEQ .want_blank
-  LDA.l $7EC73A : CMP.b #$7F : BEQ .want_blank
-
-  ; Mounted outdoors: desired = $80 | clamped_carrots (0..5)
-  LDA.l Horse_Carrots
-  CMP.b #!Horse_MaxCarrots+1 : BCC +
-    LDA.b #!Horse_MaxCarrots
-    STA.l Horse_Carrots
-  +
-  REP #$20
-  AND.w #$00FF
-  TAY                                 ; Y = 0..5 full carrots (16-bit)
-  SEP #$20
-  TYA
-  ORA.b #$80                          ; A = $80 | carrots
-  LDX.w #!Horse_HudCarrotFull
-  CPY.w #$0000 : BNE .check_dirty
-    LDX.w #!Horse_HudCarrotEmpty
-    BRA .check_dirty
-
-  .want_blank
-  LDY.w #$FFFF                        ; blank marker
-  LDA.b #$00                          ; desired = 0
-  LDX.w #!Horse_HudBlankCell          ; expected $7EC7C4 word
-
-  .check_dirty
-  CMP.l Horse_HudState : BNE .apply
-  PHA
-  REP #$20
-  TXA
-  CMP.l $7EC7C4 : BEQ .clean_pop
-    SEP #$20
-    PLA
-    BRA .apply
-  .clean_pop
-  SEP #$20
-  PLA
-  BRA .exit
-
-  .apply
-  STA.l Horse_HudState
-  CMP.b #$00 : BEQ .write_blank
-    ; Write 5 pips: slots 0..Y-1 get Full ($3549), remaining up to 5 get Empty ($316E).
-    ; Y holds 0..5. Build 16-bit cell offset in X = 0,2,4,6,8 while decrementing Y.
-    REP #$20
-    LDX.w #$0000
-    .pip_loop
-      CPY.w #$0000 : BEQ .pip_empty
-        LDA.w #!Horse_HudCarrotFull
-        DEY
-        BRA .pip_store
-      .pip_empty
-        LDA.w #!Horse_HudCarrotEmpty
-      .pip_store
-      STA.l $7EC7C4, X
-      INX #2
-      CPX.w #$000A : BCC .pip_loop
-    BRA .queue_nmi
-
-  .write_blank
-    REP #$20
-    LDA.w #!Horse_HudBlankCell
-    LDX.w #$0008
-    .blank_loop
-      STA.l $7EC7C4, X
-      DEX #2 : BPL .blank_loop
-
-  .queue_nmi
-  SEP #$20
-  LDA.b $10 : CMP.b #$0E : BEQ .exit
-    LDA.b #$01 : STA.b $16
-
-  .exit
-  REP #$30
-  PLY : PLX : PLA
-  PLB : PLP
-  RTL
-}
-
-; Handles A spur carrot spend + unconditional block/rock/bush lifting suppression.
-; Runs AFTER HorseGame_KidStartCheck so Ranch Kid prompt keeps working on A.
+; Updates pickup acceleration, corner turns/reversals, water/grass drag, spur decay,
+; carrot regen, and HUD sync. Runs AFTER CheckFenceJump + ConstrainGroundInput.
 ; In: M=8, X=8, DBR=$00.
-Horse_PreMoveControlTick:
-{
-  ; Always consume A lift/grab/dash flags while mounted so Link NEVER lifts rocks/bushes/pots!
-  BIT.b $F6 : BPL .suppress_lift
-  LDA.l Horse_State : ORA.l Horse_JumpTimer : BNE .suppress_lift
-  LDA.l HorseGame_State : CMP.b #$04 : BEQ .suppress_lift
-  LDA.l InCutScene : BNE .suppress_lift
-  LDA.w $02E4 : ORA.b $6C : ORA.w $0FFC : ORA.b $5D : BNE .suppress_lift
-
-  ; Valid A spur press!
-  LDA.l Horse_Carrots : BEQ .empty_carrots
-    DEC : STA.l Horse_Carrots
-    LDA.b #!Horse_SpurDuration : STA.l Horse_SpurTimer
-    LDA.l Horse_Carrots : BNE .normal_regen
-      LDA.b #!Horse_EmptyRegen : STA.l Horse_RegenTimer
-      BRA .spur_sfx
-    .normal_regen
-      LDA.l Horse_RegenTimer : BNE .spur_sfx
-      LDA.b #!Horse_NormalRegen : STA.l Horse_RegenTimer
-    .spur_sfx
-    LDA.b #$20 : STA.w $012E          ; SFX2.20 crisp gallop burst cue
-    BRA .suppress_lift
-
-  .empty_carrots
-    LDA.w $012E : BNE .suppress_lift
-      LDA.b #$3C : STA.w $012E        ; soft empty cue if channel free
-
-  .suppress_lift
-  LDA.b #$80
-  TRB.b $F6                           ; clear new A press before Link_HandleAPress
-  TRB.b $F2                           ; clear held A so grab/pull cannot engage
-  TRB.b $3B                           ; clear Link A-latch
-  STZ.b $3C                           ; no sword/carry hold
-  STZ.w $0308                         ; clear carry/lift substate
-  STZ.w $0376                         ; clear grab/pull/dash state
-  STZ.w $02EC                         ; clear liftable timer/state
-  BIT.b $3A : BVS +
-    LDA.b #$01 : TRB.b $50            ; never leave grab/A dir-lock stuck while mounted
-  +
-  LDA.b $5D : CMP.b #$11 : BNE +
-    STZ.b $5D                         ; force exit LinkState 11 (carrying/grabbing)
-  +
-  RTS
-}
-
-; Updates spur decay, stop/bonk reset, gradual carrot regen, and HUD sync.
-; Runs AFTER CheckFenceJump + ConstrainGroundInput. In: M=8, X=8, DBR=$00.
 Horse_PostMoveDecayTick:
 {
-  LDA.l Horse_SpurTimer : BEQ .regen
-    ; Keep spur active across mid-air jumps.
-    LDA.l Horse_State : ORA.l Horse_JumpTimer : BNE .tick_spur
-    ; Reset speed burst on damage/recoil ($5D==2 or $4D!=0).
-    LDA.b $5D : CMP.b #$02 : BEQ .reset_spur
-    LDA.b $4D : BNE .reset_spur
-    ; Reset speed burst when stopped (D-pad released) or bonked solid non-fence obstacle.
-    LDA.b $F0 : AND.b #$0F : BNE .tick_spur
-    LDA.l Horse_PushTimer : BNE .tick_spur
-    .reset_spur
-      LDA.b #$00 : STA.l Horse_SpurTimer
-      BRA .regen
-    .tick_spur
-      LDA.l Horse_SpurTimer : DEC : STA.l Horse_SpurTimer
+  LDA.l Horse_State : ORA.l Horse_JumpTimer : BEQ .on_ground
+    LDA.l Horse_SpurTimer : BNE + : BRL .regen : +
+      DEC : STA.l Horse_SpurTimer
+    BRL .regen
+
+  .on_ground
+  LDA.b $5D : CMP.b #$02 : BEQ .force_reset
+  LDA.b $4D : BNE .force_reset
+
+  LDA.b $F0 : AND.b #$0F : BNE .moving
+    LDA.l Horse_PushTimer : BNE .tick_spur_only
+      LDA.b #$00 : STA.l Horse_SpurTimer : STA.l Horse_PrevDpad
+      LDA.l Horse_Momentum : BNE + : BRL .regen : +
+        SEC : SBC.b #$03
+        BCS + : LDA.b #$00 : +
+        STA.l Horse_Momentum
+        BRL .regen
+    .tick_spur_only
+    LDA.l Horse_SpurTimer : BNE + : BRL .regen : +
+      DEC : STA.l Horse_SpurTimer
+    BRL .regen
+
+  .force_reset
+    LDA.b #$00 : STA.l Horse_SpurTimer : STA.l Horse_Momentum : STA.l Horse_PrevDpad
+    BRL .regen
+
+  .moving
+  PHA                                 ; 1,S = D-pad nibble ($F0 & $0F)
+  LDA.l Horse_SpurTimer : BEQ .chk_turns
+    DEC : STA.l Horse_SpurTimer
+
+  .chk_turns
+  LDA.b $2F : AND.b #$06 : PHA        ; 1,S = facing (0,2,4,6), 2,S = dpad
+  LDA.l Horse_PrevMoveDir : CMP.b #$FF : BEQ .accel
+  CMP 1, S : BEQ .accel
+    EOR 1, S : CMP.b #$02 : BNE .turn_90
+      ; 180-degree reversal: reset momentum & spur cleanly
+      LDA.b #$00 : STA.l Horse_Momentum : STA.l Horse_SpurTimer
+      BRA .accel
+    .turn_90
+      LDA 2, S : AND.l Horse_PrevDpad : BEQ .sharp_90
+        ; Diagonal-assisted smooth bank: mild cap at 18
+        LDA.l Horse_Momentum : CMP.b #19 : BCC .accel
+          LDA.b #18 : STA.l Horse_Momentum
+        BRA .accel
+      .sharp_90
+        ; Crisp 90-degree snap: corner scrub cap at 10 + shave 12 spur frames
+        LDA.l Horse_Momentum : CMP.b #11 : BCC +
+          LDA.b #10 : STA.l Horse_Momentum
+        +
+        LDA.l Horse_SpurTimer : BEQ .accel
+          SEC : SBC.b #12
+          BCS + : LDA.b #$00 : +
+          STA.l Horse_SpurTimer
+
+  .accel
+  LDA.l Horse_Momentum : CMP.b #24 : BCS +
+    INC : STA.l Horse_Momentum
+  +
+  ; Terrain drag: shallow water / tall grass caps canter momentum at 12 unless spurring
+  LDA.w $0351 : BEQ .save_dir
+  LDA.l Horse_SpurTimer : BNE .save_dir
+    LDA.l Horse_Momentum : CMP.b #13 : BCC .save_dir
+      LDA.b #12 : STA.l Horse_Momentum
+
+  .save_dir
+  PLA : STA.l Horse_PrevMoveDir
+  PLA : STA.l Horse_PrevDpad
 
   .regen
   LDA.l Horse_SpurTimer : BNE .hud    ; regen begins once burst decays
@@ -1137,10 +1008,16 @@ HorseForm_UpdateAnimFrame_Impl:
 
   .check_walk
   LDA.b $F0 : AND.b #$0F : BEQ .idle
-  LDA.l Horse_AnimTimer : INC : STA.l Horse_AnimTimer
+  LDA.l Horse_AnimTimer : INC
+  PHA
   LDA.l Horse_SpurTimer : BEQ +
-    LDA.l Horse_AnimTimer : INC : STA.l Horse_AnimTimer
+    LDA 1, S : INC : STA 1, S
   +
+  PLA
+  CMP.b #24 : BCC +
+    SEC : SBC.b #24
+  +
+  STA.l Horse_AnimTimer
   LDA.b $2F : AND.b #$06 : TAX
   JMP (.walk_dir, X)
 
@@ -1148,19 +1025,33 @@ HorseForm_UpdateAnimFrame_Impl:
   dw .walk_up, .walk_down, .walk_left_right, .walk_left_right
 
   .walk_up
-  LDA.l Horse_AnimTimer : LSR #2 : AND.b #$01 : CLC : ADC.b #$04
-  STA.l Horse_Frame
+  JSR .ns_beat
+  LDA.l .up_cycle, X : STA.l Horse_Frame
   RTS
+  .up_cycle
+  db 4, 3, 5, 3
 
   .walk_down
-  LDA.l Horse_AnimTimer : LSR #2 : AND.b #$01 : CLC : ADC.b #$01
-  STA.l Horse_Frame
+  JSR .ns_beat
+  LDA.l .down_cycle, X : STA.l Horse_Frame
+  RTS
+  .down_cycle
+  db 1, 0, 2, 0
+
+  .ns_beat
+  LDA.l Horse_AnimTimer
+  LDX.b #$00
+  CMP.b #6 : BCC .beat_done
+    INX
+    CMP.b #12 : BCC .beat_done
+      INX
+      CMP.b #18 : BCC .beat_done
+        INX
+  .beat_done
   RTS
 
   .walk_left_right
-  LDA.l Horse_AnimTimer : CMP.b #24 : BCC +
-    LDA.b #$00 : STA.l Horse_AnimTimer
-  +
+  LDA.l Horse_AnimTimer
   LSR #2 : TAX
   LDA.l .gallop_cycle, X : STA.l Horse_Frame
   RTS
@@ -1220,7 +1111,7 @@ pullpc
 
 ; Emits vanilla-style tall grass ($0351=2 -> $C8/$C9/$CA pal 1) or shallow water
 ; ($0351=1/3 -> $D8/$D9/$DA pal 2) 8x8 tiles at Epona's hoof line when grounded.
-; Respects 12-slot player OAM budget (1 centered tile on 8-part frames, else 2 mirrored).
+; Respects 12-slot player OAM budget (1 centered/front-hoof tile on 8-part frames, else 2).
 ; Entry: M=16, X=16, DBR=$00, $0D=frame, $00=SX16, $02=SY16, Y=OAM off. Exit: M=16, X=16.
 Horse_EmitFootReaction_Long:
 {
@@ -1237,14 +1128,28 @@ Horse_EmitFootReaction_Long:
   RTL
 
   .grounded
-  LDA.l Horse_AnimTimer : LSR #2
-  CMP.b #$03 : BCC + : SBC.b #$03 : +
-  STA.b $08
   LDA.w $0351 : CMP.b #$02 : BEQ .grass
+    ; Shallow water: continuous ripple driven by frame counter $1A (fast wade / gentle idle)
+    LDA.b $F0 : AND.b #$0F : BEQ .water_idle
+      LDA.b $1A : LSR #2 : BRA .have_phase
+    .water_idle
+    LDA.b $1A : LSR #3
+    BRA .have_phase
+  .grass
+    LDA.l Horse_AnimTimer : LSR #2
+  .have_phase
+  ; O(1) exact mod-3 reduction across full 0..63 range (fixes >24f N/S tile overflow glitch).
+  CMP.b #48 : BCC + : SBC.b #48 : +
+  CMP.b #24 : BCC + : SBC.b #24 : +
+  CMP.b #12 : BCC + : SBC.b #12 : +
+  CMP.b #6  : BCC + : SBC.b #6  : +
+  CMP.b #3  : BCC + : SBC.b #3  : +
+  STA.b $08
+  LDA.w $0351 : CMP.b #$02 : BEQ .grass_attr
     LDA.b #$D8 : CLC : ADC.b $08 : STA.b $0B
     LDA.b $65 : AND.b #$30 : ORA.b #$04
     BRA .have_attr
-  .grass
+  .grass_attr
     LDA.b #$C8 : CLC : ADC.b $08 : STA.b $0B
     LDA.b $65 : AND.b #$30 : ORA.b #$02
   .have_attr
@@ -1252,10 +1157,13 @@ Horse_EmitFootReaction_Long:
   STZ.b $0C
 
   REP #$20
-  LDA.b $02 : CLC : ADC.w #$000C : STA.b $0E
+  LDA.b $02 : CLC : ADC.w #$000B : STA.b $0E
   LDA.b $0D : AND.w #$00FF : TAX
   SEP #$20
-  LDA.l HorseFrame_Count, X : CMP.b #$08 : REP #$20 : BEQ .single_slot
+  LDA.l HorseFrame_Count, X : CMP.b #$08 : BEQ .single_slot
+  LDA.b $2F : CMP.b #$04 : BCS .two_ew
+    ; North/South 6-part: twin side-by-side tiles at SX16+0 and SX16+8
+    REP #$20
     LDA.b $00 : STA.b $08
     JSR HorseOam_WriteSlot
     INY #4
@@ -1266,8 +1174,34 @@ Horse_EmitFootReaction_Long:
     JSR HorseOam_WriteSlot
     INY #4
     RTL
+  .two_ew
+    ; East/West 6/7-part: wider rear & front hoof spread (SX16-4, SX16+12)
+    REP #$20
+    LDA.b $00 : SEC : SBC.w #$0004 : STA.b $08
+    JSR HorseOam_WriteSlot
+    INY #4
+    SEP #$20
+    LDA.b $0A : ORA.b #$40 : STA.b $0A
+    REP #$20
+    LDA.b $00 : CLC : ADC.w #$000C : STA.b $08
+    JSR HorseOam_WriteSlot
+    INY #4
+    RTL
   .single_slot
-  LDA.b $00 : CLC : ADC.w #$0004 : STA.b $08
+  LDA.b $2F : CMP.b #$06 : BEQ .single_east
+  CMP.b #$04 : BEQ .single_west
+    REP #$20
+    LDA.b $00 : CLC : ADC.w #$0004 : STA.b $08
+    BRA .write_single
+  .single_west
+    LDA.b $0A : ORA.b #$40 : STA.b $0A
+    REP #$20
+    LDA.b $00 : SEC : SBC.w #$0002 : STA.b $08
+    BRA .write_single
+  .single_east
+    REP #$20
+    LDA.b $00 : CLC : ADC.w #$000A : STA.b $08
+  .write_single
   JSR HorseOam_WriteSlot
   INY #4
   RTL
@@ -1425,4 +1359,316 @@ Horse_CheckTile16Safe_Long:
 }
 
 assert pc() <= $540000, "Epona overhaul Bank $53 tail exceeded $53FFFF"
+pullpc
+
+; =========================================================
+; Epona Bank $5E Extension Slice ($5EF000-$5EFFFF)
+; Hosts self-contained JSL helpers & speed tables clear of tight Bank $53 slices.
+; Overworld/entrances.asm uses $5E8000-$5E82FF; $5EF000-$5EFFFF is dedicated here.
+; =========================================================
+pushpc
+org $5EF000
+
+; Linear 49-entry speed decay offsets (frames 0..48) -> adds cleanly onto top pickup speed:
+; cardinal $24+$0E=$32, diag $1E+$0B=$29.
+Horse_SpurCardinalBonus:
+  db  0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4
+  db  5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 8, 8, 8, 8, 9, 9
+  db  9,10,10,10,10,11,11,11,12,12,12,13,13,13,13,14,14
+assert pc()-Horse_SpurCardinalBonus == 49
+
+Horse_SpurDiagBonus:
+  db  0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3
+  db  4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 6, 7, 7, 7
+  db  7, 8, 8, 8, 8, 8, 9, 9, 9, 9,10,10,10,10,11,11,11
+assert pc()-Horse_SpurDiagBonus == 49
+
+; 7-tier acceleration pickup tables indexed by Horse_Momentum >> 2 (0..6).
+; Starts brisker than vanilla walking ($18) and builds cleanly to sustained $24/$1E gallop.
+Horse_PickupCardinal:
+  db $1A, $1C, $1E, $20, $22, $23, $24
+Horse_PickupDiag:
+  db $14, $16, $18, $19, $1B, $1C, $1E
+
+; Called via JSL from LinkState_BunnyHoodRun ($20AF20) when !CurrentMask == #$09.
+; In:  M=8, any X width, X = SubVelocityValues index (0..$10).
+; Out: A = effective sub-velocity, C=0, caller X width preserved.
+HorseSpeed_GetSubVel:
+{
+  PHP : PHB
+  PHK : PLB                           ; DBR = $5E for local ,Y table indexing
+  SEP #$30
+  PHX : PHY
+  CPX.b #$00 : BEQ .base_cardinal
+  CPX.b #$01 : BEQ .base_diag
+    LDA.l HorseSpeedTable, X
+    BRA .have_base
+  .base_cardinal
+    JSR HorseSpeed_LookupMomentumBucket
+    LDA.w Horse_PickupCardinal, Y
+    BRA .have_base
+  .base_diag
+    JSR HorseSpeed_LookupMomentumBucket
+    LDA.w Horse_PickupDiag, Y
+  .have_base
+  PHA                                 ; preserve base speed
+  LDA.l Horse_SpurTimer : BEQ .done_pop
+    CMP.b #49 : BCC +
+      LDA.b #48
+    +
+    TAY
+    CPX.b #$00 : BEQ .cardinal
+    CPX.b #$0C : BEQ .cardinal
+    CPX.b #$01 : BEQ .diag
+    CPX.b #$0D : BNE .done_pop
+  .diag
+    PLA : CLC : ADC.w Horse_SpurDiagBonus, Y
+    BRA .done
+  .cardinal
+    PLA : CLC : ADC.w Horse_SpurCardinalBonus, Y
+    BRA .done
+  .done_pop
+    PLA
+  .done
+  PLY : PLX
+  PLB : PLP
+  CLC
+  RTL
+}
+
+HorseSpeed_LookupMomentumBucket:
+{
+  LDA.l Horse_Momentum
+  CMP.b #25 : BCC +
+    LDA.b #24
+  +
+  LSR #2
+  TAY
+  RTS
+}
+
+; Handles A spur carrot spend + unconditional block/rock/bush lifting suppression.
+; Runs AFTER HorseGame_KidStartCheck so Ranch Kid prompt keeps working on A.
+; In: M=8, X=8, DBR=$00. Exit: RTL.
+Horse_PreMoveControlTick:
+{
+  ; Always consume A lift/grab/dash flags while mounted so Link NEVER lifts rocks/bushes/pots!
+  BIT.b $F6 : BPL .suppress_lift
+  LDA.l Horse_State : ORA.l Horse_JumpTimer : BNE .suppress_lift
+  LDA.l HorseGame_State : CMP.b #$04 : BEQ .suppress_lift
+  LDA.l InCutScene : BNE .suppress_lift
+  LDA.w $02E4 : ORA.b $6C : ORA.w $0FFC : ORA.b $5D : BNE .suppress_lift
+
+  ; Valid A spur press!
+  LDA.l Horse_Carrots : BEQ .empty_carrots
+    DEC : STA.l Horse_Carrots
+    LDA.b #!Horse_SpurDuration : STA.l Horse_SpurTimer
+    LDA.b #24 : STA.l Horse_Momentum  ; pop immediately to full stride for crisp spur takeoff
+    LDA.l Horse_Carrots : BNE .normal_regen
+      LDA.b #!Horse_EmptyRegen : STA.l Horse_RegenTimer
+      BRA .spur_sfx
+    .normal_regen
+      LDA.l Horse_RegenTimer : BNE .spur_sfx
+      LDA.b #!Horse_NormalRegen : STA.l Horse_RegenTimer
+    .spur_sfx
+    LDA.b #$20 : STA.w $012E          ; SFX2.20 crisp gallop burst cue
+    BRA .suppress_lift
+
+  .empty_carrots
+    LDA.w $012E : BNE .suppress_lift
+      LDA.b #$3C : STA.w $012E        ; soft empty cue if channel free
+
+  .suppress_lift
+  LDA.b #$80
+  TRB.b $F6                           ; clear new A press before Link_HandleAPress
+  TRB.b $F2                           ; clear held A so grab/pull cannot engage
+  TRB.b $3B                           ; clear Link A-latch
+  STZ.b $3C                           ; no sword/carry hold
+  STZ.w $0308                         ; clear carry/lift substate
+  STZ.w $0376                         ; clear grab/pull/dash state
+  STZ.w $02EC                         ; clear liftable timer/state
+  BIT.b $3A : BVS +
+    LDA.b #$01 : TRB.b $50            ; never leave grab/A dir-lock stuck while mounted
+  +
+  LDA.b $5D : CMP.b #$11 : BNE +
+    STZ.b $5D                         ; force exit LinkState 11 (carrying/grabbing)
+  +
+  RTL
+}
+
+Horse_RestoreSp3Palette:
+{
+  PHP : PHB
+  SEP #$30
+  LDA.b #$00 : PHA : PLB
+  REP #$30
+  PHX : PHY
+  LDY.w #$000C
+  .loop
+    PHY
+    TYA : CLC : ADC.w #$0172 : TAX
+    LDA.w #$14A5                      ; MainSpr SP-3[9..15] uniform fill
+    JSL LoadDayNightPaletteEffect
+    REP #$30
+    PLX
+    STA.l $7EC672, X
+    TXY
+    DEY : DEY : BPL .loop
+  PLY : PLX
+  SEP #$20
+  INC.b $15
+  PLB : PLP
+  RTL
+}
+
+; Symmetric -2px vertical suspension bob for North/South gallop stride frames (0..5).
+Horse_NsStrideLift:
+  db $00, $01, $02, $00, $01, $02
+
+; Adjusts grounded North/South gallop frame height for symmetric -2px bounce.
+; In: M=16, X=16, DBR=$00, A=HorseFrame_Height[X], X=frame (0..18). Out: A adjusted, X/Y preserved (RTL).
+Horse_AdjustNsStrideHeight:
+{
+  CPX.w #$0006 : BCS .done
+  PHA
+  LDA.l Horse_State : AND.w #$00FF : BNE .skip
+    LDA.l Horse_NsStrideLift, X : AND.w #$00FF
+    CLC : ADC 1, S
+    STA 1, S
+  .skip
+  PLA
+  .done
+  RTL
+}
+
+; Plays terrain-aware hoof beats twice per 24-tick gallop cycle ($04/$05 and $10/$11).
+; Entry/Exit: M=8, DBR=$00 (RTL).
+HorseForm_PlayHoofBeat:
+HorseForm_PlayHoofBeat_Impl:
+{
+  LDA.b $F0 : AND.b #$0F : BEQ .done
+  LDA.l Horse_AnimTimer : AND.b #$FE
+  CMP.b #4 : BEQ .beat
+  CMP.b #16 : BNE .done
+  .beat
+  LDA.w $012E : BNE .done
+    LDA.w $0351 : BEQ .dry
+    CMP.b #$02 : BEQ .grass
+      LDA.b #$1C : BRA .play          ; SFX2.1C shallow water slosh/splash
+    .grass
+      LDA.b #$1A : BRA .play          ; SFX2.1A tall grass rustle
+    .dry
+      LDA.b #$23                      ; SFX2.23 soft hoof beat
+    .play
+    STA.w $012E
+  .done
+  RTL
+}
+
+; Renders 5 two-row carrot pips above the bottom clock (BG3 rows 24-25 cols 14-18:
+; HudCarrotTopBuffer $7EC866..$7EC86F + HudCarrotBotBuffer $7EC870..$7EC879) ONLY while
+; mounted outdoors with active HUD; flags one-shot blanking or silent UI reset otherwise.
+; Safe from any M/X width, any DBR; preserves A/X/Y/P/DBR.
+Horse_SyncCarrotHud:
+{
+  PHP : PHB
+  REP #$30
+  PHA : PHX : PHY
+  SEP #$20
+  LDA.b #$00 : PHA : PLB
+
+  ; Determine whether HUD carrots should be visible
+  LDA.w !HorseHelpers_CurrentMask : CMP.b #!HorseHelpers_MaskId : BNE .want_blank
+  LDA.b $1B : BNE .want_blank
+  LDA.b $10 : CMP.b #$0E : BEQ .want_blank_ui
+  LDA.l $7EC73A : CMP.b #$7F : BEQ .want_blank
+
+  ; Mounted outdoors: desired = $80 | clamped_carrots (0..5)
+  LDA.l Horse_Carrots
+  CMP.b #!Horse_MaxCarrots+1 : BCC +
+    LDA.b #!Horse_MaxCarrots
+    STA.l Horse_Carrots
+  +
+  REP #$20
+  AND.w #$00FF
+  TAY                                 ; Y = 0..5 full carrots (16-bit)
+  SEP #$20
+  TYA
+  ORA.b #$80                          ; A = $80 | carrots
+  LDX.w #!Horse_HudCarrotFullBot
+  CPY.w #$0000 : BNE .check_dirty
+    LDX.w #!Horse_HudCarrotEmptyBot
+  .check_dirty
+  CMP.l Horse_HudState : BNE .apply_mounted
+  PHA
+  REP #$20
+  TXA
+  CMP.l HudCarrotBotBuffer : BEQ .clean_pop
+    SEP #$20
+    PLA
+    BRA .apply_mounted
+  .clean_pop
+  SEP #$20
+  PLA
+  BRA .exit
+
+  .want_blank_ui
+  LDA.l Horse_HudState : BEQ .exit
+  LDA.b #$00 : STA.l Horse_HudState
+  REP #$20
+  JSR HorseHud_FillBlankBuffers
+  BRA .exit
+
+  .want_blank
+  LDA.l Horse_HudState : BEQ .exit
+  CMP.b #$01 : BEQ .exit
+  LDA.b #$01 : STA.l Horse_HudState
+  REP #$20
+  JSR HorseHud_FillBlankBuffers
+  BRA .queue_nmi
+
+  .apply_mounted
+  STA.l Horse_HudState
+  REP #$20
+  LDX.w #$0000
+  .pip_loop
+    CPY.w #$0000 : BEQ .pip_empty
+      LDA.w #!Horse_HudCarrotFullTop
+      STA.l HudCarrotTopBuffer, X
+      LDA.w #!Horse_HudCarrotFullBot
+      DEY
+      BRA .pip_store
+    .pip_empty
+      LDA.w #!Horse_HudCarrotEmptyTop
+      STA.l HudCarrotTopBuffer, X
+      LDA.w #!Horse_HudCarrotEmptyBot
+    .pip_store
+    STA.l HudCarrotBotBuffer, X
+    INX #2
+    CPX.w #$000A : BCC .pip_loop
+
+  .queue_nmi
+  SEP #$20
+  LDA.b $10 : CMP.b #$0E : BEQ .exit
+    LDA.b #$01 : STA.b $16
+
+  .exit
+  REP #$30
+  PLY : PLX : PLA
+  PLB : PLP
+  RTL
+}
+
+HorseHud_FillBlankBuffers:
+{
+  LDA.w #!Horse_HudBlankCell
+  LDX.w #$0008
+  .loop
+    STA.l HudCarrotTopBuffer, X
+    STA.l HudCarrotBotBuffer, X
+    DEX #2 : BPL .loop
+  RTS
+}
+HorseBank5EHelpers_End:
+assert pc() <= $5F0000, "Epona Bank $5E extension slice exceeded $5EFFFF"
 pullpc

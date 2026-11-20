@@ -209,7 +209,9 @@ HUD_NMIUpload:
   LDY.w #$000C : STY.w $4305                    ; continues at HudClockBuffer ($7EC858)
   STA.w $420B
 
-  CPX.w #$C700 : BEQ .done
+  CPX.w #$C700 : BNE +
+    BRL .maybe_carrots_hidden
+  +
     LDY.w #$70A0 : STY.w $2116                  ; HUD CHR tiles $014-$015
     LDY.w #HUD_StripAndMoonTiles&$FFFF          ; default: night (Moon)
     LDA.l TimeState.Hours
@@ -221,17 +223,71 @@ HUD_NMIUpload:
     LDA.b #HUD_StripAndSunTiles>>16 : STA.w $4304
     LDY.w #$0020 : STY.w $4305                  ; 32 bytes ($014 strip + $015 icon)
     LDA.b #$01 : STA.w $420B
+if defined("ENABLE_HORSE_FORM")
 if !ENABLE_HORSE_FORM == 1
-    LDA.l $7E02B2 : CMP.b #$09 : BNE .done
+    LDA.l Horse_HudState : BNE +
+      LDA.b #$01 : RTL
+    +
+    LDA.b $10 : CMP.b #$0E : BNE .carrots_gameplay
+      LDA.l Horse_HudState : BMI +
+        LDA.b #$01 : RTL
+      +
+      LDA.b #$8F : STA.l Horse_HudState         ; force frame-1 repaint when dialogue/menu closes
+      LDA.b #$01 : RTL
+    .carrots_gameplay
+    LDA.l Horse_HudState : BMI +
+      BRL .carrots_blank
+    +
+    LDA.l $7E02B2 : CMP.b #$09 : BEQ +
+      BRL .carrots_blank
+    +
+      LDA.b #$7E : STA.w $4304
+      LDY.w #HudCarrotTopBuffer&$FFFF : STY.w $4302
+      LDY.w #$630E : STY.w $2116                ; BG3 row 24, cols 14-18 (carrot leaves)
+      LDY.w #$000A : STY.w $4305
+      LDA.b #$01 : STA.w $420B
+      LDY.w #$632E : STY.w $2116                ; BG3 row 25, cols 14-18 (carrot bodies, contiguous)
+      LDY.w #$000A : STY.w $4305
+      STA.w $420B
       LDA.b #Horse_CarrotFullChr>>16 : STA.w $4304
       LDY.w #Horse_CarrotFullChr&$FFFF : STY.w $4302
-      LDY.w #$7A48 : STY.w $2116                ; BG3 tile $0149 (full carrot)
-      LDY.w #$0010 : STY.w $4305
+      LDY.w #$7A48 : STY.w $2116                ; BG3 tiles $0149-$014A (full carrot top/bot)
+      LDY.w #$0020 : STY.w $4305
       LDA.b #$01 : STA.w $420B
       LDY.w #Horse_CarrotEmptyChr&$FFFF : STY.w $4302
-      LDY.w #$7B70 : STY.w $2116                ; BG3 tile $016E (empty carrot)
-      LDY.w #$0010 : STY.w $4305
+      LDY.w #$7A10 : STY.w $2116                ; BG3 tiles $0142-$0143 (empty carrot top/bot)
+      LDY.w #$0020 : STY.w $4305
       STA.w $420B
+      BRA .done
+
+  .maybe_carrots_hidden
+    LDA.l Horse_HudState : BEQ .done_a1
+    LDA.b $10 : CMP.b #$0E : BEQ .done_a1
+    LDA.l Horse_HudState : BPL .carrots_blank
+      LDA.b #$8F : STA.l Horse_HudState         ; repaint once HUD unhides
+    BRA .carrots_blank_keep_state
+
+  .carrots_blank
+    LDA.b #$00 : STA.l Horse_HudState
+  .carrots_blank_keep_state
+    LDA.b #$7E : STA.w $4304
+    LDY.w #$C700 : STY.w $4302
+    LDY.w #$630E : STY.w $2116
+    LDY.w #$000A : STY.w $4305
+    LDA.b #$01 : STA.w $420B
+    LDY.w #$C700 : STY.w $4302
+    LDY.w #$632E : STY.w $2116
+    LDY.w #$000A : STY.w $4305
+    STA.w $420B
+    BRA .done
+
+  .done_a1
+    LDA.b #$01
+else
+  .maybe_carrots_hidden
+endif
+else
+  .maybe_carrots_hidden
 endif
   .done
   RTL
@@ -255,6 +311,22 @@ HUD_MoonTile:
   db $1C, $1C, $24, $3C, $4C, $74, $98, $E8
   db $9A, $EA, $9A, $E6, $62, $5E, $3C, $3C
 assert (HUD_StripAndSunTiles>>16) == (HUD_StripAndMoonTiles>>16)
+
+if defined("ENABLE_HORSE_FORM")
+if !ENABLE_HORSE_FORM == 1
+; Two-tone 2-row OoT-tilt Epona HUD carrot 2bpp CHR bundles (Bank $34).
+; Full Top ($0149, Pal 7 emerald leaf) + Full Bot ($014A, Pal 2 warm amber body)
+; Empty Top ($0142, Pal 4 grey leaf) + Empty Bot ($0143, Pal 4 shaded grey silhouette)
+Horse_CarrotFullChr:
+  db $00,$00,$00,$00,$00,$00,$0A,$0A, $1F,$15,$2E,$32,$3C,$24,$7C,$64
+  db $5E,$62,$5E,$6A,$7C,$44,$58,$68, $70,$50,$60,$60,$00,$00,$00,$00
+Horse_CarrotEmptyChr:
+  db $00,$00,$00,$00,$00,$00,$0A,$0A, $1F,$15,$3E,$22,$3C,$24,$7C,$64
+  db $7E,$42,$66,$42,$6C,$44,$78,$48, $70,$50,$60,$60,$00,$00,$00,$00
+assert pc()-Horse_CarrotFullChr == 64
+assert (Horse_CarrotFullChr>>16) == (Horse_CarrotEmptyChr>>16)
+endif
+endif
 
 ; =========================================================
 

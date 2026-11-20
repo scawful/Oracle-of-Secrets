@@ -99,12 +99,17 @@ def assemble_clock_harness() -> tuple[bytes, dict[str, int]]:
 
     harness = f"""
 lorom
+!ENABLE_HORSE_FORM = 1
+Horse_HudState      = $7F5674
 HudCornerBuffer    = $7EC84A
 HudCornerBufferEnd = HudCornerBuffer+14
 HudClockBuffer      = HudCornerBufferEnd
 HudClockLastHours   = HudClockBuffer+12
 HudClockLastMinutes = HudClockBuffer+13
 HudClockBufferEnd   = HudClockBuffer+14
+HudCarrotTopBuffer  = HudClockBufferEnd
+HudCarrotBotBuffer  = HudCarrotTopBuffer+10
+HudCarrotBufferEnd  = HudCarrotBotBuffer+10
 
 struct TimeState $7EE000
   .Hours:   skip 1
@@ -337,6 +342,73 @@ class HudClock12hCompiledTest(unittest.TestCase):
                     self.assertEqual(h.dmas[4]["vram_word"], 0x70A0)
                     self.assertEqual(h.dmas[4]["size"], 32)
                     self.assertEqual(h.dmas[4]["data"].hex(), STRIP_TILE_HEX + expected_icon_hex)
+
+    def test_hud_nmi_upload_epona_carrots_lifecycle(self):
+        nmi_upload = self.labels["HUD_NMIUpload"]
+        draw_long = self.labels["DrawClockToHudLong"]
+        h = self._new_harness(default_db=0x00)
+        h.put(0x7E0010, 0x09)
+        h.put(0x7E02B2, 0x09)
+        h.put(0x7EC73A, 0x6F)
+        h.put(0x7EE000, 12); h.put(0x7EE001, 34)
+        h.call_jsl(draw_long, db=0x00, mf=True, xf=True)
+
+        # Populate HudCarrotTopBuffer ($7EC866) + HudCarrotBotBuffer ($7EC870)
+        for i in range(5):
+            h.put16(0x7EC866 + i * 2, 0x3D49 if i < 3 else 0x3142)
+            h.put16(0x7EC870 + i * 2, 0x294A if i < 3 else 0x3143)
+        h.put(0x7F5674, 0x83)
+
+        def prime():
+            h.vram_addr = 0x6040
+            h.dma0_addr = 0xC700
+            h.dma0_bank = 0x7E
+            h.dma0_size = 0x014A
+            h.dmas.clear()
+
+        # 1. Mounted outdoors: streams $630E (10B), $632E (10B), $7A48 (32B), $7A10 (32B)
+        prime()
+        h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
+        self.assertEqual(h.cpu.a & 0xFF, 0x01)
+        self.assertEqual(len(h.dmas), 9)
+        self.assertEqual(h.dmas[5]["vram_word"], 0x630E)
+        self.assertEqual(h.dmas[5]["size"], 10)
+        self.assertEqual(h.dmas[6]["vram_word"], 0x632E)
+        self.assertEqual(h.dmas[6]["size"], 10)
+        self.assertEqual(h.dmas[7]["vram_word"], 0x7A48)
+        self.assertEqual(h.dmas[7]["size"], 32)
+        self.assertEqual(h.dmas[8]["vram_word"], 0x7A10)
+        self.assertEqual(h.dmas[8]["size"], 32)
+
+        # 2. Menu/Dialogue ($10=$0E): skips carrot DMA and invalidates Horse_HudState -> $8F
+        h.put(0x7E0010, 0x0E)
+        prime()
+        h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
+        self.assertEqual(h.cpu.a & 0xFF, 0x01)
+        self.assertEqual(len(h.dmas), 5)
+        self.assertEqual(h.get(0x7F5674), 0x8F)
+
+        # 3. Pending clear on dismount (Horse_HudState=$01): streams $207F blanks once and clears to $00
+        h.put(0x7E0010, 0x09)
+        h.put(0x7E02B2, 0x00)
+        h.put(0x7F5674, 0x01)
+        for off in range(0, 12, 2):
+            h.put16(0x7EC700 + off, 0x207F)
+        prime()
+        h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
+        self.assertEqual(h.cpu.a & 0xFF, 0x01)
+        self.assertEqual(len(h.dmas), 7)
+        self.assertEqual(h.dmas[5]["vram_word"], 0x630E)
+        self.assertEqual(h.dmas[5]["data"], b"\x7f\x20" * 5)
+        self.assertEqual(h.dmas[6]["vram_word"], 0x632E)
+        self.assertEqual(h.dmas[6]["data"], b"\x7f\x20" * 5)
+        self.assertEqual(h.get(0x7F5674), 0x00)
+
+        # 4. Subsequent frame unmounted ($00): zero carrot DMA
+        prime()
+        h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
+        self.assertEqual(h.cpu.a & 0xFF, 0x01)
+        self.assertEqual(len(h.dmas), 5)
 
     def test_gameover_nmi_preserves_sheet69_and_clears_0710(self):
         h = self._new_harness(default_db=0x00)

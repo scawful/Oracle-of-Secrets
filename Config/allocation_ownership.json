@@ -299,6 +299,10 @@
       "source_set": "shared",
       "path": "Masks/horse_ground_clearance.asm"
     },
+    "shared:Masks/horse_mounted_helpers.asm": {
+      "source_set": "shared",
+      "path": "Masks/horse_mounted_helpers.asm"
+    },
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm"
@@ -2746,6 +2750,28 @@
       ],
       "anchors": [
         "org $53E000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "horse_helpers_bank5e",
+      "owner": "Mounted Epona extension helpers (speed/spur, pre-move control, SP3 restore, N/S stride bob, hoof SFX, carrot HUD)",
+      "space": "snes_rom",
+      "base": 6221824,
+      "size": 4096,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_HORSE_FORM": 1
+      },
+      "lifetime": "Bounded 5EF000..5EFFFF tail in Bank $5E after overworld_expanded_entrances_bank5e ($5E8000..$5E82FF); end assertion prevents crossing $5F0000.",
+      "reset": "No runtime ROM writes. Called via JSL and read via long bank addressing.",
+      "save": "No save format change. Compiled ROM payload only.",
+      "provenance": [
+        "shared:Masks/horse_mounted_helpers.asm"
+      ],
+      "anchors": [
+        "org $5EF000",
+        "HorseBank5EHelpers_End:"
       ],
       "aliases": []
     },
