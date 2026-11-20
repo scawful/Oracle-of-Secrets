@@ -55,7 +55,12 @@
 
 ; Link is in cart
 !LinkInCart         = $35
-!MinecartSpeed      = 40
+; Sprite_Move* consumes this as 4.4 fixed point (high nibble = pixels).
+; 64 ($40) is 4.0 px/frame. Link's ground walk is SubVelocityValues $18
+; (1.5 px/frame), so riding matches a dash and stays inside one 8px cell.
+; Minecart_SeatPlayer is the 16-bit seat: cart Y - 11, then the same
+; ApplyLinksMovementToCamera call a moving cart makes each frame.
+!MinecartSpeed      = 64
 !DoubleSpeed        = 30
 
 ; SprMiscB and Minecart movement direction
