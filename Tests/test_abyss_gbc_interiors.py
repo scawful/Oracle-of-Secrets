@@ -406,9 +406,11 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
                         f.put(0x0010, 0x07)
                         f.put(0x0011, 0x00)
                         f.put(0x7EC005, 0x00)
-                        f.put(0x027F, 0x00)
+                        f.put(0x7F5409, 0x00)
+                        f.put(0x027F, 0xA5)  # Gust Jar !GustJarFlags sentinel must stay untouched
                         _run_call(f, "AbyssGbc_PalWrap", long_return=True, m8=True, x8=True)
-                        self.assertEqual(f.get(0x027F), sid)
+                        self.assertEqual(f.get(0x7F5409), sid)
+                        self.assertEqual(f.get(0x027F), 0xA5, "AbyssGbc_PalWrap must not clobber Gust Jar $027F")
                         got_words = []
                         for row in range(6):
                             base_addr = 0x7EC342 + row * 0x20
@@ -456,9 +458,11 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
                         f.put(0x0AA9, 0x00)
                         f.put(0x0010, 0x07)
                         f.put(0x0011, 0x00)
-                        f.put(0x027F, 0x00)
+                        f.put(0x7F5409, 0x00)
+                        f.put(0x027F, 0x5A)
                         _run_call(f, "AbyssGbc_PalWrap", long_return=True, m8=True, x8=True)
-                        self.assertEqual(f.get(0x027F), 0)
+                        self.assertEqual(f.get(0x7F5409), 0)
+                        self.assertEqual(f.get(0x027F), 0x5A)
                         for row in range(6):
                             base_addr = 0x7EC342 + row * 0x20
                             for col in range(15):
@@ -490,13 +494,18 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
         f = self._new_fixture()
         try:
             # 1. AbyssGbc_FullLoadEntry records volcanic style (#7) for room $014
+            #    without clobbering Gust Jar WRAM ($027E/$027F).
             f.put(0x001B, 0x01)
             f.put(0x7EF3CA, 0x40)
             f.put(0x00A0, 0x14)
             f.put(0x00A1, 0x00)
-            f.put(0x027E, 0x00)
+            f.put(0x7F5408, 0x00)
+            f.put(0x027E, 0xCC)
+            f.put(0x027F, 0x33)
             _run_call(f, "AbyssGbc_FullLoadEntry", long_return=True, m8=True, x8=True)
-            self.assertEqual(f.get(0x027E), 7)
+            self.assertEqual(f.get(0x7F5408), 7)
+            self.assertEqual(f.get(0x027E), 0xCC, "AbyssGbc_FullLoadEntry must not clobber Gust Jar $027E")
+            self.assertEqual(f.get(0x027F), 0x33, "AbyssGbc_FullLoadEntry must not clobber Gust Jar $027F")
 
             # 2. Same-style transition ($014 -> $023, both volcanic #7): SyncStyle skips reload
             f.put(0x00A0, 0x23)
@@ -506,7 +515,8 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
             _run_call(f, "AbyssGbc_SyncStyle", long_return=True, m8=True, x8=True)
             self.assertEqual(f.get(0x0270), 0x00, "Same-style transition must not force-blank reload")
             self.assertEqual(f.get(0x0013), 0x0F)
-            self.assertEqual(f.get(0x027E), 7)
+            self.assertEqual(f.get(0x7F5408), 7)
+            self.assertEqual(f.get(0x027E), 0xCC)
 
             # 3. Cross-style transition (volcanic #7 -> cave #8, room $0D0): SyncStyle reloads and restores $13
             f.put(0x00A0, 0xD0)
@@ -516,7 +526,8 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
             _run_call(f, "AbyssGbc_SyncStyle", long_return=True, m8=True, x8=True)
             self.assertEqual(f.get(0x0270), 0x5A, "Cross-style transition must invoke full BG reload")
             self.assertEqual(f.get(0x0013), 0x0F, "Brightness $13 must be restored after reload")
-            self.assertEqual(f.get(0x027E), 8, "!AbyssGbc_LoadedStyle must update to cave #8")
+            self.assertEqual(f.get(0x7F5408), 8, "!AbyssGbc_LoadedStyle must update to cave #8")
+            self.assertEqual(f.get(0x027E), 0xCC)
 
             # 4. Door scroll across style boundary copies aux ($7EC342) -> main ($7EC542) and sets $15
             f.put(0x0010, 0x07)  # Dungeon module
@@ -525,12 +536,13 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
             f.put(0x0AA8, 0x00)
             f.put(0x0AA9, 0x00)
             f.put(0x0015, 0x00)
-            f.put(0x027F, 0x07)  # Previous palette was volcanic #7, now entering cave #8
+            f.put(0x7F5409, 0x07)  # Previous palette was volcanic #7, now entering cave #8
             for off in range(0x42, 0x100, 2):
                 f.put(0x7EC500 + off, 0x00)
                 f.put(0x7EC500 + off + 1, 0x00)
             _run_call(f, "AbyssGbc_PalWrap", long_return=True, m8=True, x8=True)
-            self.assertEqual(f.get(0x027F), 8)
+            self.assertEqual(f.get(0x7F5409), 8)
+            self.assertEqual(f.get(0x027F), 0x33)
             self.assertEqual(f.get(0x0015), 0x01)
             expected_cave_first = int(self._coverage["styles"]["cave"]["palette_words"][0], 16)
             live_first = f.get(0x7EC542) | (f.get(0x7EC543) << 8)

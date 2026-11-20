@@ -24,8 +24,8 @@
 ;      BG rows 2-7 from the aux buffer to the main buffer.
 ; =========================================================
 
-!AbyssGbc_LoadedStyle = $7E027E ; inside the vanilla free block $7E0224-$7E027F
-!AbyssGbc_PalStyle    = $7E027F ; style of the last BG palette load
+!AbyssGbc_LoadedStyle = $7F5408 ; UNUSED_7F5000 tail (clear of Gust Jar $0273-$027F)
+!AbyssGbc_PalStyle    = $7F5409 ; style of the last BG palette load
 
 pushpc
 
