@@ -197,6 +197,11 @@ incsrc "Dungeons/wall_profile_selector.asm"
 
 incsrc "Dungeons/abyss_gbc_interiors.asm"
 
+; Door surrounds own bank $5E. This include must not move the bank $2C cursor.
+DoorSurrounds_Bank2C_Before = pc()
+incsrc "Dungeons/door_surrounds.asm"
+assert pc() == DoorSurrounds_Bank2C_Before, "door surrounds consumed bank $2C"
+
 assert pc() <= $2CF700 ; Somaria internal-landing helper owns the fixed tail
 print "End of dungeons.asm               ", pc
 

@@ -203,6 +203,10 @@
       "source_set": "shared",
       "path": "Dungeons/wall_profile_selector.asm"
     },
+    "shared:Dungeons/door_surrounds.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/door_surrounds.asm"
+    },
     "shared:Dungeons/wall_profile_gfx.asm": {
       "source_set": "shared",
       "path": "Dungeons/wall_profile_gfx.asm"
@@ -3551,6 +3555,26 @@
         "org $5E8000",
         "Overworld_ExpandedEntrances_Start:",
         "Overworld_ExpandedEntrances_End:"
+      ]
+    },
+    {
+      "id": "door_surrounds_bank5e",
+      "owner": "D4/D5/D6 exclusive dungeon door surround stamping routine and DSR2 policy/exception tables",
+      "space": "snes_rom",
+      "base": 6194176,
+      "size": 2048,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Compiled ROM code and generated DSR2 tables in zero-filled Bank $5E slot $5E8400-$5E8BFF after overworld_expanded_entrances_bank5e ($5E8000-$5E82FF) and well before Epona Bank $5E helpers ($5EF000-$5EFFFF).",
+      "reset": "Build owns this region; runtime reads ROM tables during RoomDraw_DrawAllObjects ($01890D) via Bank $01 bridge ($01B558).",
+      "save": "No SRAM changes; shared vanilla rooms stay on the vanilla door draw.",
+      "provenance": [
+        "shared:Dungeons/door_surrounds.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "org $5E8400",
+        "Oracle_DrawDoorWithSurrounds:"
       ]
     },
     {
