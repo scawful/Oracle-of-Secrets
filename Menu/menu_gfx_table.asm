@@ -190,7 +190,7 @@ SwordGFX:
   dw $2C64, $2CCE, $2C75, $EC64 ; level one
   dw $2C64, $2C65, $2C74, $EC8A ; level two (clean crossguard tip, no level digit)
   dw $248A, $2465, $3C74, $EC8A ; level three (clean crossguard tip, no level digit)
-  dw $288A, $2865, $2C74, $EC8A ; level four (clean crossguard tip, no level digit)
+  dw $2C8A, $2C65, $2C74, $EC8A ; level four (Master Sword blue, clean crossguard tip)
 
 ShieldGFX:
   dw $2CFD, $6CFD, $2CFE, $6CFE ; baby shield

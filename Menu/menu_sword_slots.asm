@@ -121,13 +121,15 @@ SwordSlots_IsHeavyLevel:
 }
 
 ; Heavy icon = the level-3 SwordGFX icon with its blade (top two tiles)
-; moved from red palette 1 to grey palette 4. Broken: the top-right blade
-; tile is the level-1 icon's shorter blade ($CE), so the tip is missing.
+; colored orange (Menu palette 1: $248A, $2465) when reforged into the
+; Goronblade, or grey (Menu palette 4: $308A, $30CE) while broken (the
+; top-right tile is the level-1 icon's shorter blade $CE, so the tip is missing).
 ; Bank $2D has no room for a new SwordGFX row, so the tiles are written
 ; into the tilemap buffer.
 !HEAVY_ICON_POS       = $018E         ; menu_offset(6,7), asserted in menu_equipment.asm
-!HEAVY_ICON_TL        = $308A
-!HEAVY_ICON_TR        = $3065
+!HEAVY_ICON_TL        = $248A
+!HEAVY_ICON_TR        = $2465
+!HEAVY_ICON_BROKEN_TL = $308A
 !HEAVY_ICON_BROKEN_TR = $30CE
 
 ; Called after the gear icons are drawn. Recolors the heavy icon, or draws
@@ -152,12 +154,13 @@ SwordSlots_MarkerSlot:
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyReforged
   REP #$20
   BEQ .broken
+  LDA.w #!HEAVY_ICON_TL : STA.l $7E1108+!HEAVY_ICON_POS
   LDA.w #!HEAVY_ICON_TR : BRA +
 .broken
+  LDA.w #!HEAVY_ICON_BROKEN_TL : STA.l $7E1108+!HEAVY_ICON_POS
   LDA.w #!HEAVY_ICON_BROKEN_TR
 +
   STA.l $7E110A+!HEAVY_ICON_POS
-  LDA.w #!HEAVY_ICON_TL : STA.l $7E1108+!HEAVY_ICON_POS
   SEP #$20
 .marker
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyEquipped : LSR : ORA.b #$18
