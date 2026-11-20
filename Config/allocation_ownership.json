@@ -390,6 +390,14 @@
     "shared:Masks/garo_mask.asm": {
       "source_set": "shared",
       "path": "Masks/garo_mask.asm"
+    },
+    "shared:Core/symbols.asm": {
+      "source_set": "shared",
+      "path": "Core/symbols.asm"
+    },
+    "shared:Sprites/NPCs/bean_vendor.asm": {
+      "source_set": "shared",
+      "path": "Sprites/NPCs/bean_vendor.asm"
     }
   },
   "claims": [
@@ -3718,6 +3726,75 @@
       "anchors": [
         "org $39F000",
         "assert pc() <= $3A0000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "magic_bean_oam_wram",
+      "owner": "Non-Ranch Magic Bean Flower/Bean dynamic Page 1 OAM/VRAM cache and backup buffers",
+      "space": "wram",
+      "base": 8309888,
+      "size": 467,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Transient WRAM ($7ECC80-$7ECE52) in UNUSED_7EC900 after DungeonWeb_BurnedMaskEnd ($7ECC80), guarded by $424E magic.",
+      "reset": "Auto-initializes on $424E mismatch; clears residency on sheet reloads, mode changes, or OAM conflict.",
+      "save": "Volatile WRAM; not saved to SRAM.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Sprites/NPCs/bean_vendor.asm"
+      ],
+      "anchors": [
+        "MagicBean_WramStart      = $7ECC80",
+        "MagicBean_WramEnd        = $7ECE53"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "magic_bean_oam_code",
+      "owner": "Non-Ranch Magic Bean Flower/Bean Page 1 OAM allocator and NMI DMA swapper",
+      "space": "snes_rom",
+      "base": 3846144,
+      "size": 2048,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Compiled ROM code and lookup tables in Bank $3A slot $3AB000-$3AB7FF before Core/part00 ($3AB800).",
+      "reset": "ROM-only code; bounded by assert pc() <= $3AB800.",
+      "save": "Not persisted.",
+      "provenance": [
+        "shared:Sprites/NPCs/bean_vendor.asm"
+      ],
+      "anchors": [
+        "org $3AB000",
+        "MagicBean_CodeStart:",
+        "MagicBean_CodeEnd:"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "magic_bean_oam_gfx_bank59",
+      "owner": "Non-Ranch Magic Bean FlowerTop/FlowerBot/Bean SP1 4bpp tile payload",
+      "space": "snes_rom",
+      "base": 5890048,
+      "size": 512,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Read-only 384B DMA source tiles in $59E000-$59E17F (allocated $59E000-$59E1FF after KorokSpriteSheets $59C000-$59DFFF).",
+      "reset": "Build owns this region; bounded by assert pc() <= $59E200.",
+      "save": "Not persisted.",
+      "provenance": [
+        "shared:Sprites/NPCs/bean_vendor.asm"
+      ],
+      "anchors": [
+        "org $59E000",
+        "MagicBean_TilePayload:",
+        "MagicBean_TilePayloadEnd:"
       ],
       "aliases": []
     }

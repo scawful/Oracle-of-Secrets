@@ -218,7 +218,33 @@ def _load_sky_tiletypes(root: Path = ROOT) -> tuple[list[int] | None, list[int] 
 
 
 def _load_bean_spots(root: Path = ROOT) -> list[dict[str, Any]]:
-    """Parse MagicBeanSpot_* tables from Sprites/NPCs/bean_vendor.asm if present."""
+    """Load Magic Bean spots from Data/overworld/magic_bean_spots.json or bean_vendor.asm."""
+    json_path = root / "Data" / "overworld" / "magic_bean_spots.json"
+    if json_path.is_file():
+        try:
+            data = json.loads(json_path.read_text(encoding="utf-8"))
+            spots_out: list[dict[str, Any]] = []
+            for entry in data.get("spots", []):
+                raw_map = entry["parent_map"]
+                map_id = int(raw_map[1:], 16) if isinstance(raw_map, str) and raw_map.startswith("$") else (
+                    int(raw_map, 0) if isinstance(raw_map, str) else int(raw_map)
+                )
+                legs = entry.get("legs", [])
+                dx = sum(int(leg["x_speed"]) * int(leg["timer"]) for leg in legs) // 16
+                dy = sum(int(leg["y_speed"]) * int(leg["timer"]) for leg in legs) // 16
+                spots_out.append({
+                    "index": int(entry["index"]),
+                    "map_id": map_id,
+                    "home_x": int(entry["home_x"]),
+                    "home_y": int(entry["home_y"]),
+                    "dx": dx,
+                    "dy": dy,
+                })
+            if spots_out:
+                return spots_out
+        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+            pass
+
     asm_path = root / "Sprites" / "NPCs" / "bean_vendor.asm"
     if not asm_path.is_file():
         return []

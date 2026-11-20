@@ -1388,6 +1388,11 @@ P2_NmiUpload:
       LDA.l P2_SwordSrc : CLC : ADC.w #$0180 : JSR .dma_row
       SEP #$20
   .done
+if defined("MAGIC_BEAN_OAM_HOOKS")
+  if !DISABLE_SPRITES == 0
+    JSL MagicBean_NmiUpload_Long
+  endif
+endif
   LDX.w $0ADC : STX.w $4302                    ; replayed vanilla code
   RTL
 

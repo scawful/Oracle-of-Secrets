@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "legs_per_spot": 3,
+  "sram_bank": "0x7EF3",
+  "spots": [
+    {
+      "index": 0,
+      "name": "Toto Ranch",
+      "parent_map": "0x00",
+      "sram_low": "0x9B",
+      "home_x": 576,
+      "home_y": 208,
+      "legs": [
+        { "x_speed": 12, "y_speed": -4, "timer": 48, "drag_dir": 3 },
+        { "x_speed": 24, "y_speed": 14, "timer": 128, "drag_dir": 3 },
+        { "x_speed": 24, "y_speed": 14, "timer": 128, "drag_dir": 3 }
+      ]
+    },
+    {
+      "index": 1,
+      "name": "Tail Pond",
+      "parent_map": "0x2D",
+      "sram_low": "0xC0",
+      "home_x": 2976,
+      "home_y": 2752,
+      "legs": [
+        { "x_speed": -16, "y_speed": -16, "timer": 48, "drag_dir": 2 },
+        { "x_speed": -24, "y_speed": -4, "timer": 112, "drag_dir": 2 },
+        { "x_speed": -8, "y_speed": -4, "timer": 80, "drag_dir": 2 }
+      ]
+    },
+    {
+      "index": 2,
+      "name": "Mountainside",
+      "parent_map": "0x15",
+      "sram_low": "0xC1",
+      "home_x": 2960,
+      "home_y": 1472,
+      "legs": [
+        { "x_speed": -8, "y_speed": -24, "timer": 64, "drag_dir": 0 },
+        { "x_speed": 0, "y_speed": -24, "timer": 128, "drag_dir": 0 },
+        { "x_speed": -8, "y_speed": -20, "timer": 64, "drag_dir": 0 }
+      ]
+    },
+    {
+      "index": 3,
+      "name": "Loom Beach",
+      "parent_map": "0x33",
+      "sram_low": "0xC2",
+      "home_x": 1856,
+      "home_y": 3632,
+      "legs": [
+        { "x_speed": 8, "y_speed": -24, "timer": 96, "drag_dir": 0 },
+        { "x_speed": 8, "y_speed": -24, "timer": 128, "drag_dir": 0 },
+        { "x_speed": 16, "y_speed": -24, "timer": 96, "drag_dir": 0 }
+      ]
+    }
+  ]
+}

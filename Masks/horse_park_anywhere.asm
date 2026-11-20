@@ -232,6 +232,11 @@ Horse_FrameEndScan:
 if not(defined("NO_KORL_MOUNT"))
   JSL KORL_FrameEndDockedOam
 endif
+if defined("MAGIC_BEAN_OAM_HOOKS")
+  if !DISABLE_SPRITES == 0
+    JSL MagicBean_FrameEndScan_Long
+  endif
+endif
   REP #$30 : PLY : PLX : PLA
   PLB : PLP
   RTL

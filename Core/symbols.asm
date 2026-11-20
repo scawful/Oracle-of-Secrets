@@ -186,6 +186,34 @@ DungeonWeb_BurnedMask    = $7ECA00
 DungeonWeb_BurnedMaskEnd = DungeonWeb_BurnedMask+$0280
 assert DungeonWeb_BurnedMaskEnd == $7ECC80
 
+; Non-Ranch Magic Bean Flower/Bean dynamic Page 1 OAM/VRAM cache
+; (Sprites/NPCs/bean_vendor.asm). Transient WRAM inside vanilla-free UNUSED_7EC900
+; after DungeonWeb_BurnedMaskEnd ($7ECC80); cleared/guarded by $424E magic. Not saved to SRAM.
+!MAGIC_BEAN_WRAM_DEFINED = 1
+MagicBean_WramStart      = $7ECC80
+MagicBean_Magic          = $7ECC80 ; word: $424E ("BN") initialized marker
+MagicBean_ReqMask        = $7ECC82 ; byte: bits 0..2 requested non-Ranch blocks (FlowerTop/Bot/Bean)
+MagicBean_ResidentMask   = $7ECC83 ; byte: bits 0..2 uploaded & valid in Page 1 VRAM
+MagicBean_PendingUpload  = $7ECC84 ; byte: bits 0..2 allocated, waiting NMI backup+upload
+MagicBean_PendingRestore = $7ECC85 ; byte: bits 0..2 displaced, waiting NMI backup restore
+MagicBean_TrackCount     = $7ECC86 ; byte: tracked non-Ranch MagicBean OAM spans this frame (0..8)
+MagicBean_BlockSlot      = $7ECC87 ; 3 bytes: Page 1 sheet slot index 0..3 ($7EC2FC+s) for k=0..2
+MagicBean_BlockChr       = $7ECC8A ; 3 bytes: Page 1 OAM top-left char ($00..$EE) for k=0..2
+MagicBean_BackupSheet    = $7ECC8D ; 3 bytes: $7EC2FC+slot sheet ID at allocation/backup ($FF=none)
+MagicBean_HoldFrames     = $7ECC90 ; 3 bytes: idle hysteresis countdown before restoring block k
+MagicBean_TrackMask      = $7ECC93 ; 8 bytes: required block bitmask per tracked OAM span (0..7)
+MagicBean_TrackOff       = $7ECC9B ; 16 bytes: 8 x 16-bit OAM buffer offsets ($0000..$01FC)
+MagicBean_TrackEnd       = $7ECCAB ; 16 bytes: 8 x 16-bit exclusive OAM buffer end offsets
+MagicBean_Occ            = $7ECCBB ; 8 bytes: 64-block Page 1 OAM occupancy bitmask (FrameEndScan)
+MagicBean_BackupBuf      = $7ECCC3 ; 3 x 132 = 396 bytes ($018C): 2B prefetch + 64B row0 + 2B + 64B row1
+MagicBean_Scratch0       = $7ECE4F ; 4 bytes: local FrameEndScan / NmiUpload scratch (zero DP use)
+MagicBean_Scratch1       = $7ECE50
+MagicBean_Scratch2       = $7ECE51
+MagicBean_Scratch3       = $7ECE52
+MagicBean_WramEnd        = $7ECE53
+assert MagicBean_BackupBuf+396 == MagicBean_Scratch0
+assert MagicBean_WramEnd <= $7ECE60
+
 ; Map page: the map request made on the page, run once by Menu_Exit.
 ; Separate conditional owner after the horse tail. $7E1EFE is Horse_AnchorArea
 ; when park-anywhere is on (the menu cleared her park on every open), so this

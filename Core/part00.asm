@@ -233,6 +233,11 @@ HouseVillager_LoadSheet:
     ; when returning from Garrison ($25) to Korok Cove ($0E).
     PHP : PHA
     LDA.b #$00 : STA.l $7E0AA5
+    if defined("MAGIC_BEAN_OAM_HOOKS")
+      if !DISABLE_SPRITES == 0
+        JSL MagicBean_OnSheetReload_Long
+      endif
+    endif
     PLA : PLP
   STA.l $7EC2FD
   RTL
