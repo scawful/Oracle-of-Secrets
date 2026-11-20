@@ -25,6 +25,9 @@ SpecialOverworld_CrossWorldDest = $7EC132
 SpecialOverworld_MapSavedPos    = $7EC133
 SpecialOverworld_MapSavedFlag   = $7EC137
 SpecialOverworld_VortexWorld    = $7EC138
+Soaring_MapSwitchPending        = $7EC13B ; 0 = fresh open, 1 = world-flip reload
+Soaring_OriginWorld             = $7EC13C ; 0 = Kalyxo LW, 1 = Eon Abyss DW, 2 = Lyra Sea SW
+Soaring_ViewWorld               = $7EC13D ; 0 = Kalyxo LW, 1 = Eon Abyss DW, 2 = Lyra Sea SW
 
 pushpc
 org $5FD200
@@ -39,12 +42,16 @@ SpecialOverworld_TransitionsCodeStart:
 ; AND Special Overworld ($80-$BF). On $80-$BF, backs up $7EC108..$7EC10B first
 ; so SpecialOverworld return triggers ($81->$0F, $80->$2A, $91->$33) keep their
 ; saved Light World return coordinates intact after closing the World Map.
+; Preserves existing backup if SpecialOverworld_MapSavedFlag is already set (world flip).
 ; Exit: M=16, X=8, DBR preserved; A clobbered.
 SpecialOverworld_SaveAndSetMapPos:
 {
   LDX.b $8A
   CPX.b #$C0 : BCS .skip
   CPX.b #$80 : BCC .copy_live
+    LDA.l SpecialOverworld_MapSavedFlag
+    AND.w #$00FF
+    BNE .copy_live
     LDA.l $7EC108 : STA.l SpecialOverworld_MapSavedPos
     LDA.l $7EC10A : STA.l SpecialOverworld_MapSavedPos+2
     SEP #$20
@@ -74,23 +81,45 @@ SpecialOverworld_RestoreMapPos:
   RTL
 }
 
+; Resolves active World Map tileset/GFX/palette index from $10/$11 + Soaring_ViewWorld.
+; Entry: M=8 (any X/Y, any DBR).
+; Exit: A (M=8) = 0 (Kalyxo LW), 1 (Eon Abyss DW), 2 (Lyra Sea SW); X/Y/DBR preserved.
+SpecialOverworld_ResolveMapWorld:
+{
+  LDA.b $10 : CMP.b #$0E : BNE .from_area
+  LDA.b $11 : CMP.b #$0A : BNE .from_area
+  LDA.l Soaring_OriginWorld : ORA.l Soaring_ViewWorld : BEQ .from_area
+    LDA.l Soaring_ViewWorld
+    RTL
+  .from_area
+  LDA.b $8A
+  CMP.b #$80 : BCC .not_sw
+  CMP.b #$C0 : BCS .not_sw
+    LDA.b #$02
+    RTL
+  .not_sw
+  AND.b #$40 : BEQ .is_lw
+    LDA.b #$01
+    RTL
+  .is_lw
+  LDA.b #$00
+  RTL
+}
+
 ; Hook at $0ABA40 (WorldMap_LoadLightWorldMap palette copy, M=8, X=8, DBR=$0A).
 ; 3-way dispatch:
-;   $80-$BF -> SWPalettes ($5FD000)
-;   $40-$7F -> DWPalettes ($0ADC27)
-;   $00-$3F -> Palettes_OWMAP ($0ADB27)
+;   2 (SW) -> SWPalettes ($5FD000)
+;   1 (DW) -> DWPalettes ($0ADC27)
+;   0 (LW) -> Palettes_OWMAP ($0ADB27)
 ; Exit: M=8, X=8, DBR preserved; A/X/Y clobbered.
 SpecialOverworld_LoadWorldMapPalette:
 {
   PHB
-  REP #$30
-  LDA.b $8A : AND.w #$00FF
-  CMP.w #$0080 : BCC .lw_or_dw
-  CMP.w #$00C0 : BCS .lw_or_dw
-    ; Special Overworld ($80-$BF) palette in Bank $42
-    SEP #$20
+  JSL SpecialOverworld_ResolveMapWorld
+  CMP.b #$02 : BNE .lw_or_dw
+    ; Special Overworld ($80-$BF) palette
     LDA.b #SWPalettes>>16 : PHA : PLB
-    REP #$20
+    REP #$30
     LDX.w #$00FE
     .copy_sw
       LDA.w SWPalettes, X
@@ -99,13 +128,16 @@ SpecialOverworld_LoadWorldMapPalette:
     BPL .copy_sw
     BRA .done
   .lw_or_dw
-  SEP #$20
+  PHA
   LDA.b #$0A : PHA : PLB
-  REP #$20
-  LDX.w #$00FE
+  PLA
+  REP #$30
+  AND.w #$00FF
   LDY.w #$00FE
-  LDA.b $8A : AND.w #$0040 : BEQ .copy_lw_dw
+  CMP.w #$0001 : BNE .copy_lw_dw_ready
     LDY.w #$01FE
+  .copy_lw_dw_ready
+  LDX.w #$00FE
   .copy_lw_dw
     LDA.w $DB27, Y
     STA.l $7EC500, X

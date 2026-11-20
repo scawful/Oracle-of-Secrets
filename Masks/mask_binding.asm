@@ -87,10 +87,12 @@ endif
 }
 
 ; Equal-sized replacement for the wolf/flute dispatch test in bank $07.
-; Z set means Ocarina. An active Wolf always digs, even with Ocarina selected.
+; Z set means Ocarina. Active Wolf ($03) and Moosh ($07) never open Ocarina.
 MaskBinding_IsOcarina:
 {
-  LDA.w !CurrentMask : CMP.b #$03 : BNE .item
+  LDA.w !CurrentMask : CMP.b #$03 : BEQ .not_ocarina
+  CMP.b #$07 : BNE .item
+  .not_ocarina
   LDA.b #$01 : RTL
   .item
   LDA.w $0202 : CMP.b #$0D : RTL
@@ -140,6 +142,7 @@ endif
   LDA.w !CurrentMask : BEQ .as_link
   CMP.b #$06 : BEQ .as_link
   CMP.b #$08 : BEQ .take_off
+  CMP.b #$07 : BEQ .take_off
 if !ENABLE_HORSE_FORM == 1
   CMP.b #$09 : BNE +
     LDA.l Horse_State : BNE .consume_y
@@ -148,7 +151,7 @@ if !ENABLE_HORSE_FORM == 1
     BRA .consume_y
   +
 endif
-  CMP.b #$05 : BCS .blocked            ; Minish / Moosh
+  CMP.b #$05 : BCS .blocked            ; Minish stays blocked
   ; An active form comes off first, regardless of the newly selected binding.
   .take_off
   JSL PlayerTransform
@@ -182,7 +185,7 @@ endif
   ; validate magic, spawn effects and start its active timers.
   STZ.w $02E2
   LDA.b #$40 : TSB.b $F4
-  LDA.b #$13 : BRA .set_action
+  LDA.b #$13 : JMP .set_action
 
   .blocked
   ; Preserve M3 recovery: a pre-existing cape can always be removed,
@@ -202,6 +205,15 @@ endif
   LDA.w !CurrentMask : BEQ .base_form
   CMP.b #$06 : BEQ .base_form
   CMP.b #$08 : BEQ .no_item            ; Garo's Y ability is handled above
+  CMP.b #$07 : BNE .after_moosh_y
+    ; Moosh uses Y for hover/slam and never routes Y/X items (e.g. Ocarina).
+    LDA.b $5D : BNE .moosh_done
+    LDA.b $F4 : AND.b #$40 : BEQ .moosh_done
+      LDA.b #$40 : TRB.b $F4
+      JSL PrepareQuakeSpell
+    .moosh_done
+    BRA .no_item
+  .after_moosh_y
 if !ENABLE_HORSE_FORM == 1
   ; Mounted bow only: supports Bow on Y ($0202=$01) and Bow on X via ItemBindings_Route.
   CMP.b #$09 : BNE .after_horse_y
@@ -214,7 +226,7 @@ if !ENABLE_HORSE_FORM == 1
     LDA.b #$03 : BRA .set_action
   .after_horse_y
 endif
-  CMP.b #$05 : BCS .regular            ; preserve automatic Minish / Moosh
+  CMP.b #$05 : BCS .regular            ; preserve automatic Minish
   TAX
   LDA.l .actions-1, X : BRA .set_action
   .base_form

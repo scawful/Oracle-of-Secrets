@@ -81,8 +81,6 @@ endif
 ; -> Items. Map opens the field map; the dungeon row sits under it. The six
 ; songs move from Equipment to the Quest bottom row.
 ; WRAM: MenuMapTravel_Pending $7E1EFF (Core/symbols.asm).
-; Garrison/Sky fly list; source preview until T3 native and save proof.
-!ENABLE_SPECIAL_OVERWORLD_SOARING   = 0
 ; D8 Sky boss (sprite $C3, Sprites/Bosses/d8_boss.asm):
 ; Somaria-socket qualified cycles, credited-hit counter, three stages;
 ; room $96 uses dungeon spriteset $2D (base ROM PC 0x110AB7).

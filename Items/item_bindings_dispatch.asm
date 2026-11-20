@@ -272,7 +272,9 @@ ItemBindings_MapPress:
 ; another item. X/Y preserved.
 ItemBindings_IsOcarina:
 {
-  LDA.w !CurrentMask : CMP.b #$03 : BNE .item
+  LDA.w !CurrentMask : CMP.b #$03 : BEQ .not_ocarina
+  CMP.b #$07 : BNE .item
+  .not_ocarina
   LDA.b #$01 : RTL
   .item
   JSL ItemBindings_EffectiveItem

@@ -1,5 +1,5 @@
 ; Watch-log completion grants the existing Sky Soaring destination token.
-; This file is included only by ENABLE_SPECIAL_OVERWORLD_SOARING. The target
+; Included by default with Special Overworld Soaring. The target
 ; is deliberately unbound: no message ID, text or teaching site is allocated.
 ; Set this existing Asar source-define seam only with a registry-backed approved
 ; message. $0000-$000A are engine/save/choice helpers, never teaching targets.

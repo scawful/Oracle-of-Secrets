@@ -990,9 +990,60 @@ BeginGoldstarOrHookshot:
 
 MaybeUploadBirdGraphicsToOam:
 {
-  LDY $037A : CPY #$0104 : BEQ .here
-    LDY #$40E0 : STY $2116
+  LDY.w $037A : CPY.w #$0104 : BNE .check_abyss
+    JMP .here
+  .check_abyss
+  ; In Eon Abyss ($40-$7F) with a live Travel Bird ancilla ($27), stream the
+  ; 4bpp GBC Flying Rooster frame into VRAM $40E0/$41E0 instead of vanilla Duck.
+  ; Stale $0AF4 after landing must fall back cleanly so item receipts ($22) stay intact.
+  LDA.b $8A : CMP.b #$40 : BCC .vanilla
+  CMP.b #$80 : BCS .vanilla
+    LDY.w #$0009
+    .scan_bird
+      LDA.w $0C4A, Y : CMP.b #$27 : BEQ .found_bird
+      DEY : BPL .scan_bird
+    .vanilla
+    LDY.w #$40E0 : STY.w $2116
     JML $008B30 ; NMI_DoUpdates
+  .found_bird
+    LDA.w $0AF4
+    BEQ .frame0
+    CMP.b #$01 : BEQ .frame0
+    CMP.b #$20 : BEQ .frame1
+    CMP.b #$40 : BEQ .frame2
+    CMP.b #$E0 : BNE .vanilla
+      LDY.w #$0180 : BRA .upload_gbc
+    .frame0
+      LDY.w #$0000 : BRA .upload_gbc
+    .frame1
+      LDY.w #$0080 : BRA .upload_gbc
+    .frame2
+      LDY.w #$0100
+    .upload_gbc
+    REP #$20
+    TYA : CLC : ADC.w #GbcTravelBirdGfx
+    TAY
+    SEP #$20
+    LDA.b #GbcTravelBirdGfx>>16 : STA.w $4304
+    LDA.b #$80 : STA.w $2115
+
+    LDX.w #$40E0 : STX.w $2116
+    STY.w $4302
+    LDX.w #$0040 : STX.w $4305
+    LDA.b #$01 : STA.w $420B
+
+    REP #$20
+    TYA : CLC : ADC.w #$0040
+    TAY
+    SEP #$20
+    LDX.w #$41E0 : STX.w $2116
+    STY.w $4302
+    LDX.w #$0040 : STX.w $4305
+    LDA.b #$01 : STA.w $420B
+
+    ; Restore DMA0ADDRB ($7E) and X (#$0040) expected by $008B50+.
+    LDA.b #$7E : STA.w $4304
+    LDX.w #$0040
   .here
   JML $008B50 ; NMI_DoUpdates.no_update_swagduck
 }

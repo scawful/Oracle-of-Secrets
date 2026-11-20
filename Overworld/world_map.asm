@@ -521,13 +521,12 @@ assert (LWWorldMap_Gfx&$FFFF) == $9000 && (DWWorldMap_Gfx&$FFFF) == $9000
 DMAOwMap:
 {
   JSL Palette_ArmorAndGloves
-  LDA.b $8A
-  CMP.b #$80 : BCC .check_dw
-  CMP.b #$C0 : BCS .check_dw
+  JSL SpecialOverworld_ResolveMapWorld
+  BEQ .lw_bank
+  CMP.b #$01 : BEQ .dw_bank
     LDA.b #SWWorldMap_Tiles>>16
     BRA .upload
-  .check_dw
-  AND.b #$40 : BEQ .lw_bank
+  .dw_bank
     LDA.b #DWWorldMap_Tiles>>16
     BRA .upload
   .lw_bank
@@ -600,13 +599,12 @@ DMAOwMap:
 
 DMAOwMapGfx:
 {
-  LDA.b $8A
-  CMP.b #$80 : BCC .check_dw
-  CMP.b #$C0 : BCS .check_dw
+  JSL SpecialOverworld_ResolveMapWorld
+  BEQ .lw_bank
+  CMP.b #$01 : BEQ .dw_bank
     LDA.b #SWWorldMap_Gfx>>16
     BRA .upload
-  .check_dw
-  AND.b #$40 : BEQ .lw_bank
+  .dw_bank
     LDA.b #DWWorldMap_Gfx>>16
     BRA .upload
   .lw_bank

@@ -2206,9 +2206,7 @@
       "base": 8319922,
       "size": 1,
       "status": "shared",
-      "condition": {
-        "ENABLE_SPECIAL_OVERWORLD_SOARING": 1
-      },
+      "condition": {},
       "lifetime": "Save file; native five-page save and checksum block.",
       "reset": "Vanilla new-file initialization zeros it. Only exact A5 is learned; other old-save values stay locked until a bound watch-log conversation reaches its acknowledged terminator and normal window close. No migration.",
       "save": "SaveGameFile 00897B copies the F300 page to primary and backup; checksum loop 00899C covers offsets0000-04FD; new-file 0CC321 clears the F300 page.",
@@ -2325,9 +2323,7 @@
       "base": 8264939,
       "size": 1,
       "status": "shared",
-      "condition": {
-        "ENABLE_SPECIAL_OVERWORLD_SOARING": 1
-      },
+      "condition": {},
       "lifetime": "One native message conversation; hooks emit only with an explicit non-helper target binding. Native initialized-but-unused JUNK_7E1CEB is borrowed, not saved.",
       "reset": "Native RenderText initialization clears1CD0-1CEF; capture resets before checking the original message. Finalize consumes and clears every close; helper09/0A reparses leave this byte unchanged.",
       "save": "Not SRAM. Only acknowledged terminator plus normal special-overworld message cleanup can grant the existing SkySoaringLearned A5 token. Choice confirmation/refusal never qualifies.",

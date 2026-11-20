@@ -244,26 +244,20 @@ LinkItem_NewFlute:
   ; Are we indoors?
   LDA.b $1B : BNE .early_return
 
-  ; Are we in the dark world? Then become Moosh form.
-  LDA.b $8A : AND #$40 : BEQ .light_world
-    JSL Link_TransformMoosh
+  ; Eon Abyss ($40-$7F) uses Abyss Soaring with the GBC Flying Rooster.
+  LDA.b $8A : CMP.b #$40 : BCC .check_special
+  CMP.b #$80 : BCS .check_special
+    JSL AbyssSoaring_Open
   .early_return
     RTS
-  .light_world
+  .check_special
 
   ; Special Overworld ($80-$BF) uses Special Soaring under unified Module $09.
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   LDA.b $8A : CMP.b #$80 : BCC .normal_soaring
   CMP.b #$C0 : BCS .normal_soaring
     JSL SpecialSoaring_Open
     RTS
   .normal_soaring
-else
-  LDA.b $10 : CMP.b #$0B : BEQ .early_return
-  LDA.b $8A : CMP.b #$80 : BCC .normal_soaring
-  CMP.b #$C0 : BCC .early_return
-  .normal_soaring
-endif
 
   LDX.b #$04
 
@@ -772,6 +766,21 @@ Ocarina_ValidSong_Long:
 OcarinaEffect_Epona:
 {
   STZ.b SongFlag
+  ; Eon Abyss outdoors ($1B == 0, $40 <= $8A < $80) transforms into Moosh form.
+  ; Clear the 128-frame Ocarina hold timer ($03F0), Y-action latch ($3A bit 6),
+  ; and restore BGM volume ($F3) because Moosh clears $0303 so LinkItem_NewFlute
+  ; no longer runs to tick $03F0 down.
+  LDA.b $1B : BNE .not_abyss
+  LDA.b $8A : CMP.b #$40 : BCC .not_abyss
+  CMP.b #$80 : BCS .not_abyss
+    JSL Link_TransformMoosh
+    LDA.b #$00 : STA.l $7E03F0
+    LDA.b #$40 : TRB.b $3A
+    LDA.l $7E012C : BNE +
+      LDA.b #$F3 : STA.l $7E012C
+    +
+    RTL
+  .not_abyss
   LDA.b #$1B : STA.l $7E012D
 if !ENABLE_HORSE_FORM == 1 && !ENABLE_HORSE_PARK_ANYWHERE == 1
   JSL HorseCall_Long : BCS .called
@@ -781,9 +790,7 @@ endif
   RTL
 }
 incsrc "Items/song_secrets_stone.asm"
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  incsrc "Items/special_soaring.asm"
-endif
+incsrc "Items/special_soaring.asm"
 ; Called by TimeSystem_CheckCanRun .overworld (Overworld/time_system.asm, bank $34)
 ; from HUD_ClockDisplay's PHP/PLP wrapper. Calls Sprite_LoadGraphicsProperties
 ; ($00FC62) only when module, area, phase (CheckIfNight), song tint or
