@@ -77,7 +77,7 @@ def prepare_source_graphics(project: Path, base_rom: Path, *,
         if saved_sha1 != hashlib.sha1(spec_path.read_bytes()).hexdigest():
             raise ValueError("Source graphics saved spec SHA1 differs from the current spec")
         defines = _load_global_defines(code)
-        enabled = defines.get(sheets.FLAG)
+        enabled = defines.get(sheets.FLAG, 1)
         if enabled not in (0, 1):
             raise ValueError("Source sheet feature flag is missing or invalid")
         if not enabled:
