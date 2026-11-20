@@ -570,11 +570,15 @@ class SpecialOverworldTransitionsTests(unittest.TestCase):
             f.put(0x7F0600 + 0xA6 * 8, 0x69)
             # Sea Zora ($90) has gfx0=$5E
             f.put(0x7F0600 + 0x90 * 8, 0x5E)
-            # Sky hosts ($87, $8C-$8F) share overlay $0094, differ in main_palette/gfx0
+            # Native Sky hosts ($87, $8C-$8F) share overlay $0094; $8C<->$8D share native
+            # main_palette ($01)/gfx, whereas $87 differs ($05/gfx1 $F2 vs $01/gfx1 $F5).
             for sky in (0x87, 0x8C, 0x8D, 0x8E, 0x8F):
                 f.word(0x7F0400 + sky * 2, 0x0094)
-            f.put(0x7F0300 + 0x87, 0x03)
-            f.put(0x7F0300 + 0x8C, 0x02)
+            f.put(0x7F0300 + 0x87, 0x05)
+            for sky_isle in (0x8C, 0x8D, 0x8E, 0x8F):
+                f.put(0x7F0300 + sky_isle, 0x01)
+                f.put(0x7F0600 + sky_isle * 8, 0x3A)
+                f.put(0x7F0600 + sky_isle * 8 + 1, 0x3B)
             f.put(0x7F0600 + 0x87 * 8, 0xEB)
             f.put(0x7F0600 + 0x8F * 8, 0xEB)
             f.put(0x7F0600 + 0x87 * 8 + 1, 0xF2)
@@ -604,9 +608,9 @@ class SpecialOverworldTransitionsTests(unittest.TestCase):
                 (0xA2, 0xA3, 0x01, 3, False),
                 (0xA0, 0xA2, 0x01, 3, False),
                 (0xA8, 0xB0, 0x04, 1, False),
-                # Sky-to-Sky route -> smooth normal scroll (preserves sky_overlay_transition.asm)
+                # Native Sky route: matching $8C<->$8D smooth-scrolls, differing $8F<->$87 mosaics
                 (0x8C, 0x8D, 0x01, 3, False),
-                (0x8F, 0x87, 0x08, 0, False),
+                (0x8F, 0x87, 0x08, 0, True),
             ]
             for old_p, new_p, dbit, didx, expect in cases:
                 with self.subTest(old=f"${old_p:02X}", new=f"${new_p:02X}", dbit=dbit):
