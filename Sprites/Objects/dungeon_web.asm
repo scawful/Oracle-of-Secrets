@@ -106,10 +106,13 @@ DungeonWeb_CodeStart:
 ; Entry: M=8, X=8, DBR=$00 (inside LoadCommonSprites during forced blank, VMAIN=$80).
 ; Preserves X, Y, DBR, DP, and VMADDR ($4800); exits with M=8, X=8 and flags
 ; set for `LDA.b $10 : CMP.b #$01` so $00E72A `BEQ .in_file_select` is unchanged.
+; Also chains LilyPad_UploadTiles ($42/$43/$52/$53/$7C/$7D) in Underworld
+; ($0AA4 == $0A, verified 100% blank on GFX_7D) and Lyra Sea ($1B == 0,
+; $8A in $90..$BF), leaving Kalyxo LW/DW wooden signposts untouched.
 DungeonWeb_UploadCommonArt:
 {
   LDA.b $10 : CMP.b #$01 : BEQ .done
-  LDA.w $0AA4 : CMP.b #$0A : BNE .done
+  LDA.w $0AA4 : CMP.b #$0A : BNE .check_lyra
 
   PHX
   REP #$30
@@ -130,11 +133,17 @@ DungeonWeb_UploadCommonArt:
   INX : INX
   CPX.w #$0040 : BCC .loop_row1
 
-  ; Restore VMADDR = $4800 for the following GFX_79/GFX_7A upload at $00E72C
-  LDA.w #$4800 : STA.w $2116
-
   SEP #$30
   PLX
+  ; Chain lily pad tiles ($42/$43/$52/$53/$7C/$7D) and restore VMADDR=$4800.
+  JSL LilyPad_UploadTiles
+  BRA .done
+
+.check_lyra
+  LDA.b $1B : BNE .done
+  LDA.b $8A : CMP.b #$90 : BCC .done
+  CMP.b #$C0 : BCS .done
+    JSL LilyPad_UploadTiles
 
 .done
   LDA.b $10 : CMP.b #$01

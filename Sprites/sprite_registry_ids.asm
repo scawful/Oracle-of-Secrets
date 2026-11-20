@@ -50,3 +50,4 @@ Sprite_GanonBall = $46 ; Ganondorf energy ball (volley)
 Sprite_DungeonWeb = $B7 ; Doorway web (0=horiz 32x16; 1=vert 16x32)
 Sprite_HorseNPC = $2D ; Toto Ranch Epona; SprMiscA $F1 dispatches to the fishing floater
 Sprite_FishingFloater = $2D ; Shared sprite id $2D with Epona; floater sets SprMiscA to $F1
+Sprite_LilyPad = $AD ; Rideable Gust Jar lily pad (D4 Zora & Lyra Sea)

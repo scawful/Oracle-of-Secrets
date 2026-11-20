@@ -167,6 +167,9 @@ class Harness:
         self.sfx2: list[int] = []
         self.tiles: dict[tuple[int, int], int] = {}
         self.default_tile = 0x08
+        self.vmaddr = 0
+        self.vram_writes: dict[int, int] = {}
+        self._vram_lo: int | None = None
         self._read_cb = C.CFUNCTYPE(C.c_uint8, C.c_void_p, C.c_uint32)(lambda _, a: self.read(a))
         self._write_cb = C.CFUNCTYPE(None, C.c_void_p, C.c_uint32, C.c_uint8)(lambda _, a, v: self.write(a, v))
         self._idle_cb = C.CFUNCTYPE(None, C.c_void_p, C.c_bool)(lambda *_: None)
@@ -209,6 +212,19 @@ class Harness:
                 self.sfx2.append(val)
             return
         lo = addr & 0xFFFF
+        if lo == 0x2116:
+            self.vmaddr = (self.vmaddr & 0xFF00) | val
+            return
+        if lo == 0x2117:
+            self.vmaddr = (self.vmaddr & 0x00FF) | (val << 8)
+            return
+        if lo == 0x2118:
+            self._vram_lo = val
+            return
+        if lo == 0x2119:
+            self.vram_writes[self.vmaddr] = (self._vram_lo or 0) | (val << 8)
+            self.vmaddr = (self.vmaddr + 1) & 0xFFFF
+            return
         if 0x2100 <= lo <= 0x21FF:
             return
 
@@ -341,6 +357,9 @@ class Harness:
         self.sfx2.clear()
         self.tiles.clear()
         self.default_tile = 0x08
+        self.vmaddr = 0
+        self.vram_writes.clear()
+        self._vram_lo = None
 
     def mask_word(self, index: int) -> int:
         # DungeonWeb_BurnedMask is $7ECA00, which the harness stores at RAM offset $CA00.
@@ -370,9 +389,48 @@ class CompiledWebLilyTests(unittest.TestCase):
         self.assertGreaterEqual(gust_start, 0x318000)
         self.assertLess(gust_start, 0x320000)
         self.assertLess(self.labels["LilyPad_CodeEnd"], 0x330000)
-        self.assertGreaterEqual(self.labels["LilyPad_Tile60"], self.labels["LilyPad_CodeStart"])
-        # Six distinct 4bpp tiles, 32 bytes each, first pixel column is the rim.
-        self.assertNotEqual(self.rom[lorom_pc(self.labels["LilyPad_Tile60"])], 0)
+        self.assertGreaterEqual(self.labels["LilyPad_Tile42"], self.labels["LilyPad_CodeStart"])
+        # Six distinct 4bpp tiles (192 bytes) encoded for universal OAM Palette 1.
+        self.assertNotEqual(self.rom[lorom_pc(self.labels["LilyPad_Tile42"])], 0)
+
+    def test_common_art_vram_upload_gates_uw_lyra_and_lw_without_clobbering_60(self):
+        # 1. Underworld ($0AA4=$0A): uploads DungeonWeb ($44C0/$45C0) AND LilyPad ($4420/$4520/$47C0).
+        h = self.harness()
+        h.reset_ram()
+        h.put(0x0010, 0x07)
+        h.put(0x001B, 0x01)
+        h.put(0x0AA4, 0x0A)
+        h.call("DungeonWeb_UploadCommonArt", slot=0x05, long=True)
+        self.assertEqual(h.cpu.x & 0xFF, 0x05)
+        self.assertEqual(h.vmaddr, 0x4800)
+        for base in (0x44C0, 0x45C0, 0x4420, 0x4520, 0x47C0):
+            for off in range(0x20):
+                self.assertIn(base + off, h.vram_writes, f"missing VRAM word ${base+off:04X}")
+        for forbidden in range(0x4600, 0x4660):
+            self.assertNotIn(forbidden, h.vram_writes, f"must never clobber pickup slot ${forbidden:04X}")
+
+        # 2. Lyra Sea ($1B=0, $8A=$A3, $0AA4=$01): uploads ONLY LilyPad ($4420/$4520/$47C0).
+        h.reset_ram()
+        h.put(0x0010, 0x0B)
+        h.put(0x001B, 0x00)
+        h.put(0x008A, 0xA3)
+        h.put(0x0AA4, 0x01)
+        h.call("DungeonWeb_UploadCommonArt", slot=0x03, long=True)
+        self.assertEqual(h.cpu.x & 0xFF, 0x03)
+        self.assertEqual(h.vmaddr, 0x4800)
+        for base in (0x4420, 0x4520, 0x47C0):
+            self.assertIn(base, h.vram_writes)
+        self.assertNotIn(0x44C0, h.vram_writes)
+
+        # 3. Light World Kalyxo ($1B=0, $8A=$10): writes ZERO VRAM (signposts preserved).
+        h.reset_ram()
+        h.put(0x0010, 0x09)
+        h.put(0x001B, 0x00)
+        h.put(0x008A, 0x10)
+        h.put(0x0AA4, 0x01)
+        h.call("DungeonWeb_UploadCommonArt", slot=0x02, long=True)
+        self.assertEqual(h.cpu.x & 0xFF, 0x02)
+        self.assertEqual(h.vram_writes, {})
 
     def test_fire_rod_burns_and_sets_persistence_mask(self):
         h = self.harness()
@@ -698,12 +756,16 @@ class CompiledWebLilyTests(unittest.TestCase):
         web = WEB.read_text(encoding="utf-8")
         lily = LILY.read_text(encoding="utf-8")
         all_sprites = (ROOT / "Sprites" / "all_sprites.asm").read_text(encoding="utf-8")
+        reg_csv = (ROOT / "Sprites" / "registry.csv").read_text(encoding="utf-8")
+        reg_ids = (ROOT / "Sprites" / "sprite_registry_ids.asm").read_text(encoding="utf-8")
         self.assertIn("!WebGustState  = $0273", web)
         self.assertIn("!WebGustFlags  = $027F", web)
         self.assertIn("DungeonWeb_RipAway", web)
         self.assertNotIn("org $37F800", web)
-        self.assertNotIn("lily_pad.asm", all_sprites)
-        self.assertIn("!SPRID              = $AD", lily)
+        self.assertIn('incsrc "Sprites/Objects/lily_pad.asm"', all_sprites)
+        self.assertIn("Sprite_LilyPad,$AD,Sprites/Objects/lily_pad.asm", reg_csv)
+        self.assertIn("Sprite_LilyPad = $AD", reg_ids)
+        self.assertIn("!SPRID              = Sprite_LilyPad", lily)
         self.assertNotIn("org $", lily)
         self.assertIn("OAM_AllocateFromRegionB", lily)
 

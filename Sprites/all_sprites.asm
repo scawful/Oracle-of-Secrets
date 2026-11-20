@@ -424,6 +424,12 @@ incsrc "Sprites/Enemies/chain_chomp_opt.asm"
 incsrc "Sprites/Objects/dungeon_web.asm"
 %log_end("dungeon_web", !LOG_SPRITES)
 
+; Rideable Gust Jar lily pad ($AD): bank-neutral in Bank $32; common OBJ tiles
+; ($42/$43/$52/$53/$7C/$7D) uploaded via DungeonWeb_UploadCommonArt ($00E726).
+%log_start("lily_pad", !LOG_SPRITES)
+incsrc "Sprites/Objects/lily_pad.asm"
+%log_end("lily_pad", !LOG_SPRITES)
+
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
 ; vanilla fortune teller at $0DC92E until 2026-09-26).

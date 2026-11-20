@@ -1,18 +1,8 @@
 ; ==============================================================================
-; Sprites/Objects/lily_pad.asm — Rideable lily pad (Minish Cap Gust Jar)
+; Sprites/Objects/lily_pad.asm — Rideable lily pad (Minish Cap Gust Jar, $AD)
 ; ==============================================================================
-; Not included from Sprites/all_sprites.asm yet. The file is bank-neutral
-; (PHK/PLB, outward calls are JSL) and carries its own property macro, so
-; wiring is:
-;   1. Sprites/registry.csv row Sprite_LilyPad,$AD (vanilla main at $069283
-;      is the null routine $BFEF; kydrog's dynamic spawn $A7 is a different ID)
-;   2. Two lines in the Bank $30 or Bank $32 sprite stream:
-;        %log_start("lily_pad", !LOG_SPRITES)
-;        incsrc "Sprites/Objects/lily_pad.asm"
-;        %log_end("lily_pad", !LOG_SPRITES)
-; Measured size is LilyPad_CodeEnd-LilyPad_CodeStart. Place it where that
-; many bytes are free; do not org this file onto DungeonWeb ($36F200) or
-; FireBurnBushes ($36F800).
+; Wired in Sprites/all_sprites.asm (Bank $32, bank-neutral PHK/PLB, outward
+; calls are JSL) and registered in Sprites/registry.csv as Sprite_LilyPad ($AD).
 ;
 ; Behavior:
 ;   - Floats on deep/shallow water (tile types $08, $09, $4B). Other tiles,
@@ -27,21 +17,24 @@
 ;     Gust Blast (!GustJarState==2), opposite !GustJarDir, speed =
 ;     min(tier,3)*2 px/frame (2/4/6). Inhale (!GustJarState==1) builds tier
 ;     without premature recoil. Glide decays by 1 px/frame.
-;   - Draw: 12 8x8 tiles (32x24) from CHR $60-$65, OAM priority under Link
-;     (Region B, priority 2, palette 2). True 9-bit SNES OAM X clipping:
-;     screen X in 0..255 uses X-MSB=0, X in -7..-1 uses X-MSB=1 for smooth
-;     left-edge clip, and X <= -8 or X >= 256 hides the tile (Y=$F0, HI=0).
+;   - Draw: 12 8x8 tiles (32x24) from CHR $42/$43/$52/$53/$7C/$7D, OAM
+;     priority under Link (Region B, priority 2, universal OAM palette 1:
+;     emerald leaf green in LW/UW/Lyra, olive-moss in DW/Abyss). True 9-bit
+;     SNES OAM X clipping: screen X in 0..255 uses X-MSB=0, X in -7..-1 uses
+;     X-MSB=1 for smooth left-edge clip, and X <= -8 or X >= 256 hides the
+;     tile (Y=$F0, HI=0).
 ;
 ; Gust Jar WRAM (Items/gust_jar.asm, not modified):
 ;   $0273 state, $0276 tier, $0277 dir, $027F flags.
 ;
-; Graphics: six 4bpp tiles. Upload is LilyPad_UploadTiles (not hooked; the
-; common-sprite hook at $00E726 already belongs to DungeonWeb). Target
-; VRAM word $4600 (OBJ tile $60) when the active sheet can spare $60-$65,
-; in both underworld common GFX ($0AA4=$0A) and the Lyra overworld sheet.
+; Graphics: six 4bpp tiles (192 bytes) uploaded during forced blank via
+; LilyPad_UploadTiles (chained from DungeonWeb_UploadCommonArt at $00E726) to
+; VRAM words $4420 ($42/$43), $4520 ($52/$53), and $47C0 ($7C/$7D) — verified
+; 100% blank on UW GFX_7D ($0AA4=$0A) and gated to Lyra Sea ($8A in $90..$BF)
+; outdoors so Kalyxo LW/DW wooden signposts and $60-$65 pickups stay intact.
 ; ==============================================================================
 
-!SPRID              = $AD
+!SPRID              = Sprite_LilyPad
 !NbrTiles           = 11  ; 12 8x8 tiles (32x24)
 !Harmless           = 01
 !HVelocity          = 00
@@ -51,7 +44,7 @@
 !ImperviousAll      = 01
 !SmallShadow        = 00
 !Shadow             = 00
-!Palette            = 02
+!Palette            = 01
 !Hitbox             = 00
 !Persist            = 01
 !Statis             = 01
@@ -568,52 +561,72 @@ Sprite_LilyPad_Draw:
 }
 
 LilyPad_DrawChr:
-  db $60, $61, $61, $60
-  db $62, $63, $63, $62
-  db $64, $65, $65, $64
+  db $42, $43, $43, $42
+  db $52, $53, $53, $52
+  db $7C, $7D, $7D, $7C
 LilyPad_DrawProp:
-  db $24, $24, $64, $64
-  db $24, $24, $64, $64
-  db $A4, $A4, $E4, $E4
+  db $22, $22, $62, $62 ; Priority 2, Universal OAM Pal 1, H-flip right half
+  db $22, $22, $62, $62
+  db $22, $22, $62, $62
 
 ; ------------------------------------------------------------------------------
-; 4bpp OBJ tiles $60-$65. Bit 7 is the left pixel. Colors: 1 outline, 2 leaf,
-; 3 lit leaf, 5 flower (bp0+bp2). Upload with LilyPad_UploadTiles.
+; 4bpp OBJ tiles $42/$43/$52/$53/$7C/$7D (192 bytes, left half mirrored to 32x24).
+; Universal OAM Palette 1: 5=#282828 outline, 3=#388038 emerald leaf,
+; 4=#50B090 sunlit mint rim & veins (LW/UW/Lyra; warm olive-moss in DW/Abyss).
 ; ------------------------------------------------------------------------------
-LilyPad_Tile60: ; left rim
-  db $80,$7F, $80,$7F, $80,$7F, $80,$7F, $80,$7F, $80,$7F, $80,$7F, $80,$7F
-  db $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00
-LilyPad_Tile61: ; inner top, highlight along the far edge
-  db $FF,$00, $FF,$FF, $FF,$FF, $7E,$7E, $7E,$7E, $FF,$FF, $FF,$FF, $FF,$FF
-  db $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00
-LilyPad_Tile62: ; left mid rib
-  db $80,$7F, $80,$7F, $81,$7E, $81,$7E, $81,$7E, $81,$7E, $80,$7F, $80,$7F
-  db $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00
-LilyPad_Tile63: ; center flower
-  db $FF,$FF, $FF,$FF, $E7,$E7, $E7,$E7, $C3,$C3, $E7,$E7, $FF,$FF, $FF,$FF
-  db $00,$00, $00,$00, $18,$00, $3C,$00, $3C,$00, $18,$00, $00,$00, $00,$00
-LilyPad_Tile64: ; left bottom rim
-  db $80,$7F, $80,$7F, $80,$7F, $80,$7F, $80,$7F, $80,$7F, $FF,$00, $FF,$00
-  db $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00
-LilyPad_Tile65: ; inner bottom
-  db $FF,$FF, $FF,$FF, $7E,$7E, $7E,$7E, $FF,$FF, $FF,$FF, $FF,$00, $FF,$00
-  db $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00, $00,$00
+LilyPad_Tile42: ; top-left rim + curve
+  db $07,$00,$18,$00,$20,$00,$4F,$0F,$5E,$1E,$BF,$3F,$B3,$33,$BC,$3C
+  db $07,$00,$1F,$00,$3F,$00,$70,$00,$61,$00,$C0,$00,$CC,$00,$C3,$00
+LilyPad_Tile43: ; top-inner + center V-notch
+  db $F0,$00,$08,$00,$04,$00,$F2,$F0,$F9,$F8,$7D,$7C,$BF,$BE,$DF,$DE
+  db $F0,$00,$F8,$00,$FC,$00,$0E,$00,$07,$00,$83,$00,$41,$00,$21,$00
+LilyPad_Tile52: ; mid-left rim + veins
+  db $BF,$3F,$FF,$7F,$E3,$63,$FC,$7C,$FF,$7F,$FC,$7C,$F3,$73,$FF,$7F
+  db $C0,$00,$80,$00,$9C,$00,$83,$00,$80,$00,$83,$00,$8C,$00,$80,$00
+LilyPad_Tile53: ; mid-inner leaf hub
+  db $6E,$6E,$B4,$B4,$D9,$D9,$67,$67,$9C,$9C,$EB,$EB,$DF,$DF,$BF,$BF
+  db $91,$00,$4B,$00,$26,$00,$98,$00,$63,$00,$14,$00,$20,$00,$40,$00
+LilyPad_Tile7C: ; bottom-left curve
+  db $FF,$7F,$7E,$3E,$7F,$3F,$3F,$1F,$1F,$0F,$0F,$03,$03,$00,$00,$00
+  db $80,$00,$41,$00,$40,$00,$20,$00,$10,$00,$0C,$00,$03,$00,$00,$00
+LilyPad_Tile7D: ; bottom-inner rim
+  db $7F,$7F,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$7F,$7F,$00
+  db $80,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$80,$00,$7F,$00
 
-; Entry: M=8, X=8, DBR may be anything. Writes 6 tiles (192 bytes) to VRAM
-; word $4600 (CHR $60 of the $4000 OBJ page). Caller must be in force-blank
-; with VMAIN incrementing on $2118. Not hooked; DungeonWeb owns $00E726.
+; Entry: M=8, X=8, DBR may be anything (chained from DungeonWeb_UploadCommonArt
+; during LoadCommonSprites forced blank with VMAIN=$80). Writes 6 tiles (192 B)
+; to verified-safe OBJ slots $42/$43 ($4420), $52/$53 ($4520), $7C/$7D ($47C0),
+; restores VMADDR = $4800 for GFX_79/GFX_7A, and preserves X, DBR, P.
 LilyPad_UploadTiles:
 {
   PHP
   PHB : PHK : PLB
   REP #$30
-  LDA.w #$4600 : STA.w $2116
+  PHX
+
+  LDA.w #$4420 : STA.w $2116
   LDX.w #$0000
-.loop
-  LDA.w LilyPad_Tile60, X : STA.w $2118
+.row0
+  LDA.w LilyPad_Tile42, X : STA.w $2118
   INX #2
-  CPX.w #$00C0 : BCC .loop
-  SEP #$30
+  CPX.w #$0040 : BCC .row0
+
+  LDA.w #$4520 : STA.w $2116
+  LDX.w #$0000
+.row1
+  LDA.w LilyPad_Tile52, X : STA.w $2118
+  INX #2
+  CPX.w #$0040 : BCC .row1
+
+  LDA.w #$47C0 : STA.w $2116
+  LDX.w #$0000
+.row2
+  LDA.w LilyPad_Tile7C, X : STA.w $2118
+  INX #2
+  CPX.w #$0040 : BCC .row2
+
+  LDA.w #$4800 : STA.w $2116
+  PLX
   PLB
   PLP
   RTL
