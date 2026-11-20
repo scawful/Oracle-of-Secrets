@@ -104,14 +104,7 @@ Sprite_ThunderGhost_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(6, 6, 16)
-    JSL Sprite_CheckDamageToPlayer
-    JSL Sprite_MoveLong
-    JSL Sprite_CheckTileCollision
-    LDA.w SprCollision, X : BNE .despawn
-    LDA.w SprTimerA, X : BNE .alive
-    .despawn
-      STZ.w SprState, X
-    .alive
+    JSR ThunderBolt_Fly
     RTS
   }
 
@@ -119,16 +112,45 @@ Sprite_ThunderGhost_Main:
   {
     %StartOnFrame(7)
     %PlayAnimation(7, 7, 16)
-    JSL Sprite_CheckDamageToPlayer
-    JSL Sprite_MoveLong
-    JSL Sprite_CheckTileCollision
-    LDA.w SprCollision, X : BNE .despawn
-    LDA.w SprTimerA, X : BNE .alive
-    .despawn
-      STZ.w SprState, X
-    .alive
+    JSR ThunderBolt_Fly
     RTS
   }
+}
+
+; The bolt used to die on the tile it spawned on, including grass, because
+; Sprite_CheckTileCollision flags many non-wall tiles. SprTimerC is a grace
+; period. After that, only a projectile-solid tile (not shallow water) stops it.
+ThunderBolt_Fly:
+{
+  JSL Sprite_CheckDamageToPlayer
+  JSL Sprite_MoveLong
+  LDA.w SprTimerA, X : BEQ .despawn
+  LDA.w SprTimerC, X : BNE .alive
+  JSR ThunderBolt_HitWall : BCS .despawn
+  .alive
+  RTS
+  .despawn
+  STZ.w SprState, X
+  RTS
+}
+
+ThunderBolt_HitWall:
+{
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  STA.w $0FD8
+  SEP #$20
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  STA.w $0FDA
+  SEP #$20
+  JSL Probe_CheckTileSolidity : BCC .open
+  LDA.w $0FA5 : CMP.b #$09 : BEQ .open
+  SEC
+  RTS
+  .open
+  CLC
+  RTS
 }
 
 Sprite_ThunderGhost_Move:
@@ -214,6 +236,7 @@ SpawnLightningAttack:
     LDA.b #$40 : STA.w SprHealth, Y
     LDA.b #$04 : STA.w SprBump, Y
     LDA.b #$38 : STA.w SprTimerA, Y
+    LDA.b #$0C : STA.w SprTimerC, Y
     LDA.b #$00
     STA.w SprTimerB, Y
     STA.w SprCollision, Y
@@ -293,8 +316,8 @@ Sprite_ThunderGhost_Draw:
   dw 0, 0, 8
   dw 0, 8, 0
   dw 0, 8, 0
-  dw 0, 4, -4
-  dw 0, 4, 8
+  dw -12, -8, -16
+  dw 12, 16, 20
   .y_offsets
   dw -8, 0, -8
   dw -8, 0, -8
@@ -302,8 +325,8 @@ Sprite_ThunderGhost_Draw:
   dw 0, -8, -8
   dw 0, -8, -8
   dw 0, -8, -8
-  dw 0, 12, 8
-  dw 0, 12, 0
+  dw 12, 24, 20
+  dw 12, 24, 12
   .chr
   db $3A, $02, $3B
   db $3A, $02, $3B

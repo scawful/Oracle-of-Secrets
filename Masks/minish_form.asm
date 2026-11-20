@@ -30,8 +30,14 @@ LinkState_CheckForMinishForm:
 
 ; =========================================================
 
+; Tile $65. A full 16x16 platform (every quadrant $65) still lets Minish and
+; Moosh stand on it. A mixed tile such as $330 (one $65 corner, three solid)
+; blocks every form, so the corner cannot flicker open under one probe.
+; Entry and exit are M=16, X=16. Restores $00-$07.
 LinkState_CheckMinishTile:
 {
+  ; The quadrant walk lives in bank $3A. This hook is in the bank-$07 gap.
+  JSL MinishTile_AllQuadrants : BCC .blocked
   ; 16-bit A here: mask off $02B3 (item-binding RAM) so only the form byte counts.
   LDA $02B2 : AND.w #$00FF : BEQ .blocked ; no form
     CMP.w #$0007 : BEQ .allowed  ; moosh can fly over

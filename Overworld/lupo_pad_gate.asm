@@ -36,14 +36,20 @@
 ;   - LW $02 -> DW $42 (Lupo Mountain): requires D5 crystal (!Crystal_D5_GlaciaEstate).
 ;   - LW $0B -> DW $4B (Kalyxo Castle -> Fortress of Secrets breach): requires
 ;     FinaleBreach_IsUnlocked (Maku Seed / Fortress opened / Fortress cleared).
+;   - LW $03 -> DW $43 and LW $07 -> DW $47 (volcano mouths): refuse.
+;     DW $43/$47 back to the Light World still warp (return-only).
 ;   - DW $4B -> LW $0B and all other pads (e.g. LW $25 -> DW $65): always allowed.
+; 2026-09-27 pad ruling: remove the volcano entries or make them return-only.
+; The tiles stay until the map edit; this is the return-only code path.
 LupoPadGate_Check:
 {
   LDA.l NOWARP : BNE .no_warp                         ; vanilla: latched
   LDA.b $8A
   CMP.b #$02 : BEQ .check_lupo                        ; LW $02 -> DW $42
   CMP.b #$0B : BEQ .check_breach                      ; LW $0B -> DW $4B
-  BRA .warp                                           ; DW $4B and all other pads stay vanilla
+  CMP.b #$03 : BEQ .refuse                            ; LW $03 -> DW $43 volcano
+  CMP.b #$07 : BEQ .refuse                            ; LW $07 -> DW $47 volcano
+  BRA .warp                                           ; return pads and the kept shrines stay vanilla
 
   .check_lupo
   LDA.l Crystals : AND.b #!Crystal_D5_GlaciaEstate : BNE .warp

@@ -446,14 +446,26 @@ Sprite_Octorok_Draw:
     RTS
   .on_screen
   LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    ; Sprite_TimersAndOAM sized SprNbrOAM for the death poof (7 slots). A live
+    ; octorok only writes 1 body tile, or 3 with the water ripple. Allocate
+    ; that many, then put the poof count back before Sprite_DrawShadow.
+    LDA.w SprNbrOAM, X : PHA
+    AND.b #$E0
+    LDY.w SprSubtype, X : BEQ .one_tile
+      ORA.b #$02
+      BRA .store_tiles
+    .one_tile
+      ORA.b #$00
+    .store_tiles
+    STA.w SprNbrOAM, X
     JSL Sprite_OAM_AllocateDeferToPlayer
+    PLA : STA.w SprNbrOAM, X
   .alloc_done
 
   LDA.w SprFrame, X : CMP.b #$09 : BCC .frame_ok
     LDA.b #$00
   .frame_ok
   TAY ; Animation Frame
-  LDA .start_index, Y : STA $06
 
   ; 8-bit WORLDFLAG palette split before entering 16-bit OAM coordinate math:
   ; - Kalyxo & Special OW (WORLDFLAG == 0): Universal OBJ Pal 3 ($06) for land
@@ -479,6 +491,36 @@ Sprite_Octorok_Draw:
   .apply_flash
   AND.b #$0E : EOR.b $07 : STA.b $08
 
+  ; 16-bit Kalyxo keeps water priority 3. 8-bit Eon Abyss forces priority 2
+  ; so aux palette 6 cannot inherit that bit. Both stay 16x16: chr $80 is the
+  ; top-left of a 16x16 pair, and an 8x8 size would crop three quadrants.
+  LDA.w WORLDFLAG : BNE .draw_abyss
+    JSR Sprite_Octorok_DrawKalyxo
+    BRA .drawn
+  .draw_abyss
+    JSR Sprite_Octorok_DrawAbyss
+  .drawn
+  CLC
+  RTS
+}
+
+Sprite_Octorok_DrawKalyxo:
+{
+  LDA.b #$02 : STA.b $09
+  STZ.b $0B
+  BRA Sprite_Octorok_DrawTiles
+}
+
+Sprite_Octorok_DrawAbyss:
+{
+  LDA.b #$02 : STA.b $09
+  LDA.b #$01 : STA.b $0B
+  BRA Sprite_Octorok_DrawTiles
+}
+
+Sprite_Octorok_DrawTiles:
+{
+  LDA .start_index, Y : STA.b $06
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
@@ -509,11 +551,15 @@ Sprite_Octorok_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : ORA $08 : STA ($90), Y
+  LDA .properties, X : ORA.b $08 : STA.b $0A
+  LDA.b $0B : BEQ .keep_priority
+    LDA.b $0A : AND.b #$CF : ORA.b #$20 : STA.b $0A
+  .keep_priority
+  LDA.b $0A : STA ($90), Y
 
   PHY
   TYA : LSR #2 : TAY
-  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.b $09 : ORA.b $0F : STA ($92), Y ; $02 = 16x16, plus the X high bit
   PLY : INY
   PLX : DEX : BPL .nextTile
 

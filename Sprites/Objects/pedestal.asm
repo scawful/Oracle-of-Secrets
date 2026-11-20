@@ -2,7 +2,7 @@
 ;
 ; Zora Temple (Map 1E)
 ; Goron Desert (Map 36)
-; Fortress Secrets (Map 5E)
+; Fortress of Secrets (Map 4B)
 
 pushpc
 ; Sprite_B3_PedestalPlaque

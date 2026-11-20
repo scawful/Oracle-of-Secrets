@@ -25,9 +25,9 @@ Sprite_Octoboss_Long:
     ;LDA.b #$20 : STA.w SprHealth, X
     STZ.w SprBulletproof, X
 
-    ; Safety check: if boss is defeated but player left without collecting
-    ; the Quake Medallion, SpawnMedallionAlt places it at (X=$F7, Y=$DC)
-    ; on re-entry. Verified v168 — coordinates are center-right of arena.
+    ; Safety check: if the boss is defeated but the Quake Medallion was not
+    ; taken, SpawnMedallionAlt drops it on this sprite's placed coordinates.
+    ; A fixed $08F7/$08DC point only matched one camera origin.
     PHX
     LDX.b $8A
     if !SPECIAL_OVERWORLD_NATIVE == 1
@@ -987,6 +987,7 @@ SpawnMedallionAlt:
 {
   LDA.b #$C0 ; SPRITE C0
   JSL Sprite_SpawnDynamically : BMI .exit
+    JSL $09AE64 ; Sprite_SetSpawnedCoordinates (parent slot still in X)
     PHX
     TYX
     LDA.b #$11 ; ITEMGET 11
@@ -994,9 +995,6 @@ SpawnMedallionAlt:
     LDA.b #$83 : STA.w SprNbrOAM,X
     LDA.b #$58 : STA.w SprGfxProps,X
     AND.b #$0F : STA.w SprProps,X
-    LDA.b #$DC : STA.w SprY, X
-    LDA.b #$F7 : STA.w SprX, X
-    LDA.b #$08 : STA.w SprYH, X : STA.w SprXH, X
     PLX
     PHX
     PHY

@@ -1701,10 +1701,12 @@ endif
 ; Called from LinkState_CheckForMinishForm (tile $64 handler, 8-bit A/X/Y).
 ; The tile handler can run several times in one frame (one call per touching
 ; detection point), so contact is handled once per frame ($1A).
-; $80 is latched contact. LinkMain_FrameHook advances it before collision;
-; four eligible frames without a contact rearm it. Pauses and action states
-; freeze this absence count; GBC state $17 remains eligible.
-; No new WRAM or second collision scan is required.
+; $80 is latched contact. LinkMain_FrameHook advances it before collision.
+; A partial Tile16 (only one quadrant is $64) misses some probes, so absence
+; is counted only after the whole 16x16 under Link has no $64 quadrant.
+; Four eligible frames off that cell rearm the latch. Pauses and action
+; states freeze the count; GBC state $17 remains eligible.
+; No new WRAM. The cell is re-read from Link's position.
 
 MinishPortal_Maintain:
 {
@@ -1722,11 +1724,115 @@ MinishPortal_Maintain:
   CMP.b #$FF : BNE .count_absence
     LDA.b #$80 : STA.w MinishPortalTimer
   .count_absence
+  JSR MinishPortal_StillOnPortal : BCC .age
+    LDA.b #$80 : STA.w MinishPortalTimer
+    RTL
+  .age
   INC.w MinishPortalTimer
   LDA.w MinishPortalTimer : CMP.b #$84 : BCC .exit
     STZ.w MinishPortalTimer
   .exit
   RTL
+}
+
+MinishPortal_GetTileType = $00882E
+
+; Carry set when all four quadrants of the probed 16x16 are $65, or indoors.
+; Carry clear on a mixed tile so the $65 corner cannot open under one probe.
+; JSL from LinkState_CheckMinishTile. Entry/exit M=16 X=16. Restores $00-$07.
+MinishTile_AllQuadrants:
+{
+  LDA.b $1B : AND.w #$00FF : BNE .yes
+  LDA.b $00 : PHA
+  LDA.b $02 : PHA
+  LDA.b $04 : PHA
+  LDA.b $06 : PHA
+  ; Mask to the 16x16 origin (top-left quadrant) so ORA #$0008 / #$0001 in
+  ; MinishPortal_ReadQuadrant probes all four distinct quadrants even when
+  ; the caller hit a right or bottom quadrant first.
+  LDA 7,s : AND.w #$FFF0 : STA.b $04
+  LDA 5,s : AND.w #$FFFE : STA.b $06
+  PHX
+  LDX.w #$0003
+  .next
+    JSR MinishPortal_ReadQuadrant
+    CMP.w #$0065 : BNE .no
+    DEX : BPL .next
+  PLX
+  PLA : STA.b $06
+  PLA : STA.b $04
+  PLA : STA.b $02
+  PLA : STA.b $00
+  .yes
+  SEC
+  RTL
+  .no
+  PLX
+  PLA : STA.b $06
+  PLA : STA.b $04
+  PLA : STA.b $02
+  PLA : STA.b $00
+  CLC
+  RTL
+}
+
+; Carry set when the 16x16 under Link's body still contains a $64 quadrant.
+; Indoors returns clear (dungeon Minish is the room tag, not this tile).
+; Entry/exit M=8. Clobbers A. Preserves X/Y via the caller's frame hook.
+MinishPortal_StillOnPortal:
+{
+  LDA.b $1B : BNE .no
+  PHP
+  REP #$30
+  LDA.b $00 : PHA
+  LDA.b $02 : PHA
+  LDA.b $04 : PHA
+  LDA.b $06 : PHA
+  LDA.b $20 : CLC : ADC.w #$0010 : AND.w #$FFF0 : STA.b $04
+  LDA.b $22 : CLC : ADC.w #$0008 : AND.w #$FFF0 : LSR : LSR : LSR : STA.b $06
+  LDX.w #$0003
+  .next
+    JSR MinishPortal_ReadQuadrant
+    CMP.w #$0064 : BEQ .yes
+    DEX : BPL .next
+  PLA : STA.b $06
+  PLA : STA.b $04
+  PLA : STA.b $02
+  PLA : STA.b $00
+  PLP
+  .no
+  CLC
+  RTS
+  .yes
+  PLA : STA.b $06
+  PLA : STA.b $04
+  PLA : STA.b $02
+  PLA : STA.b $00
+  PLP
+  SEC
+  RTS
+}
+
+; In: X = quadrant, $04 = Y pixels, $06 = X/8. Out: A = type, M=16, X kept.
+MinishPortal_ReadQuadrant:
+{
+  PHX
+  LDA.b $04 : STA.b $00
+  LDA.b $06 : STA.b $02
+  TXA : AND.w #$0001 : BEQ .no_x
+    LDA.b $02 : ORA.w #$0001 : STA.b $02
+  .no_x
+  TXA : AND.w #$0002 : BEQ .no_y
+    LDA.b $00 : ORA.w #$0008 : STA.b $00
+  .no_y
+  PHB
+  PEA.w $0000 : PLB : PLB
+  JSL MinishPortal_GetTileType
+  PLB
+  REP #$30
+  AND.w #$00FF
+  PLX
+  RTS
 }
 
 MinishPortal_Tick:
