@@ -1,5 +1,5 @@
 ; =========================================================
-; Epona crowd check + mounted charge (!ENABLE_HORSE_CROWD_CHARGE).
+; Epona crowd check + mounted charge.
 ; Included from Sprites/NPCs/horse.asm in bank $53 after park-anywhere.
 ;
 ; Crowd check: Epona's Song refuses (existing $3C refusal chime, no new

@@ -51,14 +51,12 @@ DEFAULT_FLIPS_CANDIDATES = (
     Path("/opt/homebrew/bin/flips"),
 )
 
-# 12 active beta feature flags (matching live rev5 beta build + 6-stop Special Overworld Soaring)
+# Active beta feature flags (matching live rev5 beta build + 6-stop Special Overworld Soaring)
 DEFAULT_BETA_ENABLE_FLAGS = (
     "d3_prison_sequence,"
     "d8_farore_graphics,"
     "glade_ambush,"
-    "horse_crowd_charge,"
     "lyra_talkers,"
-    "lyra_temple_zora,"
     "minecart_cart_shutters,"
     "ocarina_song_tint,"
     "ow_aux_extension,"

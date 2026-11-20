@@ -1,6 +1,5 @@
 ; Shared deck pixels stay compatible while $30/$32 are visible together.
 ; Boats and aux $15 are committed only at normal transition stage $08.
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
 assert !ENABLE_OW_AUX_EXTENSION == 1, "Docks profile requires aux ABI 1"
 pushpc
 
@@ -225,4 +224,3 @@ DocksFinishTransition:
 }
 assert pc() <= $44B000, "Docks helpers exceed their allocation"
 pullpc
-endif

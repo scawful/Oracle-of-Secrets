@@ -57,7 +57,6 @@ endif
 !ENABLE_OCARINA_SONG_TINT            = 0
 ; Aux ABI 1 needs an explicitly bound authoring table; preserve ordinary ROMs.
 !ENABLE_OW_AUX_EXTENSION              = 1
-!ENABLE_KALYXO_DOCKS_PROFILE          = 0
 ; Forest Glade ambush (prototype, off): after Kydrog's msg $21 the glade
 ; animals flee, a thunder blackout swaps stalfos art into the glade slots,
 ; stalfos rise around Link, and a mosaic ramp leads into the module $15
@@ -87,25 +86,10 @@ endif
 ; Off by default on master; this stack enables it for A5 fold proof. WRAM-only.
 !ENABLE_HORSE_PARK_ANYWHERE         = 1
 
-
-
-; Epona crowd check + mounted charge (Masks/horse_charge.asm): the song call
-; refuses with 5+ active enemies (OAM headroom); charging into an enemy deals
-; level-1 sword damage. Armored enemies and bosses are immune. Off until
-; native proof.
-!ENABLE_HORSE_CROWD_CHARGE          = 0
-
-; Ranch milk: after the Ocarina, the Ranch Girl's later powder reveals offer
-; Toto Ranch milk for 30 Rupees (BottleMan messages $187-$18B, no new text)
-; instead of the curse reminder $10E. Off until native proof.
-!ENABLE_RANCH_MILK                  = 0
 ; Lyra talkers: talk-only ShopMan ($BB) NPCs on the Lyra crescent island
 ; (parent $B3); placeholder text, no gates yet (Sprites/NPCs/lyra_talker.asm).
 ; Needs EARLY_GAME_BALANCE (its $BB dispatch).
 !ENABLE_LYRA_TALKERS                = 0
-; Lyra temple Zora: Sea Zora $B8 on $90 draws the E7 River Zora front.
-; Needs ENABLE_D4_ZORA_REDESIGN and sprite set $8E on $90 (Sprites/NPCs/lyra_temple_zora.asm).
-!ENABLE_LYRA_TEMPLE_ZORA            = 0
 ; Dev/beta testing harness in Bank $3C (Util/item_cheat.asm): non-destructive
 ; L+R+X kit grant, runtime cache reinit, and WarpDispatcher (including Special
 ; Overworld $80-$BF cached-exit load and dungeon room fall). Default off so

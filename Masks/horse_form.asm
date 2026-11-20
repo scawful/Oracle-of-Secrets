@@ -488,9 +488,7 @@ endif
     JSR HorseForm_ConstrainGroundInput
     JSR HorseForm_TrampleBushes
     JSL HorseForm_PlayHoofBeat_Impl
-if !ENABLE_HORSE_CROWD_CHARGE == 1
     JSL HorseCharge_Tick_Long
-endif
   .skip_triggers
   JSR Horse_PostMoveDecayTick
   JSR HorseForm_UpdateAnimFrame

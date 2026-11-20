@@ -121,7 +121,7 @@ def generate(b49_path, authoring_path, b50_path):
              'room_94_first_chest': chest_binding(authoring, 0x94)}],
         'profile_B': {'enable': ['d8_boss', 'd3_prison_sequence', 'minecart_cart_shutters',
                                 'ocarina_song_tint', 'ow_aux_extension'],
-                      'disable': ['kalyxo_docks_profile']},
+                      'disable': []},
         'receipts': {
             'native_preserved_range': [0, 75],
             'native_semantics': 'Preserved table rows; not an approved shuffle pool',

@@ -83,7 +83,7 @@ endif
   .eon_draw
   SEP #$30
   LDA.w SprSubtype, X : BNE .special_zora
-if !ENABLE_D4_ZORA_REDESIGN == 1 && !ENABLE_LYRA_TEMPLE_ZORA == 1
+if !ENABLE_D4_ZORA_REDESIGN == 1
     JSL LyraTempleZora_IsActor : BCC .sea_draw
     JSL LyraTempleZora_Draw
     BRA .sea_shadow

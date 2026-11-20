@@ -326,11 +326,7 @@ incsrc "Overworld/abyss_spawn_menu.asm"
 ; operands are direct page, long or immediate, so it runs from here.
 incsrc "Overworld/lyra_overlay_fix.asm"
 
-; Ranch milk sale: bank $30 is full. Entered by JSL, exits by RTL, operands
-; are long, immediate or low WRAM ($1CE8, mirrored), so it runs from here.
-if !ENABLE_RANCH_MILK == 1
-incsrc "Sprites/NPCs/ranch_milk.asm"
-endif
+; Ranch milk sale moved to Bank $32 (Sprites/all_sprites.asm) next to ranch_girl.asm.
 
 ; Lyra talkers: banks $30/$32 are full. Entered by JML (prep hook) and JSL
 ; (Oracle $BB dispatch); table reads run under PHK : PLB and other absolute

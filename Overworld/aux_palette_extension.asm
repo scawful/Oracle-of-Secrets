@@ -35,13 +35,11 @@ AuxPaletteBG1:
 {
   REP #$21
   LDA.w $0AB4 : AND.w #$00FF
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
   CMP.w #$0015 : BNE .load
   JSL DocksDeferAuxPalette : BCC .load
   SEP #$30
   RTL
   .load
-endif
   CMP.w #$0014 : BCS .extension
   JML $1BEEED
   .extension
@@ -54,13 +52,11 @@ AuxPaletteBG2:
 {
   REP #$21
   LDA.w $0AB5 : AND.w #$00FF
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
   CMP.w #$000D : BNE .load
   JSL DocksDeferAuxPalette : BCC .load
   SEP #$30
   RTL
   .load
-endif
   CMP.w #$0014 : BCS .extension
   JML $1BEF11
   .extension

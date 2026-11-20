@@ -2061,7 +2061,6 @@
       "size": 8192,
       "status": "shared",
       "condition": {
-        "ENABLE_KALYXO_DOCKS_PROFILE": 1,
         "DISABLE_OVERWORLD": 0
       },
       "lifetime": "ROM storage for the explicitly selected Docks profile.",
@@ -2081,7 +2080,6 @@
       "size": 4096,
       "status": "shared",
       "condition": {
-        "ENABLE_KALYXO_DOCKS_PROFILE": 1,
         "DISABLE_OVERWORLD": 0
       },
       "lifetime": "ROM storage for the explicitly selected Docks profile.",
@@ -2101,7 +2099,6 @@
       "size": 1036,
       "status": "shared",
       "condition": {
-        "ENABLE_KALYXO_DOCKS_PROFILE": 1,
         "DISABLE_OVERWORLD": 0
       },
       "lifetime": "ROM storage for the explicitly selected Docks profile.",

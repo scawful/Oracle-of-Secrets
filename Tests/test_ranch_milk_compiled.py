@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile the Ranch Girl milk sale (!ENABLE_RANCH_MILK) and run it on the
+"""Compile the Ranch Girl milk sale and run it on the
 Lakesnes 65816 core.
 
 Assembles Sprites/NPCs/ranch_girl.asm and Sprites/NPCs/ranch_milk.asm into a
@@ -22,7 +22,6 @@ RUPEES, BOTTLES, CHOICE = 0x7EF360, 0x7EF35C, 0x1CE8
 MISC_D, FLUTE, SQ2, MODULE = 0x0E90, 0x7EF34C, 0x7EF3D8, 0x10
 
 FIXTURE = """lorom
-!ENABLE_RANCH_MILK = 1
 !SideQuest2_EponaSong = $02
 !MapIcon_TailPond = $05
 SprMiscC = $0DE0

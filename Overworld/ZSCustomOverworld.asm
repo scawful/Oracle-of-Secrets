@@ -1985,11 +1985,7 @@ Overworld_LoadMusicIfNeeded:
     .no_music_load_needed
 
     ; PLACE CUSTOM GFX LOAD HERE!
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     JSL Oracle_DocksNormalLoad
-else
-    JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
-endif
 
     RTS
 }
@@ -3365,11 +3361,9 @@ BlockGFXCheck:
         endif
         STA.b $00
         SEP #$10
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
         LDX.b $02
         JSL Oracle_DocksResolveTransitionSheet
         STA.b $00
-endif
         CMP.b #$FF : BNE .notDefaultBlock
             LDX.b $02 : JSR.w ResolveDefaultOWGFXSheet8
             STA.b $00
@@ -3628,11 +3622,7 @@ CheckForChangeGraphicsTransitionLoad:
     ; Whirlpool ($11 == #$2E) runs outside forced blank ($13 = #$0F); never run
     ; direct-VRAM-DMA normal-load callbacks here.
     LDA.b $11 : CMP.b #$2E : BEQ CheckForChangeGraphicsTransitionLoadRetrun
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     JSL Oracle_DocksNormalLoad
-else
-    JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
-endif
 
     CheckForChangeGraphicsTransitionLoadRetrun:
 
@@ -3956,11 +3946,7 @@ CheckForChangeGraphicsNormalLoad:
     ;JSL.l DecompOwAnimatedTiles 
 
     ; PLACE CUSTOM GFX LOAD HERE!
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     JSL Oracle_DocksNormalLoad
-else
-    JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
-endif
 
     ; TODO: Instead of the place custom gfx load here, pre-allocate a function.
     ; Some free space 
@@ -4025,11 +4011,7 @@ BirdTravel_LoadTargetArea_Interupt:
     STX.w $012C
 
     ; PLACE CUSTOM GFX LOAD HERE!
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     JSL Oracle_DocksNormalLoad
-else
-    JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
-endif
         
     RTL
 }
@@ -4622,11 +4604,9 @@ NewLoadTransAuxGFX:
     JSL Oracle_SpecialOverworldGraphicsResolveSheet
     PLX
     endif
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     PHX : SEP #$10
     LDX.b #$03 : JSL Oracle_DocksResolveTransitionSheet
     REP #$10 : PLX
-endif
     SEP #$10
     CMP.b #$FF : BNE .notDefault3
         LDX.b #$03 : JSR.w ResolveDefaultOWGFXSheet8
@@ -4660,11 +4640,9 @@ endif
     JSL Oracle_SpecialOverworldGraphicsResolveSheet
     PLX
     endif
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     PHX : SEP #$10
     LDX.b #$04 : JSL Oracle_DocksResolveTransitionSheet
     REP #$10 : PLX
-endif
     SEP #$10
     CMP.b #$FF : BNE .notDefault4
         LDX.b #$04 : JSR.w ResolveDefaultOWGFXSheet8
@@ -4698,11 +4676,9 @@ endif
     JSL Oracle_SpecialOverworldGraphicsResolveSheet
     PLX
     endif
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     PHX : SEP #$10
     LDX.b #$05 : JSL Oracle_DocksResolveTransitionSheet
     REP #$10 : PLX
-endif
     SEP #$10
     CMP.b #$FF : BNE .notDefault5
         LDX.b #$05 : JSR.w ResolveDefaultOWGFXSheet8
@@ -4736,11 +4712,9 @@ endif
     JSL Oracle_SpecialOverworldGraphicsResolveSheet
     PLX
     endif
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     PHX : SEP #$10
     LDX.b #$06 : JSL Oracle_DocksResolveTransitionSheet
     REP #$10 : PLX
-endif
     SEP #$10
     CMP.b #$FF : BNE .notDefault6
         LDX.b #$06 : JSR.w ResolveDefaultOWGFXSheet8
@@ -4842,9 +4816,7 @@ NewPrepTransAuxGFX:
         if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
         JSL Oracle_SpecialOverworldGraphicsStageAux
         endif
-if !ENABLE_KALYXO_DOCKS_PROFILE == 1
         JSL Oracle_DocksPatchSharedDeckBuffer
-endif
 
     .dontPrep
 

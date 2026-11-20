@@ -131,7 +131,7 @@ endmacro
 !CurrentMask = $02B2
 !ENABLE_HORSE_FORM = 1
 !ENABLE_HORSE_PARK_ANYWHERE = 1
-!ENABLE_HORSE_CROWD_CHARGE = 0
+HorseCharge_Tick_Long = ${STUB_FRAME_END_SCAN:06X}
 !SideQuest2_RanchGirl = $01
 !DEKU_WINGS_NMI_DEFINED = 1
 InCutScene = $7EF303

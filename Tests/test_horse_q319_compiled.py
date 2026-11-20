@@ -113,7 +113,7 @@ endmacro
 !CurrentMask = $02B2
 !ENABLE_HORSE_FORM = 1
 !ENABLE_HORSE_PARK_ANYWHERE = 1
-!ENABLE_HORSE_CROWD_CHARGE = 0
+HorseCharge_Tick_Long = $058024
 !SideQuest2_RanchGirl = $01
 InCutScene = $7E02E4
 SideQuestProg2 = $7EF3D8

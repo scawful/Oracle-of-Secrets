@@ -387,6 +387,7 @@ incsrc "Sprites/NPCs/fortune_teller.asm"
 
 %log_start("ranch_girl", !LOG_SPRITES)
 incsrc "Sprites/NPCs/ranch_girl.asm"
+incsrc "Sprites/NPCs/ranch_milk.asm"
 %log_end("ranch_girl", !LOG_SPRITES)
 
 ; cloud_bridge moved to the end of bank $30 (2026-11-16): the Kydreeok
@@ -516,9 +517,7 @@ incsrc "Sprites/NPCs/goron.asm"
 
 if !ENABLE_D4_ZORA_REDESIGN == 1
   incsrc "Sprites/Bosses/d4_pressure_warden.asm"
-  if !ENABLE_LYRA_TEMPLE_ZORA == 1
-    incsrc "Sprites/NPCs/lyra_temple_zora.asm"
-  endif
+  incsrc "Sprites/NPCs/lyra_temple_zora.asm"
 endif
 
 ; The D8 include owns a fixed bank $2E code slot and restores this cursor.

@@ -26,7 +26,7 @@
 ;           fit vanilla text region 2
 ;   0x10E - Already has Ocarina (curse reminder)
 ;   0x187/0x188/0x189/0x18B, 0x033 - Toto Ranch milk sale on later visits
-;           (!ENABLE_RANCH_MILK; BottleMan's texts, replaces 0x10E)
+;           (BottleMan's texts, replaces 0x10E)
 ;
 ; FLAGS WRITTEN:
 ;   SideQuestProg2 |= 0x01 - Ranch Girl revealed (Ocarina given)
@@ -69,28 +69,21 @@ RanchGirl_Message:
     LDA.l SideQuestProg2 : ORA.b #!SideQuest2_EponaSong : STA.l SideQuestProg2
     LDA.b #$1B : STA.w $012D ; SFX1.$1B Epona's Song learned (SFX1 has no pan bits)
   .knows_epona
-if !ENABLE_RANCH_MILK == 1
   ; Later visits: Toto Ranch milk for 30 Rupees (BottleMan offer $187,
   ; Buy/Reject). RanchGirl_TeachSong finishes the sale once the box closes.
   %ShowUnconditionalMessage($0187)
   LDA.b #$02 : STA.w SprMiscD, X
   RTL
-else
-  %ShowUnconditionalMessage($010E)
-  RTL
-endif
 }
 
 RanchGirl_TeachSong:
 {
-if !ENABLE_RANCH_MILK == 1
   LDA.w SprMiscD, X : CMP.b #$02 : BNE .no_sale
   LDA $10 : CMP.b #$0E : BEQ .running_dialog   ; offer still on screen
     STZ.w SprMiscD, X
-    JSL RanchGirl_SellMilk_Long     ; Sprites/NPCs/ranch_milk.asm (bank $2B)
+    JSL RanchGirl_SellMilk_Long     ; Sprites/NPCs/ranch_milk.asm (bank $32)
     BRA .running_dialog
   .no_sale
-endif
   LDA.w SprMiscD, X : CMP.b #$01 : BNE .not_started
   LDA $10 : CMP.b #$0E : BEQ .running_dialog
   LDA $7EF34C : CMP.b #$01 : BCS .has_song

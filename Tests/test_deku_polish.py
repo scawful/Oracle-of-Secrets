@@ -115,7 +115,6 @@ def _assemble_fixture(folder: Path) -> tuple[bytes, dict[str, int]]:
 !DEBUG = 0
 !ENABLE_HORSE_FORM = 1
 !ENABLE_HORSE_PARK_ANYWHERE = 0
-!ENABLE_HORSE_CROWD_CHARGE = 0
 !ENABLE_OCARINA_SONG_TINT = 0
 
 macro a8()
@@ -247,6 +246,9 @@ JumpTableLocal:
   LDA.b [$0C] : STA.b $0C
   SEP #$20
   JML [$000C]
+
+Horse_RanchActorsSafe:
+  SEC : RTL
 
 ; Bank $35: real Masks/deku_mask.asm Bank-$35 code + Data/graphics/items/deku_flower_wings.4bpp
 org $35F000

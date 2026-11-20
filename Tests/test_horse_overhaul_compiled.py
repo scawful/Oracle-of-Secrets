@@ -139,7 +139,6 @@ endmacro
 ; Feature flags & core aliases matching Defaults + Overhaul
 !ENABLE_HORSE_FORM = 1
 !ENABLE_HORSE_PARK_ANYWHERE = 1
-!ENABLE_HORSE_CROWD_CHARGE = 1
 !DEKU_WINGS_NMI_DEFINED = 1
 !NO_KORL_MOUNT = 1
 !CurrentMask = $02B2

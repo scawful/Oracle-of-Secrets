@@ -503,10 +503,8 @@ if !ENABLE_HORSE_PARK_ANYWHERE == 1
   incsrc "Masks/horse_park_anywhere.asm"
   assert pc() <= $53E000, "horse_park_anywhere overlapped mounted clearance allocation"
 endif
-if !ENABLE_HORSE_CROWD_CHARGE == 1
-  incsrc "Masks/horse_charge.asm"
-  assert pc() <= $53E000, "horse_charge overlapped mounted clearance allocation"
-endif
+incsrc "Masks/horse_charge.asm"
+assert pc() <= $53E000, "horse_charge overlapped mounted clearance allocation"
 incsrc "Masks/horse_mounted_helpers.asm"
 assert pc() <= $53E000, "Sprite_HorseNPC overlapped mounted clearance allocation"
 pullpc
