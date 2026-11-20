@@ -175,8 +175,11 @@ assert HudClockBuffer == $7EC858 && HudClockBufferEnd == $7EC866
 HudCarrotTopBuffer  = HudClockBufferEnd      ; $7EC866..$7EC86F (5 tiles = 10 bytes)
 HudCarrotBotBuffer  = HudCarrotTopBuffer+10  ; $7EC870..$7EC879 (5 tiles = 10 bytes)
 HudCarrotBufferEnd  = HudCarrotBotBuffer+10  ; $7EC87A
+HudChrCache         = HudCarrotBufferEnd     ; $7EC87A: bits0-1 Sun(1)/Moon(2), bit7 Carrots CHR resident
+HudChrContext       = HudChrCache+1          ; $7EC87B: cached $10 module for CHR invalidation
+HudChrCacheEnd      = HudChrCache+2          ; $7EC87C
 assert HudCarrotTopBuffer == $7EC866 && HudCarrotBotBuffer == $7EC870
-assert HudCarrotBufferEnd <= $7EC880
+assert HudChrCacheEnd <= $7EC880
 
 ; Burnable doorway webs (Sprites/Objects/dungeon_web.asm). 16-bit per-room
 ; mask across all 320 underworld rooms ($000-$13F) in vanilla-free UNUSED_7EC900

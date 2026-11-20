@@ -192,9 +192,32 @@ HUD_NMIUpload:
 {
   LDA.b #$01 : STA.w $420B                      ; replaced: HUD rows 0-4
 
+  ; Dialogue / sign / menu ($10 == #$0E): skip extra BG3 row-26 & CHR DMAs so
+  ; VBlank stays clear during BG3 text streaming (prevents sign transfer flicker).
+  LDA.b $10 : CMP.b #$0E : BNE .not_overlay
+    LDA.b #$00 : STA.l HudChrCache
+if defined("ENABLE_HORSE_FORM")
+if !ENABLE_HORSE_FORM == 1
+    LDA.l Horse_HudState : BPL .overlay_ret
+      LDA.b #$8F : STA.l Horse_HudState         ; force frame-1 repaint when dialogue/menu closes
+  .overlay_ret
+endif
+endif
+    LDA.b #$01 : RTL
+
+  .not_overlay
+  ; Invalidate static CHR cache on module change ($10) or submodule transition ($11 != 0).
+  CMP.l HudChrContext : BNE .invalidate_chr
+  LDA.b $11 : BEQ .chr_ctx_ok
+  .invalidate_chr
+    LDA.b #$00 : STA.l HudChrCache
+    LDA.b $10 : STA.l HudChrContext
+  .chr_ctx_ok
+
   assert HudClockBuffer == HudCornerBufferEnd
   LDX.w #HudCornerBuffer&$FFFF
   LDA.l $7EC73A : CMP.b #$7F : BNE .shown
+    LDA.b #$00 : STA.l HudChrCache              ; hidden HUD: force CHR re-upload on unhide
     LDX.w #$C700                                ; hidden HUD: blank cells
   .shown
   STX.w $4302
@@ -212,29 +235,30 @@ HUD_NMIUpload:
   CPX.w #$C700 : BNE +
     BRL .maybe_carrots_hidden
   +
-    LDY.w #$70A0 : STY.w $2116                  ; HUD CHR tiles $014-$015
-    LDY.w #HUD_StripAndMoonTiles&$FFFF          ; default: night (Moon)
+    ; Dirty-flagged 32B Sun/Moon CHR upload ($70A0): skips DMA on steady HUD ticks.
+    LDY.w #HUD_StripAndMoonTiles&$FFFF          ; default: night (Moon, tag 2)
+    LDX.w #$0002
     LDA.l TimeState.Hours
-    CMP.b #$06 : BCC .upload_chr
-    CMP.b #$12 : BCS .upload_chr
-      LDY.w #HUD_StripAndSunTiles&$FFFF         ; day 06:00..17:59 (Sun)
-    .upload_chr
-    STY.w $4302
-    LDA.b #HUD_StripAndSunTiles>>16 : STA.w $4304
-    LDY.w #$0020 : STY.w $4305                  ; 32 bytes ($014 strip + $015 icon)
-    LDA.b #$01 : STA.w $420B
+    CMP.b #$06 : BCC .check_icon_cache
+    CMP.b #$12 : BCS .check_icon_cache
+      LDY.w #HUD_StripAndSunTiles&$FFFF         ; day 06:00..17:59 (Sun, tag 1)
+      LDX.w #$0001
+    .check_icon_cache
+    TXA
+    EOR.l HudChrCache : AND.b #$03 : BEQ .icon_chr_ok
+      LDA.l HudChrCache : AND.b #$FC : STA.l HudChrCache
+      TXA : ORA.l HudChrCache : STA.l HudChrCache
+      LDX.w #$70A0 : STX.w $2116                ; HUD CHR tiles $014-$015
+      STY.w $4302
+      LDA.b #HUD_StripAndSunTiles>>16 : STA.w $4304
+      LDY.w #$0020 : STY.w $4305                ; 32 bytes ($014 strip + $015 icon)
+      LDA.b #$01 : STA.w $420B
+    .icon_chr_ok
 if defined("ENABLE_HORSE_FORM")
 if !ENABLE_HORSE_FORM == 1
     LDA.l Horse_HudState : BNE +
       LDA.b #$01 : RTL
     +
-    LDA.b $10 : CMP.b #$0E : BNE .carrots_gameplay
-      LDA.l Horse_HudState : BMI +
-        LDA.b #$01 : RTL
-      +
-      LDA.b #$8F : STA.l Horse_HudState         ; force frame-1 repaint when dialogue/menu closes
-      LDA.b #$01 : RTL
-    .carrots_gameplay
     LDA.l Horse_HudState : BMI +
       BRL .carrots_blank
     +
@@ -249,20 +273,24 @@ if !ENABLE_HORSE_FORM == 1
       LDY.w #$632E : STY.w $2116                ; BG3 row 25, cols 14-18 (carrot bodies, contiguous)
       LDY.w #$000A : STY.w $4305
       STA.w $420B
-      LDA.b #Horse_CarrotFullChr>>16 : STA.w $4304
-      LDY.w #Horse_CarrotFullChr&$FFFF : STY.w $4302
-      LDY.w #$7A48 : STY.w $2116                ; BG3 tiles $0149-$014A (full carrot top/bot)
-      LDY.w #$0020 : STY.w $4305
-      LDA.b #$01 : STA.w $420B
-      LDY.w #Horse_CarrotEmptyChr&$FFFF : STY.w $4302
-      LDY.w #$7A10 : STY.w $2116                ; BG3 tiles $0142-$0143 (empty carrot top/bot)
-      LDY.w #$0020 : STY.w $4305
-      STA.w $420B
-      BRA .done
+      ; Dirty-flagged 64B Carrot CHR upload ($7A48/$7A10): once per mount/transition.
+      LDA.l HudChrCache : BPL +
+        LDA.b #$01 : RTL
+      +
+        ORA.b #$80 : STA.l HudChrCache
+        LDA.b #Horse_CarrotFullChr>>16 : STA.w $4304
+        LDY.w #Horse_CarrotFullChr&$FFFF : STY.w $4302
+        LDY.w #$7A48 : STY.w $2116              ; BG3 tiles $0149-$014A (full carrot top/bot)
+        LDY.w #$0020 : STY.w $4305
+        LDA.b #$01 : STA.w $420B
+        LDY.w #Horse_CarrotEmptyChr&$FFFF : STY.w $4302
+        LDY.w #$7A10 : STY.w $2116              ; BG3 tiles $0142-$0143 (empty carrot top/bot)
+        LDY.w #$0020 : STY.w $4305
+        STA.w $420B
+      LDA.b #$01 : RTL
 
   .maybe_carrots_hidden
-    LDA.l Horse_HudState : BEQ .done_a1
-    LDA.b $10 : CMP.b #$0E : BEQ .done_a1
+    LDA.l Horse_HudState : BEQ .done
     LDA.l Horse_HudState : BPL .carrots_blank
       LDA.b #$8F : STA.l Horse_HudState         ; repaint once HUD unhides
     BRA .carrots_blank_keep_state
@@ -279,10 +307,6 @@ if !ENABLE_HORSE_FORM == 1
     LDY.w #$632E : STY.w $2116
     LDY.w #$000A : STY.w $4305
     STA.w $420B
-    BRA .done
-
-  .done_a1
-    LDA.b #$01
 else
   .maybe_carrots_hidden
 endif
@@ -290,12 +314,13 @@ else
   .maybe_carrots_hidden
 endif
   .done
+  LDA.b #$01
   RTL
 }
 
 ; Contiguous 32-byte 2bpp CHR bundles for VRAM $70A0-$70AF (tiles $014-$015).
 ; Tile $014: item-box border strip (top edge $2014 / V-flipped bottom $A014).
-; Tile $015: Majora's Mask-inspired 8x8 Sun (Pal 5 gold) or Moon (Pal 3 blue/silver).
+; Tile $015: Majora's Mask-inspired 8x8 Sun (Pal 5 gold) or Crescent Moon (Pal 3 blue/silver).
 HUD_StripAndSunTiles:
 HUD_StripTile:
   db $00, $00, $00, $00, $00, $00, $00, $00
@@ -308,8 +333,8 @@ HUD_StripAndMoonTiles:
   db $00, $00, $00, $00, $00, $00, $00, $00
   db $FF, $FF, $00, $FF, $FF, $00, $00, $FF
 HUD_MoonTile:
-  db $1C, $1C, $24, $3C, $4C, $74, $98, $E8
-  db $9A, $EA, $9A, $E6, $62, $5E, $3C, $3C
+  db $38, $38, $4C, $74, $98, $E8, $98, $E8
+  db $98, $E8, $9E, $E6, $42, $7E, $3C, $3C
 assert (HUD_StripAndSunTiles>>16) == (HUD_StripAndMoonTiles>>16)
 
 if defined("ENABLE_HORSE_FORM")

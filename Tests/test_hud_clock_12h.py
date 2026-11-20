@@ -27,7 +27,7 @@ from test_bosses_sfx_polish import (  # noqa: E402
 ROOT = Path(__file__).resolve().parents[1]
 
 SUN_TILE_HEX = "2838287cc6ba01ffc6ba2a7e28381010"
-MOON_TILE_HEX = "1c1c243c4c7498e89aea9ae6625e3c3c"
+MOON_TILE_HEX = "38384c7498e898e898e89ee6427e3c3c"
 STRIP_TILE_HEX = "0000000000000000ffff00ffff0000ff"
 
 
@@ -110,6 +110,9 @@ HudClockBufferEnd   = HudClockBuffer+14
 HudCarrotTopBuffer  = HudClockBufferEnd
 HudCarrotBotBuffer  = HudCarrotTopBuffer+10
 HudCarrotBufferEnd  = HudCarrotBotBuffer+10
+HudChrCache         = HudCarrotBufferEnd
+HudChrContext       = HudChrCache+1
+HudChrCacheEnd      = HudChrContext+1
 
 struct TimeState $7EE000
   .Hours:   skip 1
@@ -343,6 +346,28 @@ class HudClock12hCompiledTest(unittest.TestCase):
                     self.assertEqual(h.dmas[4]["size"], 32)
                     self.assertEqual(h.dmas[4]["data"].hex(), STRIP_TILE_HEX + expected_icon_hex)
 
+                    # Steady second frame in the same mode/period skips the redundant 32B CHR DMA!
+                    h.vram_addr = 0x6040
+                    h.dma0_addr = 0xC700
+                    h.dma0_bank = 0x7E
+                    h.dma0_size = 0x014A
+                    h.dmas.clear()
+                    h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
+                    self.assertEqual(len(h.dmas), 4, "Steady frame must skip redundant 32B Sun/Moon CHR DMA")
+
+                    # Flipping day<->night invalidates the icon bit and re-uploads 32B CHR once.
+                    flipped_hr = 18 if 6 <= hour < 18 else 12
+                    h.put(0x7EE000, flipped_hr)
+                    h.vram_addr = 0x6040
+                    h.dma0_addr = 0xC700
+                    h.dma0_bank = 0x7E
+                    h.dma0_size = 0x014A
+                    h.dmas.clear()
+                    h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
+                    self.assertEqual(len(h.dmas), 5, "Day/night crossing must re-upload 32B Sun/Moon CHR")
+                    exp_flip = MOON_TILE_HEX if flipped_hr == 18 else SUN_TILE_HEX
+                    self.assertEqual(h.dmas[4]["data"].hex(), STRIP_TILE_HEX + exp_flip)
+
     def test_hud_nmi_upload_epona_carrots_lifecycle(self):
         nmi_upload = self.labels["HUD_NMIUpload"]
         draw_long = self.labels["DrawClockToHudLong"]
@@ -366,7 +391,7 @@ class HudClock12hCompiledTest(unittest.TestCase):
             h.dma0_size = 0x014A
             h.dmas.clear()
 
-        # 1. Mounted outdoors: streams $630E (10B), $632E (10B), $7A48 (32B), $7A10 (32B)
+        # 1. First mounted frame outdoors: streams $630E (10B), $632E (10B), $7A48 (32B), $7A10 (32B)
         prime()
         h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
         self.assertEqual(h.cpu.a & 0xFF, 0x01)
@@ -380,15 +405,26 @@ class HudClock12hCompiledTest(unittest.TestCase):
         self.assertEqual(h.dmas[8]["vram_word"], 0x7A10)
         self.assertEqual(h.dmas[8]["size"], 32)
 
-        # 2. Menu/Dialogue ($10=$0E): skips carrot DMA and invalidates Horse_HudState -> $8F
+        # 1b. Steady second mounted frame skips 32B Sun/Moon + 64B Carrot CHR (96B/NMI saved!)
+        prime()
+        h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
+        self.assertEqual(h.cpu.a & 0xFF, 0x01)
+        self.assertEqual(len(h.dmas), 6)
+        self.assertEqual(h.dmas[4]["vram_word"], 0x630E)
+        self.assertEqual(h.dmas[5]["vram_word"], 0x632E)
+
+        # 2. Menu/Dialogue ($10=$0E): fast-path executes ONLY the replaced top HUD DMA,
+        #    invalidates HudChrCache -> $00 and Horse_HudState -> $8F (zero sign flicker!).
         h.put(0x7E0010, 0x0E)
         prime()
         h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
         self.assertEqual(h.cpu.a & 0xFF, 0x01)
-        self.assertEqual(len(h.dmas), 5)
+        self.assertEqual(len(h.dmas), 1)
+        self.assertEqual(h.get(0x7EC87A), 0x00)
         self.assertEqual(h.get(0x7F5674), 0x8F)
 
-        # 3. Pending clear on dismount (Horse_HudState=$01): streams $207F blanks once and clears to $00
+        # 3. Pending clear on dismount (Horse_HudState=$01): re-uploads invalidated 32B CHR +
+        #    streams $207F carrot blanks once and clears Horse_HudState to $00.
         h.put(0x7E0010, 0x09)
         h.put(0x7E02B2, 0x00)
         h.put(0x7F5674, 0x01)
@@ -398,17 +434,18 @@ class HudClock12hCompiledTest(unittest.TestCase):
         h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
         self.assertEqual(h.cpu.a & 0xFF, 0x01)
         self.assertEqual(len(h.dmas), 7)
+        self.assertEqual(h.dmas[4]["vram_word"], 0x70A0)
         self.assertEqual(h.dmas[5]["vram_word"], 0x630E)
         self.assertEqual(h.dmas[5]["data"], b"\x7f\x20" * 5)
         self.assertEqual(h.dmas[6]["vram_word"], 0x632E)
         self.assertEqual(h.dmas[6]["data"], b"\x7f\x20" * 5)
         self.assertEqual(h.get(0x7F5674), 0x00)
 
-        # 4. Subsequent frame unmounted ($00): zero carrot DMA
+        # 4. Subsequent steady frame unmounted ($00): zero carrot DMA and zero redundant CHR DMA
         prime()
         h.call_jsl(nmi_upload, a=0x00, db=0x00, mf=True, xf=False)
         self.assertEqual(h.cpu.a & 0xFF, 0x01)
-        self.assertEqual(len(h.dmas), 5)
+        self.assertEqual(len(h.dmas), 4)
 
     def test_gameover_nmi_preserves_sheet69_and_clears_0710(self):
         h = self._new_harness(default_db=0x00)
