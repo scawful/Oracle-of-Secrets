@@ -8,7 +8,7 @@
 !NbrTiles           = 08  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 00  ; Number of Health the sprite have
+!Health             = 01  ; 1 HP (dies with standard death poof + prize drop)
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
@@ -23,7 +23,7 @@
 !DeflectArrow       = 00  ; 01 = deflect arrows
 !WaterSprite        = 00  ; 01 = can only walk shallow water
 !Blockable          = 00  ; 01 = can be blocked by link's shield?
-!Prize              = 00  ; 00-15 = the prize pack the sprite will drop from
+!Prize              = 03  ; 00-15 = the prize pack the sprite will drop from
 !Sound              = 00  ; 01 = Play different sound when taking damage
 !Interaction        = 00  ; ?? No documentation
 !Statue             = 00  ; 01 = Sprite is statue
@@ -44,24 +44,32 @@ if !ENABLE_D4_ZORA_REDESIGN == 1
   .legacy_d4
 endif
   PHB : PHK : PLB
-  ; Skip the Keese / Vampire Bat body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
-  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
-  ; Sprite_CheckActive fails while dying anyway, so jumping to the end is safe.
-  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
-  LDA.w SprSubtype, X : CMP.b #$02 : BEQ +
-    JSR Sprite_Keese_Draw
-    JSL Sprite_DrawShadow
+  LDA.w SprSubtype, X : CMP.b #$02 : BEQ .vampire_bat
+    ; Keep drawing Keese while SpriteModule_Die ($0DD0 == 6) counts SprTimerA
+    ; down from $1F to $0A (in Region A slots after SpriteDeath_DrawPoof).
+    LDA.w SprState, X : CMP.b #$06 : BNE .keese_draw
+      LDA.w SprTimerA, X : CMP.b #$0A : BCC .keese_check_active
+    .keese_draw
+    JSR Sprite_Keese_Draw : BCS .keese_check_active
+      JSL Sprite_DrawShadow
+    .keese_check_active
     JSL Sprite_CheckActive : BCC .SpriteIsNotActive
       JSR Sprite_Keese_Main
     .SpriteIsNotActive
-    JMP ++
-  +
+    PLB
+    RTL
+
+  .vampire_bat
+  ; Vampire Bat's draw routine calls Sprite_OAM_AllocateDeferToPlayer; keep it
+  ; visible during pre-poof sparkles (>= $10) then yield before explosion ($0F).
+  LDA.w SprState, X : CMP.b #$06 : BNE .bat_draw
+    LDA.w SprTimerA, X : CMP.b #$10 : BCC .bat_done
+  .bat_draw
   JSR Sprite_VampireBat_Draw
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive : BCC ++
+  JSL Sprite_CheckActive : BCC .bat_done
     JSR Sprite_VampireBat_Main
-  ++
-  .dying
+  .bat_done
   PLB
   RTL
 }
@@ -82,7 +90,6 @@ endif
     LDA.b #$20 : STA.w SprHealth, X
     BRA ++
   +
-  LDA.b #$03 : STA.w SprNbrOAM, X
   LDA.b #$03 : STA.w SprPrize, X
   ++
   PLB
@@ -105,8 +112,8 @@ Sprite_Keese_Main:
     JSL GetDistance8bit_Long : CMP.b #$20 : BCS +
       .move
       INC.w SprAction, X
-      JSL GetRandomInt
-      STA.w SprTimerA, X
+      JSL GetRandomInt : ORA.b #$40 : STA.w SprTimerD, X
+      STZ.w SprTimerA, X
     +
     RTS
   }
@@ -115,9 +122,7 @@ Sprite_Keese_Main:
   {
     %PlayAnimation(0,5,8)
     JSL Sprite_CheckDamageToPlayer
-    JSL Sprite_CheckDamageFromPlayer : BCC +
-      JSL ForcePrizeDrop_long
-    +
+    JSL Sprite_CheckDamageFromPlayer
     JSL Sprite_DamageFlash_Long
     JSL Sprite_BounceFromTileCollision
 
@@ -126,15 +131,19 @@ Sprite_Keese_Main:
     +
     JSR Sprite_Keese_Attack
 
-    LDA.w SprTimerA, X : AND.b #$10 : BNE +
+    LDA.w SprTimerA, X : BNE +
+      JSL Sprite_SelectNewDirection
+    +
+
+    LDA.w SprTimerD, X : AND.b #$10 : BNE +
       LDA.b #$40
       JSL Sprite_ProjectSpeedTowardsPlayer
     +
 
-    JSL Sprite_SelectNewDirection
     JSL Sprite_Move
 
-    LDA.w SprTimerA, X : BNE +
+    LDA.w SprTimerD, X : BNE +
+      LDA.b #$40 : STA.w SprTimerC, X
       STZ.w SprAction, X
     +
     RTS
@@ -156,12 +165,25 @@ Sprite_Keese_Attack:
 
 Sprite_Keese_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    SEC
+    RTS
+  .on_screen
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
-  LDA.w SprFrame, X : TAY ;Animation Frame
+  LDA.w SprFrame, X : CMP.b #$06 : BCC .frame_ok
+    LDA.b #$00
+  .frame_ok
+  TAY ; Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprFlash, X : STA $08
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash
+  .dying_flash
+    LDA.w SprFlash, X
+  .apply_flash
+  AND.b #$0E : STA $08
   LDA.w SprMiscB, X : STA $09
   LDA.w SprSubtype, X : CMP.b #$01 : BNE +
     LDA.b #$0A : EOR $08 : STA $08
@@ -205,7 +227,7 @@ Sprite_Keese_Draw:
   LDA .chr, X : STA ($90), Y
   ++
   INY
-  LDA .properties, X : ORA $08 : STA ($90), Y
+  LDA .properties, X : EOR $08 : STA ($90), Y
 
   PHY
 
@@ -218,7 +240,7 @@ Sprite_Keese_Draw:
   PLX : DEX : BPL .nextTile
 
   PLX
-
+  CLC
   RTS
 
   .start_index

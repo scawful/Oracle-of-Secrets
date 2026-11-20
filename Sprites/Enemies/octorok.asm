@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = $08
-!NbrTiles           = 05  ; Number of tiles used in a frame
+!NbrTiles           = 06  ; 4 death poof + 1 body + 2 water ripple/shadow (allocates 7 slots)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 02  ; Number of Health the sprite have (matches vanilla $08)
@@ -35,27 +35,29 @@
 Sprite_Octorok_Long:
 {
   PHB : PHK : PLB
-  ; Bug fix (2026-09-26 playtest): the vanilla dying dispatch (SpriteModule_Die,
-  ; usdasm bank_06 $06F8A2) draws the death poof (SpriteDeath_DrawPoof) in this
-  ; sprite's normal OAM slots, then, while SprTimerA >= $0A, calls back into
-  ; this Long routine to draw the corpse in the slots after it. Our draw calls
-  ; Sprite_OAM_AllocateDeferToPlayer, which moves the body into the low-index
-  ; OAM regions B/C whenever the sprite is within ~16px of Link (sword kills
-  ; from above or below). The SNES orders overlapping sprites by OAM index
-  ; (lower index in front); priority bits only order sprites against BG layers.
-  ; Mesen2 capture: body idx 0 vs poof idx 15, both priority 2. Stop drawing
-  ; the Octorok itself while it is in the vanilla dying state ($0DD0,X == 6)
-  ; so the poof reads clearly.
-  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
-    JSR Sprite_Octorok_Draw
-  .dying
+  ; While dying ($0DD0 == 6), SpriteModule_Die draws the death poof in Region A
+  ; slots 0..3 and shifts $90/$92 past them while SprTimerA >= $0A. Keep drawing
+  ; the body (without calling Sprite_OAM_AllocateDeferToPlayer) until $09 so
+  ; the enemy flashes into the explosion with zero empty-frame vanish gap.
+  LDA.w SprState, X : CMP.b #$06 : BNE .draw
+    LDA.w SprTimerA, X : CMP.b #$0A : BCC .after_draw
+  .draw
+  JSR Sprite_Octorok_Draw : BCS .after_draw
+    LDA.w SprSubtype, X : BEQ .draw_land_shadow
+      REP #$20
+      LDA.b $90 : CLC : ADC.w #$0004 : STA.b $90
+      INC.b $92
+      SEP #$20
+      JSL Sprite_DrawWaterRipple
+      BRA .after_draw
+    .draw_land_shadow
+    JSL Sprite_DrawShadow
+  .after_draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     LDA.w SprSubtype, X : BEQ +
-      JSL Sprite_DrawWaterRipple
       JSR Sprite_WaterOctorok_Main
       JMP ++
     +
-    JSL Sprite_DrawShadow
     JSR Sprite_Octorok_Main
     ++
   .SpriteIsNotActive
@@ -66,7 +68,10 @@ Sprite_Octorok_Long:
 Sprite_Octorok_Prep:
 {
   PHB : PHK : PLB
-
+  LDA.w SprSubtype, X : BEQ .prep_done
+    LDA.b #$04 : STA.w SprAction, X
+    LDA.b #$08 : STA.w SprFrame, X
+  .prep_done
   PLB
   RTL
 }
@@ -81,7 +86,8 @@ Sprite_Octorok_Main:
     CMP.b #$09 : BNE .not_water_tile
   .water_tile
     LDA.b #$01 : STA.w SprSubtype, X
-    STZ.w SprAction, X
+    LDA.b #$04 : STA.w SprAction, X
+    LDA.b #$08 : STA.w SprFrame, X
     STZ.w SprMiscG, X
     RTS
   .not_water_tile
@@ -133,6 +139,7 @@ Sprite_Octorok_Main:
 Sprite_Octorok_Move:
 {
   JSL Sprite_DamageFlash_Long
+  JSL Sprite_CheckIfRecoiling
   JSL Sprite_Move
   JSL Sprite_CheckDamageFromPlayer
   JSL Sprite_CheckDamageToPlayer
@@ -161,7 +168,7 @@ Sprite_Octorok_Move:
       RTS
 
   .wait
-  LDY.w SprMiscC, X
+  LDA.w SprMiscC, X : AND.b #$03 : TAY
 
   LDA.w .speed_x, Y : STA.w SprXSpeed, X
   LDA.w .speed_y, Y : STA.w SprYSpeed, X
@@ -435,9 +442,12 @@ Octorok_SpawnRock:
 Sprite_Octorok_Draw:
 {
   JSL Sprite_PrepOamCoord : BCC .on_screen
+    SEC
     RTS
   .on_screen
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
   LDA.w SprFrame, X : CMP.b #$09 : BCC .frame_ok
     LDA.b #$00
@@ -460,7 +470,14 @@ Sprite_Octorok_Draw:
     LDA.b #$0C ; Eon Abyss Aux OBJ Pal 6
   .combine_flash
   STA.b $07
-  LDA.w SprFlash, X : ASL A : AND.b #$0E : EOR.b $07 : STA.b $08
+  ; Sprite_TimersAndOAM pre-shifts SprFlash during dying ($0DD0 == 6), whereas
+  ; Sprite_DamageFlash_Long stores raw 0..7 in SprFlash while active.
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash
+  .dying_flash
+    LDA.w SprFlash, X
+  .apply_flash
+  AND.b #$0E : EOR.b $07 : STA.b $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -501,7 +518,7 @@ Sprite_Octorok_Draw:
   PLX : DEX : BPL .nextTile
 
   PLX
-
+  CLC
   RTS
 
 

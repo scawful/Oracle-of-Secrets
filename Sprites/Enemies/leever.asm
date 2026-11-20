@@ -25,9 +25,11 @@ pullpc
 Sprite_Leever_Long:
 {
   PHB : PHK : PLB
-  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
-  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
-  LDA.w SprState, X : CMP.b #$06 : BEQ +
+  ; Keep drawing emerged Leever while SpriteModule_Die ($0DD0 == 6) counts
+  ; SprTimerA down from $1F to $0A (in Region A slots after SpriteDeath_DrawPoof).
+  LDA.w SprState, X : CMP.b #$06 : BNE .check_visible
+    LDA.w SprTimerA, X : CMP.b #$0A : BCC +
+  .check_visible
   LDA.w SprAction, X : BEQ +
     JSR Sprite_Leever_Draw
   +
@@ -117,12 +119,21 @@ Sprite_Leever_Main:
 
 Sprite_Leever_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    RTS
+  .on_screen
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA $0DC0, X : CLC : ADC $0D90, X : AND.b #$03 : TAY ; Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprFlash, X : STA $08
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash
+  .dying_flash
+    LDA.w SprFlash, X
+  .apply_flash
+  AND.b #$0E : STA $08
 
 
   PHX
@@ -156,7 +167,7 @@ Sprite_Leever_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : ORA $08 : STA ($90), Y
+  LDA .properties, X : EOR $08 : STA ($90), Y
 
   PHY
 

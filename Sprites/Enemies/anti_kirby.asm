@@ -2,7 +2,7 @@
 ; Anti Kirby
 
 !SPRID              = Sprite_AntiKirby
-!NbrTiles           = 02  ; Number of tiles used in a frame
+!NbrTiles           = 06  ; 4 death poof + max 2 body + 1 shadow (allocates 7 slots)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = $08  ; Number of Health the sprite have
@@ -34,10 +34,12 @@
 Sprite_AntiKirby_Long:
 {
   PHB : PHK : PLB
-  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
-  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
-  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
-    JSR Sprite_AntiKirby_Draw
+  ; Keep drawing the body while SpriteModule_Die ($0DD0 == 6) counts SprTimerA
+  ; down from $1F to $0A (in Region A slots after SpriteDeath_DrawPoof).
+  LDA.w SprState, X : CMP.b #$06 : BNE .draw
+    LDA.w SprTimerA, X : CMP.b #$0A : BCC .dying
+  .draw
+  JSR Sprite_AntiKirby_Draw : BCS .dying
     JSL Sprite_DrawShadow
   .dying
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -103,7 +105,7 @@ Sprite_AntiKirby_Main:
   {
     ; Check health
     LDA.w SprHealth, X : CMP.b #$01 : BCS .NotDead
-      %GotoAction(4)
+      %GotoAction(7)
       RTS
     .NotDead
 
@@ -233,7 +235,11 @@ Sprite_AntiKirby_Main:
   AntiKirby_Death:
   {
     %PlayAnimation(3, 3, 10) ; Death
+    LDA.b $4B : CMP.b #$0C : BNE +
+      STZ.b $4B
+    +
     LDA.b #$06 : STA.w SprState, X
+    LDA.b #$1F : STA.w SprTimerA, X
     LDA.b #$09 : JSL SpriteSFX_QueueSFX3WithPan
     RTS
   }
@@ -300,13 +306,26 @@ AntiKirby_StealItem:
 
 Sprite_AntiKirby_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    SEC
+    RTS
+  .on_screen
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
-  LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
+  LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : CMP.b #$0C : BCC .frame_ok
+    LDA.b #$00
+  .frame_ok
+  TAY ; Animation Frame
   LDA .start_index, Y : STA $06
 
-  LDA.w SprFlash, X : STA $08
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash
+  .dying_flash
+    LDA.w SprFlash, X
+  .apply_flash
+  AND.b #$0E : STA $08
   LDA.w SprMiscC, X : STA $09
 
   PHX
@@ -346,7 +365,7 @@ Sprite_AntiKirby_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : ORA $08 : AND.b #$FF : ORA $09 : STA ($90), Y
+  LDA .properties, X : EOR $08 : ORA $09 : STA ($90), Y
 
   PHY
   TYA : LSR #2 : TAY
@@ -355,7 +374,7 @@ Sprite_AntiKirby_Draw:
   PLX : DEX : BPL .nextTile
 
   PLX
-
+  CLC
   RTS
 
   ; Anti-Kirby V3 draw
@@ -403,20 +422,20 @@ Sprite_AntiKirby_Draw:
   db $22, $23
   db $22, $23
   .properties
-  ; Normal Kirby
-  db $0B
-  db $0B
-  db $0B
-  db $0B
-  db $0B
-  db $0B
-  ; Link hat kirby
-  db $0B, $0B
-  db $0B, $0B
-  db $0B, $0B
-  db $0B, $0B
-  db $0B, $0B
-  db $4B, $4B
+  ; Normal Kirby (Priority 2)
+  db $2B
+  db $2B
+  db $2B
+  db $2B
+  db $2B
+  db $2B
+  ; Link hat kirby (Priority 2)
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $2B
+  db $6B, $6B
   .sizes
   db $02
   db $02

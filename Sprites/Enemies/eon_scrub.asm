@@ -250,7 +250,8 @@ Sprite_EonScrub_Draw:
     LDA.b #$08 : JSL OAM_AllocateFromRegionC ; Carried: 2 tiles max above Link
     BRA .alloc_done
   .alloc_defer
-    JSL Sprite_OAM_AllocateDeferToPlayer
+    CMP.b #$06 : BEQ .alloc_done
+      JSL Sprite_OAM_AllocateDeferToPlayer
   .alloc_done
   ; Base .properties are pri 3 ($33/$73). When carried on layer 0 (SprFloor == 0),
   ; drop to pri 2 ($23/$63) to match Link under roofs/canopies.
@@ -259,8 +260,17 @@ Sprite_EonScrub_Draw:
     LDA.w SprFloor, X : BNE .have_pri
       LDA.b #$10 : STA.b $0C
   .have_pri
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w $0B89, X : ASL A : BRA .apply_flash ; SprFlash
+  .dying_flash
+    LDA.w $0B89, X
+  .apply_flash
+  AND.b #$0E : STA.b $07
 
-  LDA.w SprFrame, X : TAY ;Animation Frame
+  LDA.w SprFrame, X : CMP.b #$0E : BCC .frame_ok
+    LDA.b #$00
+  .frame_ok
+  TAY ; Animation Frame
   LDA .start_index, Y : STA $06
 
 
@@ -294,7 +304,7 @@ Sprite_EonScrub_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : EOR.b $0C : STA ($90), Y
+  LDA .properties, X : EOR.b $0C : EOR.b $07 : STA ($90), Y
 
   PHY
   TYA : LSR #2 : TAY

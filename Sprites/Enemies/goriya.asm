@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_Goriya
-!NbrTiles           = 03  ; Number of tiles used in a frame
+!NbrTiles           = 06  ; 4 death poof + 2 body + 1 shadow (allocates 7 slots)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 08  ; Number of Health the sprite have
@@ -47,12 +47,14 @@ GoriyaMovementSpeed   = 12
 Sprite_Goriya_Long:
 {
   PHB : PHK : PLB
-  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
-  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
-  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
+  ; Keep drawing the body while SpriteModule_Die ($0DD0 == 6) counts SprTimerA
+  ; down from $1F to $0A (in Region A slots after SpriteDeath_DrawPoof).
+  LDA.w SprState, X : CMP.b #$06 : BNE .draw
+    LDA.w SprTimerA, X : CMP.b #$0A : BCC .dying
+  .draw
   ; Subtype 1 is the thrown boomerang; subtype 0 and subtypes 2+ are Goriya variants.
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .boomerang_draw
-    JSR Sprite_Goriya_Draw
+    JSR Sprite_Goriya_Draw : BCS .draw_done
     JSL Sprite_DrawShadow
     BRA .draw_done
   .boomerang_draw
@@ -408,9 +410,12 @@ Sprite_Goriya_Move:
 Sprite_Goriya_Draw:
 {
   JSL Sprite_PrepOamCoord : BCC .on_screen
+    SEC
     RTS
   .on_screen
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
   LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : TAY
   CPY.b #$08 : BCC +
@@ -419,11 +424,17 @@ Sprite_Goriya_Draw:
   LDA.w .start_index, Y : STA.b $06
 
   ; Combine per-instance OAM palette (SprMiscG) with damage flash cycling.
+  ; Sprite_TimersAndOAM pre-shifts SprFlash during dying ($0DD0 == 6).
   LDA.w SprMiscG, X : BNE +
     LDA.b #$0C                        ; default Sand palette (Pal 6)
   +
   STA.b $08
-  LDA.w SprFlash, X : ASL A : EOR.b $08 : AND.b #$0E : STA.b $08
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash
+  .dying_flash
+    LDA.w SprFlash, X
+  .apply_flash
+  EOR.b $08 : AND.b #$0E : STA.b $08
 
   PHX
   LDX.w .nbr_of_tiles, Y              ; amount of tiles - 1
@@ -455,6 +466,7 @@ Sprite_Goriya_Draw:
     PLY : INY
     PLX : DEX : BPL .nextTile
   PLX
+  CLC
   RTS
 
   .start_index
@@ -504,9 +516,12 @@ Sprite_Goriya_Draw:
 Sprite_Boomerang_Draw:
 {
   JSL Sprite_PrepOamCoord : BCC .on_screen
+    SEC
     RTS
   .on_screen
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
   PHX
   LDA.w SprFrame, X : AND.b #$03 : TAX
@@ -528,6 +543,7 @@ Sprite_Boomerang_Draw:
   LDY.b #$00
   LDA.b #$02 : ORA.b $0F : STA ($92), Y
   PLX
+  CLC
   RTS
 
   .properties

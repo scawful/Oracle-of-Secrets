@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_Booki
-!NbrTiles           = 02  ; Number of tiles used in a frame
+!NbrTiles           = 05  ; 4 death poof + 1 body + 1 shadow (allocates 6 slots)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -35,10 +35,12 @@
 Sprite_Booki_Long:
 {
   PHB : PHK : PLB
-  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
-  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
-  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
-    JSR Sprite_Booki_Draw
+  ; Keep drawing the body while SpriteModule_Die ($0DD0 == 6) counts SprTimerA
+  ; down from $1F to $0A (in Region A slots after SpriteDeath_DrawPoof).
+  LDA.w SprState, X : CMP.b #$06 : BNE .draw
+    LDA.w SprTimerA, X : CMP.b #$0A : BCC .dying
+  .draw
+  JSR Sprite_Booki_Draw : BCS .dying
     JSL Sprite_DrawShadow
   .dying
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -284,14 +286,25 @@ Booki_PlayerCanSeeUs:
 Sprite_Booki_Draw:
 {
   JSL Sprite_PrepOamCoord : BCC .on_screen
+    SEC
     RTS
   .on_screen
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
-  LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
+  LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : CMP.b #$0A : BCC .frame_ok
+    LDA.b #$00
+  .frame_ok
+  TAY ; Animation Frame
   LDA .start_index, Y : STA $06
 
-  LDA.w SprFlash, X : STA $08
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash
+  .dying_flash
+    LDA.w SprFlash, X
+  .apply_flash
+  AND.b #$0E : STA $08
   LDA.w SprMiscC, X : STA $09
 
   PHX
@@ -329,7 +342,7 @@ Sprite_Booki_Draw:
   .ToRight
   LDA.b #$69
   .Prop
-  ORA $08 : STA ($90), Y
+  EOR $08 : STA ($90), Y
 
   PHY
 
@@ -342,7 +355,7 @@ Sprite_Booki_Draw:
   PLX : DEX : BPL .nextTile
 
   PLX
-
+  CLC
   RTS
 
 

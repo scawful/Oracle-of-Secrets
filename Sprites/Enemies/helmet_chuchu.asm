@@ -2,7 +2,7 @@
 ;
 
 !SPRID              = Sprite_HelmetChuchu
-!NbrTiles           = 03  ; Number of tiles used in a frame
+!NbrTiles           = 07  ; 4 death poof + max 3 body + 1 shadow (allocates 8 slots)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = $10 ; Number of Health the sprite have
@@ -34,10 +34,12 @@
 Sprite_HelmetChuchu_Long:
 {
   PHB : PHK : PLB
-  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
-  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
-  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
-    JSR Sprite_HelmetChuchu_Draw
+  ; Keep drawing the body while SpriteModule_Die ($0DD0 == 6) counts SprTimerA
+  ; down from $1F to $0A (in Region A slots after SpriteDeath_DrawPoof).
+  LDA.w SprState, X : CMP.b #$06 : BNE .draw
+    LDA.w SprTimerA, X : CMP.b #$0A : BCC .dying
+  .draw
+  JSR Sprite_HelmetChuchu_Draw : BCS .dying
     JSL Sprite_DrawShadow
   .dying
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -188,6 +190,7 @@ HelmetChuchu_SpawnHookshotDrag:
     LDA.b #$00 : STA.w SprMiscB, Y
     LDA.b #$80 : STA.w SprTimerA, Y
     LDA.b #$01 : STA.w SprNbrOAM,  Y
+    TXA : AND.b #$03 : TAX
     LDA.w .speed_x, X : STA.w SprXSpeed, Y
     LDA.w .speed_y, X : STA.w SprYSpeed, Y
   .no_space2
@@ -287,12 +290,25 @@ Sprite_Chuchu_Move:
 
 Sprite_HelmetChuchu_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    SEC
+    RTS
+  .on_screen
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
-  LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
+  LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : CMP.b #$0A : BCC .frame_ok
+    LDA.b #$00
+  .frame_ok
+  TAY ; Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprFlash, X : STA $08
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash
+  .dying_flash
+    LDA.w SprFlash, X
+  .apply_flash
+  AND.b #$0E : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -324,7 +340,7 @@ Sprite_HelmetChuchu_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : ORA $08 : STA ($90), Y
+  LDA .properties, X : EOR $08 : STA ($90), Y
 
   PHY
   TYA : LSR #2 : TAY
@@ -333,7 +349,7 @@ Sprite_HelmetChuchu_Draw:
   PLX : DEX : BPL .nextTile
 
   PLX
-
+  CLC
   RTS
 
 

@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_Darknut
-!NbrTiles           = 03  ; Number of tiles used in a frame
+!NbrTiles           = 07  ; 4 death poof + 3 body + 1 shadow (allocates 8 slots)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 12  ; Number of Health the sprite have
@@ -35,10 +35,12 @@
 Sprite_Darknut_Long:
 {
   PHB : PHK : PLB
-  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
-  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
-  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
-    JSR Sprite_Darknut_Draw
+  ; Keep drawing the body while SpriteModule_Die ($0DD0 == 6) counts SprTimerA
+  ; down from $1F to $0A (in Region A slots after SpriteDeath_DrawPoof).
+  LDA.w SprState, X : CMP.b #$06 : BNE .draw
+    LDA.w SprTimerA, X : CMP.b #$0A : BCC .dying
+  .draw
+  JSR Sprite_Darknut_Draw : BCS .dying
     JSL Sprite_DrawShadow
   .dying
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -326,15 +328,35 @@ Sprite_Darknut_BasicMove:
 
 Sprite_Darknut_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    SEC
+    RTS
+  .on_screen
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
-  LDA.w SprGfx, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA.w SprGfx, X : CLC : ADC $0D90, X : CMP.b #$08 : BCC .frame_ok
+    LDA.b #$00
+  .frame_ok
+  TAY ; Animation Frame
   LDA DarknutDrawStartIndex, Y : STA $06
 if !DISABLE_MASKS == 0
-  JSL Darknut_DrawFlash ; armored subtype uses a darker palette
+  JSL Darknut_DrawFlash ; armored subtype sets armor bit ($02) in $08
+  LDA.b $08 : AND.b #$02 : STA.b $07
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash
+  .dying_flash
+    LDA.w SprFlash, X
+  .apply_flash
+  AND.b #$0E : EOR.b $07 : STA.b $08
 else
-  LDA.w SprFlash, X : STA $08
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash_no_mask
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash_no_mask
+  .dying_flash_no_mask
+    LDA.w SprFlash, X
+  .apply_flash_no_mask
+  AND.b #$0E : STA.b $08
 endif
 
   PHX
@@ -368,7 +390,7 @@ endif
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : ORA $08 : STA ($90), Y
+  LDA .properties, X : EOR $08 : STA ($90), Y
 
   PHY
 
@@ -381,7 +403,7 @@ endif
   PLX : DEX : BPL .nextTile
 
   PLX
-
+  CLC
   RTS
 
   .chr

@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_Poltergeist
-!NbrTiles           = 4   ; Number of tiles used in a frame
+!NbrTiles           = 10  ; 4 death poof + max 6 body (allocates up to 11 slots)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 01  ; Number of Health the sprite have
@@ -35,10 +35,12 @@
 Sprite_Poltergeist_Long:
 {
   PHB : PHK : PLB
-  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
-  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
-  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
-    JSR Sprite_Poltergeist_Draw
+  ; Keep drawing the body while SpriteModule_Die ($0DD0 == 6) counts SprTimerA
+  ; down from $1F to $0A (in Region A slots after SpriteDeath_DrawPoof).
+  LDA.w SprState, X : CMP.b #$06 : BNE .draw
+    LDA.w SprTimerA, X : CMP.b #$0A : BCC .dying
+  .draw
+  JSR Sprite_Poltergeist_Draw
   .dying
 
   ; LDA $E0 : CMP #$F0 : BNE .onscreen
@@ -59,7 +61,7 @@ Sprite_Poltergeist_Prep:
 
   LDA #$00 : STA.w SprHitbox, X ; Persist
   LDA #$00 : STA.w SprDefl, X ; Sprite persist in dungeon
-  LDA #$02 : STA.w SprNbrOAM, X ;1 tile by default
+  LDA #$06 : STA.w SprNbrOAM, X ; 4 death poof + up to 2 body tiles by default
   LDA #$01 : STA.w SprAction, X ; by default it's a chair
 
   LDA.w SprSubtype, X : CMP #$10 : BNE .notPictureFrame
@@ -71,7 +73,7 @@ Sprite_Poltergeist_Prep:
   CMP #$11 : BNE .notAxe
     LDA #$07 : STA.w SprFrame, X
     LDA #$02 : STA.w SprAction, X
-    LDA #$04 : STA.w SprNbrOAM, X
+    LDA #$08 : STA.w SprNbrOAM, X
     BRA .done
   .notAxe
 
@@ -90,14 +92,14 @@ Sprite_Poltergeist_Prep:
   CMP #$14 : BNE .notBed
     LDA #5 : STA.w SprFrame, X
     LDA #$01 : STA.w SprAction, X
-    LDA #$06 : STA.w SprNbrOAM, X
+    LDA #$0A : STA.w SprNbrOAM, X
     BRA .done
   .notBed
 
   CMP #$15 : BNE .notDoor
     LDA #36 : STA.w SprFrame, X
     LDA #$01 : STA.w SprAction, X
-    LDA #$04 : STA.w SprNbrOAM, X
+    LDA #$08 : STA.w SprNbrOAM, X
     LDA.w SprY, X : SEC : SBC #$0C : STA.w SprY, X
     LDA.w SprX, X : CLC : ADC #$08 : STA.w SprX, X
     BRA .done
@@ -447,11 +449,25 @@ Sprite_Poltergeist_Draw:
       RTS
   +
 
-  JSL Sprite_PrepOamCoord
-  LDA #$08
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    RTS
+  .on_screen
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    LDA #$08
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash
+  .dying_flash
+    LDA.w SprFlash, X
+  .apply_flash
+  AND.b #$0E : STA.b $07
+
+  LDA $0DC0, X : CLC : ADC $0D90, X : CMP.b #$2D : BCC .frame_ok
+    LDA.b #$00
+  .frame_ok
+  TAY ; Animation Frame
   LDA .start_index, Y : STA $06
 
   PHX
@@ -487,7 +503,7 @@ Sprite_Poltergeist_Draw:
       INY
       LDA .chr, X : STA ($90), Y
       INY
-      LDA .properties, X : STA ($90), Y
+      LDA .properties, X : EOR.b $07 : STA ($90), Y
 
       PHY
 

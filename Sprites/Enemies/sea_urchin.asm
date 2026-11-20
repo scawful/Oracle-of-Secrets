@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_SeaUrchin
-!NbrTiles           = 04  ; Number of tiles used in a frame
+!NbrTiles           = 05  ; 4 death poof + 1 body + 1 shadow (allocates 6 slots)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 06  ; Number of Health the sprite have
@@ -39,10 +39,12 @@
 Sprite_SeaUrchin_Long:
 {
   PHB : PHK : PLB
-  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
-  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
-  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
-    JSR Sprite_SeaUrchin_Draw
+  ; Keep drawing the body while SpriteModule_Die ($0DD0 == 6) counts SprTimerA
+  ; down from $1F to $0A (in Region A slots after SpriteDeath_DrawPoof).
+  LDA.w SprState, X : CMP.b #$06 : BNE .draw
+    LDA.w SprTimerA, X : CMP.b #$0A : BCC .dying
+  .draw
+  JSR Sprite_SeaUrchin_Draw : BCS .dying
     JSL Sprite_DrawShadow
   .dying
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -67,41 +69,36 @@ Sprite_SeaUrchin_Prep:
 
 Sprite_SeaUrchin_Main:
 {
-  LDA.w SprAction, X
-  JSL JumpTableLocal
-
-  dw Idle
-  dw Death
-
-  Idle:
-  {
-    %PlayAnimation(0,3,8)
-    %PlayerCantPassThrough()
-    %DoDamageToPlayerSameLayerOnContact()
-    JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
-      %GotoAction(1)
-    .NoDamage
-    RTS
-  }
-
-  Death:
-  {
-    LDA.b #$06 : STA.w SprState, X
-    LDA.b #$0A : STA.w SprTimerA, X
-    STZ.w SprPrize,X
-    JSL ForcePrizeDrop_long
-    LDA.b #$09 : JSL SpriteSFX_QueueSFX3WithPan
-    RTS
-  }
+  %PlayAnimation(0,3,8)
+  %PlayerCantPassThrough()
+  %DoDamageToPlayerSameLayerOnContact()
+  JSL Sprite_DamageFlash_Long
+  JSL Sprite_CheckIfRecoiling
+  JSL Sprite_Move
+  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_CheckDamageFromPlayer
+  RTS
 }
 
 
 Sprite_SeaUrchin_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    SEC
+    RTS
+  .on_screen
+  LDA.w SprState, X : CMP.b #$06 : BEQ .alloc_done
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+    LDA.w SprFlash, X : ASL A : BRA .apply_flash
+  .dying_flash
+    LDA.w SprFlash, X
+  .apply_flash
+  AND.b #$0E : STA $08
+
+  LDA $0DC0, X : CLC : ADC $0D90, X : AND.b #$07 : TAY ; Animation Frame
   LDA .start_index, Y : STA $06
 
   PHX
@@ -134,7 +131,7 @@ Sprite_SeaUrchin_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : EOR $08 : STA ($90), Y
 
   PHY
   TYA : LSR #2 : TAY
@@ -143,7 +140,7 @@ Sprite_SeaUrchin_Draw:
   PLX : DEX : BPL .nextTile
 
   PLX
-
+  CLC
   RTS
 
 

@@ -2,7 +2,7 @@
 ; Business Scrub
 
 !SPRID              = Sprite_BusinessScrub
-!NbrTiles           = 03  ; Number of tiles used in a frame
+!NbrTiles           = 08  ; 4 death poof + max 4 body + 1 shadow (allocates 9 slots)
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 08  ; Number of Health the sprite have
@@ -34,9 +34,12 @@
 Sprite_BusinessScrub_Long:
 {
   PHB : PHK : PLB
-  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
-  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
-  LDA.w SprState, X : CMP.b #$06 : BEQ .normal_scrub
+  ; Keep drawing the body while SpriteModule_Die ($0DD0 == 6) counts SprTimerA
+  ; down from $1F to $0A (in Region A slots after SpriteDeath_DrawPoof).
+  LDA.w SprState, X : CMP.b #$06 : BNE .not_dying
+    LDA.w SprTimerA, X : CMP.b #$0A : BCC .normal_scrub
+    BRA .draw_body
+  .not_dying
   ; While carried ($0A), Sprite_CheckActive returns CLC (requires SprState == $09),
   ; so update the parent scrub's squirming pose here before drawing so frame 0
   ; immediately switches out of hiding into the overhead animation.
@@ -436,17 +439,29 @@ Sprite_BusinessScrub_Draw:
       LDA.b #$10 : JSL OAM_AllocateFromRegionC ; Carried: 4 tiles max above Link
       BRA .alloc_done
     .alloc_defer
-      JSL Sprite_OAM_AllocateDeferToPlayer
+      CMP.b #$06 : BEQ .alloc_done
+        JSL Sprite_OAM_AllocateDeferToPlayer
     .alloc_done
     ; Base .properties are pri 2 ($2B/$6B), matching Link on layer 0 ($20).
     ; If carried on layer 1 (SprFloor != 0), promote to pri 3 ($3B/$7B).
     STZ.b $0C
     LDA.w SprState, X : CMP.b #$0A : BNE .have_pri
-      LDA.w SprFloor, X : BEQ .have_pri
+      LDA.w SprFloor, X : BNE .not_ground
+        BRA .have_pri
+      .not_ground
         LDA.b #$10 : STA.b $0C
     .have_pri
+    LDA.w SprState, X : CMP.b #$06 : BEQ .dying_flash
+      LDA.w $0B89, X : ASL A : BRA .apply_flash ; SprFlash
+    .dying_flash
+      LDA.w $0B89, X
+    .apply_flash
+    AND.b #$0E : STA.b $07
 
-    LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+    LDA $0DC0, X : CLC : ADC $0D90, X : CMP.b #$0E : BCC .frame_ok
+      LDA.b #$00
+    .frame_ok
+    TAY ; Animation Frame
     LDA .start_index, Y : STA $06
 
     PHX
@@ -479,7 +494,7 @@ Sprite_BusinessScrub_Draw:
     INY
     LDA .chr, X : STA ($90), Y
     INY
-    LDA .properties, X : ORA.b $0C : STA ($90), Y
+    LDA .properties, X : ORA.b $0C : EOR.b $07 : STA ($90), Y
 
     PHY
     TYA : LSR #2 : TAY
