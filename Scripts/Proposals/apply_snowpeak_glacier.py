@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
-"""Private-ROM Snowpeak sheet-$37 glyph fix plus Frost Glacier audit.
+"""Private-ROM Snowpeak deep-cliff and Frost Glacier stamps.
 
-Copies a yaze ROM whose SHA-256 starts with 34e671c0 into /tmp and points
-global sheet $37 at the corrected 2B/3B stream. Never touches the live project
-ROM or Roms/oos168*.sfc. Map tiles are not restamped; the FSA/Minish kits stay
-source assets with a Tile8 and collision-hint audit.
+Copies a yaze ROM whose SHA-256 is 34e671c0... into /tmp. Points the vanilla
+graphics table (the table z3ed overworld-render reads) at edited sheets:
+sheet $37 keeps the lyra-stage1 $2B/$3B glyphs and paints the blank $2C void
+into a deep cliff; sheet $35/$36 deepen map $02's cliff faces; sheet $63
+cracks the $BE/$BF ice floor. Tile16 $7BB (maps $05-$07 only) is remapped so
+those cells draw the $2B/$3B glyphs. Never touches the live project ROM or
+Roms/oos168*.sfc.
+
+ENABLE_EXPANDED_GRAPHICS_TABLE is not defined in this tree. The asm packer in
+generate_hack_manifest.py includes Data/graphics/snowpeak_sheet.json only when
+that define is 1 and ENABLE_SOURCE_SPRITE_SHEETS is 1. Defining the flag is
+outside this track (Util/macros.asm and Config/feature_flags.asm). Until then
+the usable sheet is this private ROM pointer, not a generated asm include.
 
 Usage:
   python3 Scripts/Proposals/apply_snowpeak_glacier.py --source <rom> --work-dir /tmp/oos-gfx-snowpeak
@@ -34,8 +43,14 @@ LIVE = (
 )
 # Doctor-reported free expansion on this 4MB image. SNES $B0:8000.
 STREAM_PC = 0x180000
-STREAM_POINTER = 0xB08000
 MAPS = ("02", "03", "04", "05", "06", "07", "BE", "BF")
+PROOF_MAPS = ("02", "03", "04", "05", "06", "07", "BE", "BF")
+# Sheet $37 local tiles. $2C is the blank fill behind maps $05-$07 (tile16 $8F3).
+CLIFF_TILES = (0x0D, 0x2C)
+# Sheet $63 floor quadrant of tile16 $F00, used only on $BE/$BF.
+ICE_TILES = (0x0B,)
+# Sheet $36 faces for tile16 $A2F (map $02 only).
+MAP02_SHEET36 = (0x1A, 0x21, 0x28, 0x2A)
 
 
 def refuse(path: Path) -> None:
@@ -55,38 +70,118 @@ def run(cmd: list[str]) -> subprocess.CompletedProcess:
     return res
 
 
-def fix_stream(rom: bytearray) -> dict:
-    raw = sheet_codec.grid_to_sheet(sheet_codec.text_to_grid(SHEET37.read_text()))
-    digest = hashlib.sha256(raw).hexdigest()
+def load_grid(rom: bytes | bytearray, sheet: int) -> list[list[int]]:
+    raw, _used = sheet_table.decomp(rom, sheet_table.ptr(rom, sheet))
+    if len(raw) != 1536:
+        raise SystemExit(f"sheet {sheet:#x} decoded to {len(raw)} bytes")
+    return sheet_codec.sheet_to_grid(raw)
+
+
+def paint_tile(grid: list[list[int]], tile: int, rows: tuple[str, ...]) -> None:
+    if len(rows) != 8 or any(len(row) != 8 for row in rows):
+        raise SystemExit(f"tile {tile:#x} pattern is not 8x8")
+    tx, ty = (tile % 16) * 8, (tile // 16) * 8
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            grid[ty + y][tx + x] = 0 if ch == "." else int(ch, 16)
+
+
+DEEP_CLIFF = (
+    "00000000",
+    "77777777",
+    "00000000",
+    "00000000",
+    "66666666",
+    "00000000",
+    "00000000",
+    "77777777",
+)
+ICE_CRACKS = (
+    (
+        "55555555",
+        "55555555",
+        "55555555",
+        "11111111",
+        "55555555",
+        "55555555",
+        "55555555",
+        "66666666",
+    ),
+)
+
+
+def snes_pointer(pc: int) -> tuple[int, int, int]:
+    bank = 0x80 | (pc // 0x8000)
+    addr = 0x8000 | (pc & 0x7FFF)
+    return bank, (addr >> 8) & 0xFF, addr & 0xFF
+
+
+def install_sheet(rom: bytearray, sheet: int, grid: list[list[int]], cursor: int) -> tuple[int, dict]:
+    raw = sheet_codec.grid_to_sheet(grid)
+    comp = lz2.compress(raw)
+    back, used = lz2.decompress(comp, 0)
+    if back != raw or used != len(comp):
+        raise SystemExit(f"sheet {sheet:#x} compressor did not round-trip")
+    if cursor + len(comp) > 0x1E0000:
+        raise SystemExit("sheet streams ran out of the free expansion")
+    if any(rom[cursor:cursor + len(comp)]):
+        raise SystemExit(f"stream hole at {cursor:#x} is occupied")
+    rom[cursor:cursor + len(comp)] = comp
+    bank, high, low = snes_pointer(cursor)
+    rom[sheet_table.pc(sheet_table.TBL_BANK) + sheet] = bank
+    rom[sheet_table.pc(sheet_table.TBL_HIGH) + sheet] = high
+    rom[sheet_table.pc(sheet_table.TBL_LOW) + sheet] = low
+    got, _got_len = sheet_table.decomp(rom, sheet_table.ptr(rom, sheet))
+    if got != raw:
+        raise SystemExit(f"sheet {sheet:#x} pointer did not read back")
+    info = {"sheet": f"0x{sheet:02X}", "pc": f"0x{cursor:06X}",
+            "pointer": f"0x{bank:02X}{high:02X}{low:02X}", "compressed": len(comp)}
+    return cursor + ((len(comp) + 15) & ~15), info
+
+
+def build_sheets(rom: bytearray) -> dict:
+    text = sheet_codec.text_to_grid(SHEET37.read_text())
+    digest = hashlib.sha256(sheet_codec.grid_to_sheet(text)).hexdigest()
     if digest != "19279a4cee41b2ee83d52421256b8327dd50338b0a0c0994ee0ec08d35b515a8":
         raise SystemExit("snowpeak_sheet37.txt hash mismatch")
-    before, before_len = sheet_table.decomp(rom, sheet_table.ptr(rom, 0x37))
-    if len(before) != 1536:
-        raise SystemExit(f"ROM sheet 37 decoded to {len(before)} bytes")
-    old = sheet_codec.sheet_to_grid(before)
-    new = sheet_codec.sheet_to_grid(raw)
+    original = load_grid(rom, 0x37)
     changed = []
     for tile in range(64):
         tx, ty = (tile % 16) * 8, (tile // 16) * 8
-        if [old[ty + y][tx:tx + 8] for y in range(8)] != [new[ty + y][tx:tx + 8] for y in range(8)]:
+        if [original[ty + y][tx:tx + 8] for y in range(8)] != [text[ty + y][tx:tx + 8] for y in range(8)]:
             changed.append(tile)
     if changed != [0x2B, 0x3B]:
         raise SystemExit(f"sheet 37 diff is {changed}, expected tiles 2B and 3B")
-    comp = lz2.compress(raw)
-    if any(rom[STREAM_PC:STREAM_PC + len(comp)]):
-        raise SystemExit(f"stream hole at {STREAM_PC:#x} is occupied")
-    rom[STREAM_PC:STREAM_PC + len(comp)] = comp
-    bank, high, low = (STREAM_POINTER >> 16) & 0xFF, (STREAM_POINTER >> 8) & 0xFF, STREAM_POINTER & 0xFF
-    tables = ((sheet_table.TBL_BANK, bank), (sheet_table.TBL_HIGH, high), (sheet_table.TBL_LOW, low))
-    if sheet_table.relocated(rom):
-        tables += ((sheet_table.NEW_BANK, bank), (sheet_table.NEW_HIGH, high), (sheet_table.NEW_LOW, low))
-    for table, value in tables:
-        rom[sheet_table.pc(table) + 0x37] = value
-    check, used = sheet_table.decomp(rom, sheet_table.ptr(rom, 0x37))
-    if check != raw or used != len(comp):
-        raise SystemExit("relocated sheet 37 did not round-trip")
-    return {"previous_compressed": before_len, "compressed": len(comp), "pointer": f"0x{STREAM_POINTER:06X}",
-            "pc": f"0x{STREAM_PC:06X}", "changed_tiles": ["0x2B", "0x3B"]}
+    for tile in CLIFF_TILES:
+        paint_tile(text, tile, DEEP_CLIFF)
+    ice = load_grid(rom, 0x63)
+    paint_tile(ice, ICE_TILES[0], ICE_CRACKS[0])
+    faces = load_grid(rom, 0x36)
+    for tile in MAP02_SHEET36:
+        tx, ty = (tile % 16) * 8, (tile // 16) * 8
+        for x in range(8):
+            faces[ty][tx + x] = 1
+            faces[ty + 4][tx + x] = 1
+    cursor = STREAM_PC
+    cursor, sheet37 = install_sheet(rom, 0x37, text, cursor)
+    cursor, sheet63 = install_sheet(rom, 0x63, ice, cursor)
+    _cursor, sheet36 = install_sheet(rom, 0x36, faces, cursor)
+    return {"sheet37": sheet37, "sheet63": sheet63, "sheet36": sheet36,
+            "glyph_tiles": ["0x2B", "0x3B"], "cliff_tiles": ["0x0D", "0x2C"],
+            "ice_tiles": ["0x0B"]}
+
+
+def remap_glyphs(proposal: Path) -> None:
+    """Draw the real $2B/$3B glyphs on tile16 $7BB (maps $05, $06, $07 only)."""
+    out = proposal.with_name("snowpeak-glacier-glyphs.sfc")
+    run([
+        "z3ed", "overworld-tile16-remap",
+        f"--rom={proposal}", f"--out={out}",
+        "--tiles=7BB-7BB",
+        "--map=6:105=12B", "--map=6:108=13B",
+        "--allow-lyra-layout-writes",
+    ])
+    out.replace(proposal)
 
 
 def render(rom: Path, screen: str, dest: Path) -> None:
@@ -145,20 +240,23 @@ def main(argv: list[str] | None = None) -> int:
     proof.mkdir(exist_ok=True)
     if not base.exists() or hashlib.sha256(base.read_bytes()).hexdigest() != digest:
         shutil.copyfile(source, base)
-    render(base, "05", proof / "map05-before.png")
-    render(base, "BE", proof / "mapBE-before.png")
+    for screen in PROOF_MAPS:
+        render(base, screen, proof / f"map{screen}-before.png")
     before_sheet, _before_len = sheet_table.decomp(blob, sheet_table.ptr(blob, 0x37))
     rom = bytearray(blob)
-    info = fix_stream(rom)
+    info = build_sheets(rom)
     after_sheet, _after_len = sheet_table.decomp(rom, sheet_table.ptr(rom, 0x37))
     write_glyph_proof(before_sheet, after_sheet, proof / "sheet37-glyphs.png")
     proposal.write_bytes(rom)
     refuse(proposal)
+    remap_glyphs(proposal)
     doctor = json.loads(run(["z3ed", "rom-doctor", f"--rom={proposal}", "--format", "json"]).stdout)
     validate = run(["z3ed", "overworld-validate", f"--rom={proposal}", "--include-tail", "--check-tile16",
                     "--format", "json"]).stdout
-    render(proposal, "05", proof / "map05-after.png")
-    render(proposal, "BE", proof / "mapBE-after.png")
+    diffs = {}
+    for screen in PROOF_MAPS:
+        render(proposal, screen, proof / f"map{screen}-after.png")
+        diffs[screen] = png_diff(proof / f"map{screen}-before.png", proof / f"map{screen}-after.png")
     described = {}
     for screen in MAPS:
         described[screen] = json.loads(run([
@@ -167,32 +265,29 @@ def main(argv: list[str] | None = None) -> int:
     catalog = json.loads(run([
         "z3ed", "overworld-tile-catalog", f"--rom={proposal}", "--sheet", "37", "--format", "json"
     ]).stdout)
-    reuse = run([
-        "z3ed", "overworld-tile16-reuse-audit", f"--rom={proposal}", "--map", "05",
-        "--find-for-map", "05", "--role", "cliff", "--limit", "5", "--format", "json"
-    ]).stdout
-    glacier = run([
-        "z3ed", "overworld-tile16-reuse-audit", f"--rom={proposal}", "--map", "BE",
-        "--find-for-map", "BE", "--role", "water-edge", "--limit", "5", "--format", "json"
-    ]).stdout
     report = {
         "source_sha256": digest,
         "proposal": str(proposal),
         "proposal_sha256": hashlib.sha256(proposal.read_bytes()).hexdigest(),
-        "sheet37": info,
+        "sheets": info,
         "checksum_valid": doctor.get("checksum_valid"),
-        "map05_pixel_diff": png_diff(proof / "map05-before.png", proof / "map05-after.png"),
-        "mapBE_pixel_diff": png_diff(proof / "mapBE-before.png", proof / "mapBE-after.png"),
+        "pixel_diffs": diffs,
+        "expanded_graphics_table": (
+            "ENABLE_EXPANDED_GRAPHICS_TABLE is undefined. snowpeak_sheet.json is packed "
+            "only when that define is 1 and ENABLE_SOURCE_SPRITE_SHEETS is 1. "
+            "Unblock: set the define in Util/macros.asm and Config/feature_flags.asm, "
+            "then the existing generator writes Core/Generated/source_sprite_sheets/snowpeak."
+        ),
         "static_graphics": {screen: described[screen]["static_graphics"] for screen in MAPS},
         "sheet37_catalog_screens": catalog["Overworld Tile Abstraction Catalog"]["loaded_sheets"][0]["screen_count"],
         "validate_bytes": len(validate),
-        "cliff_audit_bytes": len(reuse),
-        "glacier_audit_bytes": len(glacier),
     }
     (proof / "proposal_report.json").write_text(json.dumps(report, indent=2) + "\n")
-    (proof / "map05-cliff-reuse.json").write_text(reuse)
-    (proof / "mapBE-water-reuse.json").write_text(glacier)
-    print(json.dumps(report, indent=2))
+    print(json.dumps({k: report[k] for k in ("proposal_sha256", "checksum_valid", "pixel_diffs", "sheets")}, indent=2))
+    weak = {screen: diffs[screen] for screen in ("02", "05", "BE") if diffs[screen] < 1000}
+    if weak:
+        print(f"stamp too small: {weak}", file=sys.stderr)
+        return 1
     return 0
 
 
