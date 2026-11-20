@@ -78,6 +78,10 @@ org $00D533 ; @hook module=Items name=MirrorShield_RemapPickupWRAM kind=jml targ
 
 pullpc
 
+; Bank $34 tail ($34F000-$34FFFF): keeps Bank $2B clear when optional features (e.g. lyra_talkers) are enabled.
+pushpc
+org $34F000
+
 ; Entry: M=16, X=16, A = BGR555 color for SP-5 Color 8 ($7EC4B0/$7EC6B0) with day/night tint.
 ; Clobbers A, X; keeps Y, DBR. Returns M=16, X=16.
 MirrorShield_ApplyColor8:
@@ -258,11 +262,9 @@ MirrorShield_RemapPickupWRAM:
 }
 
 ; ==============================================================================
-; Bank $34 tail ($34F000-$34FFFF): Dark-World / Light-World Shield 4BPP Swapper
+; Dark-World / Light-World Shield 4BPP Swapper ($34F000-$34FFFF continued)
 ; Preserves all registers, P, DBR, DP, and $7F0000 scratch (safe from any hook).
 ; ==============================================================================
-pushpc
-org $34F000
 
 ; Copies the equipped shield's 12 4BPP tiles (384 bytes) into GFX_SHIELD ($7E9300):
 ;   SavedWorld ($7EF3CA) == #$40 -> GbcShields_4bpp (DW compact GBC Shield Trilogy)
