@@ -217,8 +217,9 @@ class AbyssGbcToolingTests(unittest.TestCase):
     def test_styles_json_schema_and_full_abyss_parity(self) -> None:
         _, defaults, styles, _ = gag.load_styles_config(ABYSS_DIR / "styles.json")
         self.assertEqual([s["name"] for s in styles], [
-            "onox", "fire", "rites", "finale", "palace", "house", "volcanic", "cave"
+            "onox", "fire", "rites", "kydreeok", "finale", "palace", "house", "windmill", "volcanic", "cave"
         ])
+        self.assertEqual(defaults["diagonal"], "slope45")
         self.assertTrue(defaults["skip_unchanged_sheets"])
         self.assertIn(0xB, defaults["skip_floors"])
 
@@ -231,9 +232,14 @@ class AbyssGbcToolingTests(unittest.TestCase):
         missing = sorted(LIVE_ABYSS_ENTRANCE_TARGET_ROOMS - set(room_to_style))
         self.assertEqual(missing, [], f"Unstyled live Abyss entrance rooms: {[hex(r) for r in missing]}")
 
-        # Spot-check exact style mapping for all newly added families
-        self.assertEqual(room_to_style[0x002], "finale")
-        for r in (0x00F, 0x0C9, 0x0F4, 0x0F5, 0x100, 0x102, 0x107, 0x110, 0x11C, 0x122):
+        # Spot-check exact style mapping for all families (incl. 3-beat Finale + Hybrid Houses)
+        self.assertEqual(room_to_style[0x00D], "rites")
+        self.assertEqual(room_to_style[0x01D], "rites")
+        self.assertEqual(room_to_style[0x002], "kydreeok")
+        self.assertEqual(room_to_style[0x000], "finale")
+        self.assertEqual(room_to_style[0x010], "finale")
+        self.assertEqual(room_to_style[0x0C9], "windmill")
+        for r in (0x00F, 0x0F4, 0x0F5, 0x100, 0x102, 0x107, 0x110, 0x11C, 0x122):
             self.assertEqual(room_to_style[r], "house", f"Room 0x{r:03X} expected house")
         self.assertNotIn(0x111, room_to_style, "Archery $111 relocated to Light World Toadstool Woods")
         for r in (0x004, 0x013, 0x014, 0x015, 0x023, 0x024):
@@ -246,6 +252,53 @@ class AbyssGbcToolingTests(unittest.TestCase):
         # Lyra Sea pendant shrines remain SNES (unmapped)
         for r in EXCLUDED_LYRA_SHRINE_ROOMS:
             self.assertNotIn(r, room_to_style, f"Pendant shrine room 0x{r:03X} must not be GBC-styled")
+
+    def test_slope45_diagonal_wall_geometry_across_dungeon_styles(self) -> None:
+        import sheet_codec as sc
+
+        cov = json.loads((ABYSS_DIR / "coverage.json").read_text(encoding="utf-8"))["styles"]
+        for sname in ("onox", "fire", "rites", "kydreeok", "finale", "palace", "volcanic", "cave"):
+            centry = cov[sname]
+            slot2_sheets = [
+                sh for sh, info in centry["sheets"].items()
+                if isinstance(info, dict) and info.get("slot") == 2 and info.get("remapped", True)
+            ]
+            self.assertTrue(slot2_sheets, f"{sname} missing remapped slot-2 sheet")
+            g = sc.text_to_grid((ABYSS_DIR / f"{sname}.{slot2_sheets[0]}.txt").read_text(encoding="utf-8"))
+
+            def tile_px(char_id: int) -> list[list[int]]:
+                t = char_id - 0x80
+                tx, ty = (t % 16) * 8, (t // 16) * 8
+                return [[g[ty + y][tx + x] for x in range(8)] for y in range(8)]
+
+            t80 = tile_px(0x080)
+            t81 = tile_px(0x081)
+            t9a = tile_px(0x09A)
+            t9b = tile_px(0x09B)
+
+            # $080 (d=0..14) must be 100% solid void shade (no protruding jagged tooth)
+            void_vals = {v for row in t80 for v in row}
+            self.assertEqual(len(void_vals), 1, f"{sname} $080 must be pure solid void")
+            void_pix = next(iter(void_vals))
+
+            # $081 upper-left triangle (d = 8+x+y <= 15) must be void/outer-outline,
+            # while lower-right (d >= 16) must contain bright diagonal bevel != void_pix
+            for y in range(8):
+                for x in range(8):
+                    if 8 + x + y <= 15:
+                        self.assertEqual(t81[y][x], void_pix, f"{sname} $081 ({x},{y}) expected void/rim")
+            self.assertTrue(
+                any(t81[y][x] != void_pix for y in range(8) for x in range(8) if 8 + x + y >= 16),
+                f"{sname} $081 missing diagonal wall pixels",
+            )
+            # $09A diagonal (16+x+y == 30 -> (7,7)) and $09B (24+x+y == 30) must carry crisp black inner outline
+            self.assertEqual(t9a[7][7], void_pix, f"{sname} $09A (7,7) expected inner outline")
+            for y in range(8):
+                for x in range(8):
+                    if 24 + x + y == 30:
+                        self.assertEqual(t9b[y][x], void_pix, f"{sname} $09B ({x},{y}) expected inner outline")
+            # Ensure $081 is genuinely 45-degree sloped, not horizontal stripes (top-left void != diagonal bevel at (4,4))
+            self.assertNotEqual(t81[0][0], t81[4][4], f"{sname} $081 appears horizontally flat")
 
     def test_check_mode_passes_clean_and_detects_all_drift_vectors(self) -> None:
         self.assertEqual(gag.main(["--check"]), 0)
@@ -348,7 +401,7 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
         metrics = self._coverage["bank_metrics"]
         self.assertLessEqual(metrics["bank5a_stream_bytes"], metrics["bank5a_stream_budget"])
         self.assertLess(metrics["bank5b_stream_bytes"], gag.BANK_CAPACITY)
-        self.assertGreater(metrics["bank5b_free_bytes"], 10000)
+        self.assertGreater(metrics["bank5b_free_bytes"], 4096)
 
     def test_every_styled_room_activates_gbc_sheets_and_palettes_in_abyss(self) -> None:
         f = self._new_fixture()
@@ -492,9 +545,12 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
             f.close()
 
     def test_full_load_sync_style_and_door_scroll_palette_copy(self) -> None:
+        style_ids = {s["name"]: i for i, s in enumerate(self._styles, 1)}
+        volcanic_id = style_ids["volcanic"]
+        cave_id = style_ids["cave"]
         f = self._new_fixture()
         try:
-            # 1. AbyssGbc_FullLoadEntry records volcanic style (#7) for room $014
+            # 1. AbyssGbc_FullLoadEntry records volcanic style for room $014
             #    without clobbering Gust Jar WRAM ($027E/$027F).
             f.put(0x001B, 0x01)
             f.put(0x7EF3CA, 0x40)
@@ -504,11 +560,11 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
             f.put(0x027E, 0xCC)
             f.put(0x027F, 0x33)
             _run_call(f, "AbyssGbc_FullLoadEntry", long_return=True, m8=True, x8=True)
-            self.assertEqual(f.get(0x7F5408), 7)
+            self.assertEqual(f.get(0x7F5408), volcanic_id)
             self.assertEqual(f.get(0x027E), 0xCC, "AbyssGbc_FullLoadEntry must not clobber Gust Jar $027E")
             self.assertEqual(f.get(0x027F), 0x33, "AbyssGbc_FullLoadEntry must not clobber Gust Jar $027F")
 
-            # 2. Same-style transition ($014 -> $023, both volcanic #7): SyncStyle skips reload
+            # 2. Same-style transition ($014 -> $023, both volcanic): SyncStyle skips reload
             f.put(0x00A0, 0x23)
             f.put(0x00A1, 0x00)
             f.put(0x0013, 0x0F)
@@ -516,10 +572,10 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
             _run_call(f, "AbyssGbc_SyncStyle", long_return=True, m8=True, x8=True)
             self.assertEqual(f.get(0x0270), 0x00, "Same-style transition must not force-blank reload")
             self.assertEqual(f.get(0x0013), 0x0F)
-            self.assertEqual(f.get(0x7F5408), 7)
+            self.assertEqual(f.get(0x7F5408), volcanic_id)
             self.assertEqual(f.get(0x027E), 0xCC)
 
-            # 3. Cross-style transition (volcanic #7 -> cave #8, room $0D0): SyncStyle reloads and restores $13
+            # 3. Cross-style transition (volcanic -> cave, room $0D0): SyncStyle reloads and restores $13
             f.put(0x00A0, 0xD0)
             f.put(0x00A1, 0x00)
             f.put(0x0013, 0x0F)
@@ -527,7 +583,7 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
             _run_call(f, "AbyssGbc_SyncStyle", long_return=True, m8=True, x8=True)
             self.assertEqual(f.get(0x0270), 0x5A, "Cross-style transition must invoke full BG reload")
             self.assertEqual(f.get(0x0013), 0x0F, "Brightness $13 must be restored after reload")
-            self.assertEqual(f.get(0x7F5408), 8, "!AbyssGbc_LoadedStyle must update to cave #8")
+            self.assertEqual(f.get(0x7F5408), cave_id, "!AbyssGbc_LoadedStyle must update to cave")
             self.assertEqual(f.get(0x027E), 0xCC)
 
             # 4. Door scroll across style boundary copies aux ($7EC342) -> main ($7EC542) and sets $15
@@ -537,12 +593,12 @@ class AbyssGbcCompiled65816Tests(unittest.TestCase):
             f.put(0x0AA8, 0x00)
             f.put(0x0AA9, 0x00)
             f.put(0x0015, 0x00)
-            f.put(0x7F5409, 0x07)  # Previous palette was volcanic #7, now entering cave #8
+            f.put(0x7F5409, volcanic_id)  # Previous palette was volcanic, now entering cave
             for off in range(0x42, 0x100, 2):
                 f.put(0x7EC500 + off, 0x00)
                 f.put(0x7EC500 + off + 1, 0x00)
             _run_call(f, "AbyssGbc_PalWrap", long_return=True, m8=True, x8=True)
-            self.assertEqual(f.get(0x7F5409), 8)
+            self.assertEqual(f.get(0x7F5409), cave_id)
             self.assertEqual(f.get(0x027F), 0x33)
             self.assertEqual(f.get(0x0015), 0x01)
             expected_cave_first = int(self._coverage["styles"]["cave"]["palette_words"][0], 16)

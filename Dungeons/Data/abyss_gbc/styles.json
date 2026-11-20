@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "description": "Declarative Eon Abyss GBC interior styles (Q327-1A / Q328 A4). Style IDs are 1-based list indices.",
+  "description": "Declarative Eon Abyss GBC interior styles (Q327-1A / Q328 A4 / Q-OOS-21 + SodaComa 3-Beat Finale & Hybrid Houses). Style IDs are 1-based list indices.",
   "defaults": {
-    "diagonal": "wall",
+    "diagonal": "slope45",
     "deep": "second",
     "stairs": "stripes",
     "floor_meta": "0xA0",
@@ -12,49 +12,103 @@
   "styles": [
     {
       "name": "onox",
-      "notes": "Fortress of Secrets main rooms and island block (b14/p6; Seasons Onox tileset $44).",
+      "notes": "Fortress of Secrets main rooms and island block (b14/p6; Seasons Onox tileset $44 + slope45 diagonals).",
       "donor": {
         "png": "donor_raw_fortress/seasons_gfx_tileset44.png",
         "map": "donor_raw_fortress/seasons_tilesetMappings44.bin",
-        "pal": "donor_pal/seasons_44.txt"
+        "pal": "donor_pal/seasons_44.txt",
+        "disasm": {
+          "game": "seasons",
+          "layout": "2b",
+          "palette_label": "paletteData56a0",
+          "gfx": [
+            {"file": "gfx_tileset_dungeon_standard_1", "addr": "0x8800"},
+            {"file": "gfx_tileset_dungeon_standard_2", "addr": "0x9000"},
+            {"file": "gfx_tileset_onox_castle", "addr": "0x9400"}
+          ]
+        }
       },
       "rooms": ["0x00C", "0x01C", "0x04C", "0x05C", "0x06B", "0x06D", "0x04D", "0x05D", "0x06C"],
       "more_rooms": ["0x07B", "0x07C", "0x07D", "0x08B", "0x08D", "0x09B", "0x09D"]
     },
     {
       "name": "fire",
-      "notes": "Fortress of Secrets fire rooms $2D/$3D (b14/p6; Seasons Sword & Shield Maze Fire tileset $42).",
+      "notes": "Fortress of Secrets fire rooms $2D/$3D (b14/p6; Seasons Sword & Shield Maze Fire tileset $42 + slope45 diagonals).",
       "donor": {
         "png": "donor_raw_fortress/seasons_gfx_tileset42.png",
         "map": "donor_raw_fortress/seasons_tilesetMappings42.bin",
-        "pal": "donor_pal/seasons_42.txt"
+        "pal": "donor_pal/seasons_42.txt",
+        "disasm": {
+          "game": "seasons",
+          "layout": "2a",
+          "palette_label": "paletteData5640",
+          "gfx": [
+            {"file": "gfx_tileset_dungeon_standard_1", "addr": "0x8800"},
+            {"file": "gfx_tileset_dungeon_standard_2", "addr": "0x9000"},
+            {"file": "gfx_tileset_sword_and_shield_maze_fire", "addr": "0x9400"}
+          ]
+        }
       },
       "rooms": ["0x02D", "0x03D"]
     },
     {
       "name": "rites",
-      "notes": "Fortress of Secrets boss and final hallway $0D/$1D (b14/p6; Ages Room of Rites tileset $46).",
+      "notes": "Beat 1 Dark Link hallway and boss chamber $0D/$1D (b14/p6; SodaComa NEW Dungeons v2 Purple/Obsidian Citadel + slope45 diagonals).",
       "donor": {
-        "png": "donor_raw_fortress/ages_gfx_tileset46.png",
-        "map": "donor_raw_fortress/ages_tilesetMappings46.bin",
-        "pal": "donor_pal/ages_46.txt"
+        "png_grid": {
+          "png": "NEW Dungeons (v2).png",
+          "kit_origin": [34, 14],
+          "wall_rgb4": [[208, 204, 216], [159, 156, 168], [101, 81, 128], [0, 0, 0]],
+          "floor_tile": [36, 19],
+          "floor_pal_rgb4": [[146, 136, 164], [118, 106, 138], [82, 68, 106], [0, 0, 0]],
+          "floor_shade_remap": {"0": 0, "1": 1, "2": 2, "3": 2}
+        }
       },
-      "rooms": ["0x00D", "0x01D"]
+      "rooms": ["0x00D", "0x01D"],
+      "row_pal": {"2": 3, "3": 4, "4": 4, "5": 4, "6": 4, "7": 3}
+    },
+    {
+      "name": "kydreeok",
+      "notes": "Beat 2 Kydreeok Octagon $02 (b19/p32; SodaComa NEW Dungeons v2 Warm Copper/Volcanic + slope45 diagonals).",
+      "donor": {
+        "png_grid": {
+          "png": "NEW Dungeons (v2).png",
+          "kit_origin": [42, 7],
+          "wall_rgb4": [[216, 206, 184], [170, 123, 67], [128, 51, 34], [0, 0, 0]],
+          "floor_tile": [44, 12],
+          "throne_tile": [44, 12],
+          "accent_tile": [43, 11],
+          "floor_pal_rgb4": [[164, 118, 72], [132, 84, 52], [92, 46, 32], [0, 0, 0]],
+          "floor_shade_remap": {"0": 0, "1": 1, "2": 2, "3": 2}
+        }
+      },
+      "rooms": ["0x002"],
+      "floor_meta": "0xA1",
+      "row_pal": {"2": 3, "3": 4, "4": 4, "5": 4, "6": 4, "7": 3},
+      "posterize_like": "0x00C"
     },
     {
       "name": "finale",
-      "notes": "Eon Abyss finale sanctum ($00/$10 + Kydreeok Octagon $02; b19/p32; Onox donor with throne floor A1, blue carpet, Triforce inlay).",
+      "notes": "Beat 3 Ganondorf / Nightmare Ganon sanctum and approach $00/$10 (b19/p32; SodaComa NEW Dungeons v2 Silver/Shadow Citadel with gold/sapphire Triforce mosaic).",
       "donor": {
-        "png": "donor_raw_fortress/seasons_gfx_tileset44.png",
-        "map": "donor_raw_fortress/seasons_tilesetMappings44.bin",
-        "pal": "donor_pal/seasons_44.txt"
+        "png_grid": {
+          "png": "NEW Dungeons (v2).png",
+          "kit_origin": [42, 14],
+          "wall_rgb4": [[216, 220, 232], [168, 168, 176], [100, 101, 128], [0, 0, 0]],
+          "floor_tile": [44, 19],
+          "throne_tile": [44, 19],
+          "accent_tile": [43, 18],
+          "floor_pal_rgb4": [[144, 146, 168], [110, 112, 138], [74, 76, 104], [0, 0, 0]],
+          "accent_pal_rgb4": [[96, 144, 232], [48, 84, 184], [24, 44, 112], [0, 0, 0]],
+          "floor_shade_remap": {"0": 0, "1": 1, "2": 2, "3": 2}
+        }
       },
       "rooms": ["0x000", "0x010"],
-      "more_rooms": ["0x002"],
       "floor_meta": "0xA1",
       "row_pal": {"2": 3, "3": 4, "4": 4, "5": 4, "6": 4, "7": 3},
       "posterize_like": "0x00C",
       "accent": {"2": 7},
+      "triforce_gold_rgb": [248, 208, 64],
       "accent_floors": {
         "0x0E1": {
           "meta": "0xA2",
@@ -72,11 +126,21 @@
     },
     {
       "name": "palace",
-      "notes": "Shrine of Origins ($05, b1/p4) and Abyss Pyramid Fairy ($116, b18/p10): Ages palace tileset $5A (teal walls, green checker floor).",
+      "notes": "Shrine of Origins ($05, b1/p4) and Abyss Pyramid Fairy ($116, b18/p10): Ages palace tileset $5A (teal walls, green checker floor + slope45 diagonals).",
       "donor": {
         "png": "donor_raw_fortress/ages_gfx_tileset5a.png",
         "map": "donor_raw_fortress/ages_tilesetMappings5a.bin",
-        "pal": "donor_pal/ages_5a.txt"
+        "pal": "donor_pal/ages_5a.txt",
+        "disasm": {
+          "game": "ages",
+          "layout": "17",
+          "palette_label": "paletteData5720",
+          "gfx": [
+            {"file": "gfx_tileset_dungeon_standard_1", "addr": "0x8800"},
+            {"file": "gfx_tileset_dungeon_standard_2", "addr": "0x9000"},
+            {"file": "gfx_tileset_moblin_fortress", "addr": "0x9400"}
+          ]
+        }
       },
       "rooms": ["0x005"],
       "more_rooms": ["0x116"],
@@ -90,36 +154,42 @@
     },
     {
       "name": "house",
-      "notes": "Abyss houses and shops: Windmill ($C9), Dream Hut ($0F), 7 b3 houses ($F4/$F5/$100/$102/$107/$110/$11C), and b17 interior ($122; Archery $111 relocated to Light World Toadstool Woods). Seasons indoors A ($2C) with warm tan wood floor.",
+      "notes": "Abyss cottages and shops: Dream Hut ($0F), 7 b3 houses ($F4/$F5/$100/$102/$107/$110/$11C), and b17 Fortune Teller ($122). SodaComa NEW Dungeons v2 Warm Wood + cedar floorboards.",
       "donor": {
-        "png": "donor_raw_house/seasons_gfx_tileset2c.png",
-        "map": "donor_raw_house/seasons_tilesetMappings2c.bin",
-        "pal": "donor_pal/seasons_2c.txt",
-        "disasm": {
-          "game": "seasons",
-          "layout": "2c",
-          "palette_label": "paletteData5760",
-          "gfx": [
-            {"file": "gfx_tileset_dungeon_standard_1", "addr": "0x8800", "count": "0x20"},
-            {"file": "gfx_tileset_indoors_1", "addr": "0x8A00"},
-            {"file": "gfx_tileset_indoors_2", "addr": "0x9000"},
-            {"file": "gfx_tileset_vases", "addr": "0x8860"}
-          ]
+        "png_grid": {
+          "png": "NEW Dungeons (v2).png",
+          "kit_origin": [26, 21],
+          "wall_rgb4": [[216, 204, 180], [176, 128, 96], [120, 80, 80], [0, 0, 0]],
+          "floor_tile": [0, 20],
+          "floor_pal_rgb4": [[198, 158, 110], [172, 128, 84], [138, 96, 62], [0, 0, 0]],
+          "floor_by_luma": true,
+          "floor_shade_remap": {"0": 0, "1": 1, "2": 2, "3": 2}
         }
       },
-      "extra_pal": {
-        "8": [[28, 22, 14], [22, 15, 8], [14, 8, 4], [0, 0, 0]]
+      "row_pal": {"2": 3, "3": 3, "4": 3, "5": 4, "6": 4, "7": 3},
+      "rooms": ["0x00F", "0x100"],
+      "more_rooms": ["0x0F4", "0x0F5", "0x102", "0x107", "0x110", "0x11C", "0x122"]
+    },
+    {
+      "name": "windmill",
+      "notes": "Abyss Windmill ($C9): SodaComa NEW Dungeons v2 Grey Stone House + slate stone floor.",
+      "donor": {
+        "png_grid": {
+          "png": "NEW Dungeons (v2).png",
+          "kit_origin": [34, 21],
+          "wall_rgb4": [[216, 216, 208], [168, 168, 168], [100, 101, 128], [0, 0, 0]],
+          "floor_tile": [8, 6],
+          "floor_pal_rgb4": [[152, 154, 168], [126, 128, 144], [92, 94, 114], [0, 0, 0]],
+          "floor_by_luma": true,
+          "floor_shade_remap": {"0": 0, "1": 1, "2": 2, "3": 2}
+        }
       },
-      "row_pal": {"5": 8, "6": 8},
-      "rooms": ["0x0C9"],
-      "more_rooms": [
-        "0x00F", "0x0F4", "0x0F5", "0x100", "0x102", "0x107", "0x110", "0x11C",
-        "0x122"
-      ]
+      "row_pal": {"2": 3, "3": 3, "4": 3, "5": 4, "6": 4, "7": 3},
+      "rooms": ["0x0C9"]
     },
     {
       "name": "volcanic",
-      "notes": "Eon Abyss volcanic/mountain cave network ($04/$13/$14/$15/$23/$24; b13/p24): Seasons Subrosia Indoors ($30 + PALH_TILESET_SUBROSIA_INDOORS).",
+      "notes": "Eon Abyss volcanic/mountain cave network ($04/$13/$14/$15/$23/$24; b13/p24): Seasons Subrosia Indoors ($30 + PALH_TILESET_SUBROSIA_INDOORS + slope45 diagonals).",
       "donor": {
         "disasm": {
           "game": "seasons",
@@ -138,7 +208,7 @@
     },
     {
       "name": "cave",
-      "notes": "Eon Abyss caves ($D0/$D1/$D2/$F6/$10E/$112/$114/$117/$11E/$123/$124/$125; b6/b20): Seasons Cave ($2F + PALH_TILESET_CAVE, row 7 = GBC pal 5 teal water).",
+      "notes": "Eon Abyss caves ($D0/$D1/$D2/$F6/$10E/$112/$114/$117/$11E/$123/$124/$125; b6/b20): Seasons Cave ($2F + PALH_TILESET_CAVE + slope45 diagonals, row 7 = GBC pal 5 teal water).",
       "donor": {
         "disasm": {
           "game": "seasons",
